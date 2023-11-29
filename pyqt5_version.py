@@ -4,13 +4,17 @@ import sys
 
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout,
-    QWidget, QLineEdit, QTextEdit, QMessageBox, QStackedWidget, QHBoxLayout
+    QWidget, QLineEdit, QTextEdit, QMessageBox, QStackedWidget, QHBoxLayout, QFileDialog, 
+    QGroupBox, QStatusBar, QSpacerItem, QSizePolicy
 )
-from PyQt5.QtGui import QPixmap, QFont, QPalette, QBrush, QColor, QFontDatabase
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QFont, QPalette, QBrush, QColor, QFontDatabase, QDesktopServices
+from PyQt5.QtCore import Qt, QUrl
+
 
 from pages.subnet import SelectSubnetPage
 from pages.neuron import SelectNeuronPage
+from pages.dashboard import SelectDashboardPage
+
 
 class MiningWizard(QMainWindow):
     def __init__(self):
@@ -20,22 +24,15 @@ class MiningWizard(QMainWindow):
         self.subnet = None
         self.neuron = None
         
-        self.setWindowTitle("Bittensor Plug and Play Miner")
+        self.setWindowTitle("BITCURRENT")
+        # self.setStyleSheet(f"background-image: url('cyberpunk_background.png'); background-position: center; background-repeat: no-repeat; background-attachment: fixed;")
+        # self.setStyleSheet("{background: rgba(0, 0, 0, 0.3); width: 1px; }")
         self.setGeometry(100, 100, 800, 600)
 
-        # Set background image
+        # # Set background image
         self.central_widget = QStackedWidget()
         self.setCentralWidget(self.central_widget)
-        
-        # self.background_label = QLabel(self)
-        # self.pixmap = QPixmap("cyberpunk_background.png")  # Make sure the path is correct
-        # self.background_label.setPixmap(self.pixmap)
-        # self.background_label.setScaledContents(True)
 
-        # Add the background label to the layout
-        # layout = QVBoxLayout()
-        # layout.addWidget(self.background_label)
-        # self.setLayout(layout)
 
         # Initialize pages
         self.start_page = StartPage(self)
@@ -44,6 +41,9 @@ class MiningWizard(QMainWindow):
         self.get_wallet_page = GetWalletPage(self)
         self.select_subnet_page = SelectSubnetPage(self)
         self.select_neuron_page = SelectNeuronPage(self)
+        self.dashboard_page = SelectDashboardPage(self)
+
+    
 
         # Adding pages to the stack
         self.central_widget.addWidget(self.start_page)
@@ -52,6 +52,7 @@ class MiningWizard(QMainWindow):
         self.central_widget.addWidget(self.get_wallet_page)
         self.central_widget.addWidget(self.select_subnet_page)
         self.central_widget.addWidget(self.select_neuron_page)
+        self.central_widget.addWidget(self.dashboard_page)
 
     def show_start_page(self):
         self.central_widget.setCurrentWidget(self.start_page)
@@ -71,80 +72,169 @@ class MiningWizard(QMainWindow):
     def show_select_neuron_page(self):
         self.central_widget.setCurrentWidget(self.select_neuron_page)
 
+    def show_dashboard_page(self):
+        self.central_widget.setCurrentWidget(self.dashboard_page)
+
 class StartPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         layout = QVBoxLayout()
 
         # Add a cyberpunk style
-        self.setStyleSheet("""
-            QWidget {
-                color: #00ff00;
-                background-color: #000;
-                font-family: 'Orbitron', sans-serif;
-            }
-            QPushButton {
-                border: 2px solid #00ff00;
-                border-radius: 15px;
-                min-height: 30px;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #005500;
-            }
-        """)
+        # self.setStyleSheet("""
+        #     QWidget {
+        #         color: #00ff00;
+        #         background: rgba(0, 0, 0, 0.3);
+        #         font-family: 'Orbitron', sans-serif;
+        #     }
+        #     QPushButton {
+        #         color: black;
+        #         border: 2px solid #000000;
+        #         border-radius: 15px;
+        #         min-height: 30px;
+        #         font-size: 16px;
+        #     }
+        #     QPushButton:hover {
+        #         background-color: #333;
+        #     }
+        # """)
+        
 
-        label = QLabel("Choose Your Option", self)
-        label.setFont(QFont("Orbitron", 18, QFont.Bold))
-        layout.addWidget(label)
+        # Header
+        header_group = QGroupBox("Welcome", self)
+        header_group.setStyleSheet("color: black;")
+        header_group.setFont(QFont("Orbitron", 18, QFont.Bold))
+        header_group.setAlignment(Qt.AlignCenter) 
+        header_layout = QHBoxLayout(header_group)
+
+        # header_layout.addWidget(QLabel("BITCURRENT"))
+        # header_layout.addWidget(QPushButton("User Account Information"))
+        
+        # dash_button = QPushButton("Dashboard")
+        # dash_button.clicked.connect(parent.show_dashboard)
+        # header_layout.addWidget(dash_button)
+        # header_layout.addWidget(QPushButton("Quick Navigation Menu"))
+
+        layout.addWidget(header_group)
+
+        # Mining options
+        options_group = QGroupBox()
+        # options_group.setFont(QFont("Orbitron", 16, QFont.Bold))
+        options_layout = QVBoxLayout(options_group)
+        
+        # label = QLabel("Choose Your Option", self)
+        # label.setStyleSheet("color: black;")
+        # label.setFont(QFont("Orbitron", 16, QFont.Bold))
+        # options_layout.addWidget(label)
 
         new_wallet_button = QPushButton("Create New Wallet and Mine", self)
         new_wallet_button.clicked.connect(parent.show_create_wallet_page)
-        layout.addWidget(new_wallet_button)
+        options_layout.addWidget(new_wallet_button)
 
         existing_wallet_button = QPushButton("Mine to Existing Wallet", self)
         existing_wallet_button.clicked.connect(parent.show_get_wallet_page)
-        layout.addWidget(existing_wallet_button)
+        options_layout.addWidget(existing_wallet_button)
+
+        view_dashboard_button = QPushButton("View Dashboard", self)
+        view_dashboard_button.clicked.connect(parent.show_dashboard_page)
+        options_layout.addWidget(view_dashboard_button)
+
+
+        layout.addWidget(options_group)
+        options_group.setFixedSize(800,200)
+        
+        # footer group
+        footer_group = QGroupBox()
+        footer_layout = QHBoxLayout(footer_group)
+        # add about page
+        about_button = QPushButton("About")
+        about_button.setFont(QFont("Orbitron", 12))
+        about_button.clicked.connect(self.open_about_url)
+        footer_layout.addWidget(about_button)
+
+        # legal
+        legal_button = QPushButton("Legal and Compliance")
+        legal_button.setFont(QFont("Orbitron", 12))
+        legal_button.clicked.connect(self.open_legal_url)
+        footer_layout.addWidget(legal_button)
+
+        # Support
+        support_button = QPushButton("Support")
+        support_button.setFont(QFont("Orbitron", 12))
+        support_button.clicked.connect(self.open_support_url)
+        footer_layout.addWidget(support_button)
+
+        # Terms
+        terms_button = QPushButton("Terms of Use")
+        terms_button.setFont(QFont("Orbitron", 12))
+        terms_button.clicked.connect(self.open_terms_url)
+        footer_layout.addWidget(terms_button)
+        footer_group.setMinimumSize(800,25)  
+        
+        layout.addWidget(footer_group)
+        
+
+    
 
         warning_label = QLabel("Please ensure to keep the miner program running at all times.", self)
-        warning_label.setFont(QFont("Orbitron", 10))
-        warning_label.setStyleSheet("QLabel { color : red; }")
+        warning_label.setFont(QFont("Orbitron", 14))
+        warning_label.setStyleSheet("QLabel { color : black;padding: 5px; }")   
+        warning_label.setFixedSize(800, 50)     
+        # layout.addWidget(warning_label)
         layout.addWidget(warning_label)
-
         self.setLayout(layout)
 
     def create_new_wallet(self):
         QMessageBox.information(self, "New Wallet", "The new wallet creation functionality is not implemented yet.")
+
+    def open_about_url(self):
+        QDesktopServices.openUrl(QUrl("https://bitcurrent.net/"))
+    
+    def open_legal_url(self):
+        QDesktopServices.openUrl(QUrl("https://bitcurrent.net/"))
+
+    def open_support_url(self):
+        QDesktopServices.openUrl(QUrl("https://bitcurrent.net/"))
+
+    def open_terms_url(self):
+        QDesktopServices.openUrl(QUrl("https://bitcurrent.net/"))
+
+    # def show_dashboard(self):
+    #     dashboard = MiningDashboard(self)
+    #     dashboard.show()
+
 
 class MiningPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         layout = QVBoxLayout()
 
-        self.setStyleSheet("""
-            QPushButton {
-                border: 2px solid #00ff00;
-                border-radius: 15px;
-                min-height: 30px;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #005500;
-            }
-            QLineEdit {
-                border: 1px solid #00ff00;
-                border-radius: 10px;
-                padding: 5px;
-                color: #00ff00;
-                background-color: #000;
-                font-family: 'Orbitron', sans-serif;
-            }
-            QTextEdit {
-                color: #00ff00;
-                background-color: #000;
-                font-family: 'Orbitron', sans-serif;
-            }
-        """)
+        # self.setStyleSheet("""
+        #     QPushButton {
+        #         border: 2px solid #00ff00;
+        #         border-radius: 15px;
+        #         min-height: 30px;
+        #         font-size: 16px;
+        #     }
+        #     QPushButton:hover {
+        #         background-color: #005500;
+        #     }
+        #     QLineEdit {
+        #         border: 1px solid #00ff00;
+        #         border-radius: 10px;
+        #         padding: 5px;
+        #         color: #00ff00;
+        #         background-color: #000;
+        #         font-family: 'Orbitron', sans-serif;
+        #     }
+        #     QTextEdit {
+        #         color: #00ff00;
+        #         background-color: #000;
+        #         font-family: 'Orbitron', sans-serif;
+        #     }
+                           
+
+        # """)
 
         label = QLabel("Step 2: Start Mining", self)
         label.setFont(QFont("Orbitron", 16))
@@ -189,22 +279,22 @@ class AddWalletPage(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout()
 
-        self.setStyleSheet("""
-            QWidget {
-                color: #00ff00;
-                background-color: #000;
-                font-family: 'Orbitron', sans-serif;
-            }
-            QPushButton {
-                border: 2px solid #00ff00;
-                border-radius: 15px;
-                min-height: 30px;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #005500;
-            }
-        """)
+        # self.setStyleSheet("""
+        #     QWidget {
+        #         color: #00ff00;
+        #         background-color: #000;
+        #         font-family: 'Orbitron', sans-serif;
+        #     }
+        #     QPushButton {
+        #         border: 2px solid #00ff00;
+        #         border-radius: 15px;
+        #         min-height: 30px;
+        #         font-size: 16px;
+        #     }
+        #     QPushButton:hover {
+        #         background-color: #005500;
+        #     }
+        # """)
 
         label = QLabel("Add Wallet Details", self)
         label.setFont(QFont("Orbitron", 18, QFont.Bold))
@@ -283,22 +373,22 @@ class GetWalletPage(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout()
 
-        self.setStyleSheet("""
-            QWidget {
-                color: #00ff00;
-                background-color: #000;
-                font-family: 'Orbitron', sans-serif;
-            }
-            QPushButton {
-                border: 2px solid #00ff00;
-                border-radius: 15px;
-                min-height: 30px;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #005500;
-            }
-        """)
+        # self.setStyleSheet("""
+        #     QWidget {
+        #         color: #00ff00;
+        #         background-color: #000;
+        #         font-family: 'Orbitron', sans-serif;
+        #     }
+        #     QPushButton {
+        #         border: 2px solid #00ff00;
+        #         border-radius: 15px;
+        #         min-height: 30px;
+        #         font-size: 16px;
+        #     }
+        #     QPushButton:hover {
+        #         background-color: #005500;
+        #     }
+        # """)
 
         label = QLabel("Add Wallet Details", self)
         label.setFont(QFont("Orbitron", 18, QFont.Bold))
@@ -362,6 +452,7 @@ class GetWalletPage(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setStyleSheet("QMainWindow::separator { background: rgba(0, 0, 0, 0.3); width: 1px; }")
     QFontDatabase.addApplicationFont("Orbitron/Orbitron-VariableFont_wght.ttf")  # Add the path to the Orbitron font file
 
     window = MiningWizard()
