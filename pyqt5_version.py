@@ -24,7 +24,7 @@ class MiningWizard(QMainWindow):
         self.subnet = None
         self.neuron = None
         
-        self.setWindowTitle("BITCURRENT")
+        self.setWindowTitle("Plug and play miner")
         # self.setStyleSheet(f"background-image: url('cyberpunk_background.png'); background-position: center; background-repeat: no-repeat; background-attachment: fixed;")
         # self.setStyleSheet("{background: rgba(0, 0, 0, 0.3); width: 1px; }")
         self.setGeometry(100, 100, 800, 600)
@@ -81,60 +81,59 @@ class StartPage(QWidget):
         layout = QVBoxLayout()
 
         # Add a cyberpunk style
-        # self.setStyleSheet("""
-        #     QWidget {
-        #         color: #00ff00;
-        #         background: rgba(0, 0, 0, 0.3);
-        #         font-family: 'Orbitron', sans-serif;
-        #     }
-        #     QPushButton {
-        #         color: black;
-        #         border: 2px solid #000000;
-        #         border-radius: 15px;
-        #         min-height: 30px;
-        #         font-size: 16px;
-        #     }
-        #     QPushButton:hover {
-        #         background-color: #333;
-        #     }
-        # """)
+        self.setStyleSheet("""
+             QPushButton {
+                font-family: 'Georgia'; 
+                font-weight: bold;
+                background-color: #3498db;
+                color: #ffffff;
+                border: none;
+                border-radius: 10px;      
+                min-height: 30px;
+                font-size: 16px;
+        }
+            QPushButton:hover {
+              background-color: #333";
+            }
+        """)
         
 
         # Header
-        header_group = QGroupBox("Welcome", self)
-        header_group.setStyleSheet("color: black;")
-        header_group.setFont(QFont("Orbitron", 18, QFont.Bold))
-        header_group.setAlignment(Qt.AlignCenter) 
-        header_layout = QHBoxLayout(header_group)
-
-        # header_layout.addWidget(QLabel("BITCURRENT"))
-        # header_layout.addWidget(QPushButton("User Account Information"))
+        header_group = QGroupBox("BitCurrent", self)
+        header_group.setFont(QFont("Georgia", 20, QFont.Bold))
         
-        # dash_button = QPushButton("Dashboard")
-        # dash_button.clicked.connect(parent.show_dashboard)
-        # header_layout.addWidget(dash_button)
-        # header_layout.addWidget(QPushButton("Quick Navigation Menu"))
+        header_group.setStyleSheet("font-family: 'Georgia'; \
+                                   font-weight: bold;\
+                                   color: black; \
+                                   padding: 10px;  \
+                                   border: None; \
+                                   # 1px solid #3498db; \
+                                   margin-top: 22px; margin-bottom: 20px;")
+       
+        # header_group.setAlignment(Qt.AlignCenter) 
+        header_layout = QHBoxLayout(header_group)
+        welcome_message = QLabel("Making Mining Accessible to All")
+        welcome_message.setFont(QFont("Georgia", 42, QFont.Bold, italic=True))
+        header_layout.addWidget(welcome_message)
 
         layout.addWidget(header_group)
 
         # Mining options
         options_group = QGroupBox()
-        # options_group.setFont(QFont("Orbitron", 16, QFont.Bold))
+        options_group.setFont(QFont("Georgia", 16, QFont.Bold))
         options_layout = QVBoxLayout(options_group)
         
-        # label = QLabel("Choose Your Option", self)
-        # label.setStyleSheet("color: black;")
-        # label.setFont(QFont("Orbitron", 16, QFont.Bold))
-        # options_layout.addWidget(label)
-
-        new_wallet_button = QPushButton("Create New Wallet and Mine", self)
+        # Use new wallet
+        new_wallet_button = QPushButton("Create New Wallet and Mine", self) 
         new_wallet_button.clicked.connect(parent.show_create_wallet_page)
         options_layout.addWidget(new_wallet_button)
 
+        # Using existing Wallet
         existing_wallet_button = QPushButton("Mine to Existing Wallet", self)
         existing_wallet_button.clicked.connect(parent.show_get_wallet_page)
         options_layout.addWidget(existing_wallet_button)
 
+        # to dashboard
         view_dashboard_button = QPushButton("View Dashboard", self)
         view_dashboard_button.clicked.connect(parent.show_dashboard_page)
         options_layout.addWidget(view_dashboard_button)
@@ -146,41 +145,38 @@ class StartPage(QWidget):
         # footer group
         footer_group = QGroupBox()
         footer_layout = QHBoxLayout(footer_group)
+        
         # add about page
         about_button = QPushButton("About")
-        about_button.setFont(QFont("Orbitron", 12))
+        about_button.setFont(QFont("Georgia", 12))
         about_button.clicked.connect(self.open_about_url)
         footer_layout.addWidget(about_button)
 
         # legal
         legal_button = QPushButton("Legal and Compliance")
-        legal_button.setFont(QFont("Orbitron", 12))
+        legal_button.setFont(QFont("Georgia", 12))
         legal_button.clicked.connect(self.open_legal_url)
         footer_layout.addWidget(legal_button)
 
         # Support
         support_button = QPushButton("Support")
-        support_button.setFont(QFont("Orbitron", 12))
+        support_button.setFont(QFont("Georgia", 12))
         support_button.clicked.connect(self.open_support_url)
         footer_layout.addWidget(support_button)
 
         # Terms
         terms_button = QPushButton("Terms of Use")
-        terms_button.setFont(QFont("Orbitron", 12))
+        terms_button.setFont(QFont("Georgia", 12))
         terms_button.clicked.connect(self.open_terms_url)
         footer_layout.addWidget(terms_button)
-        footer_group.setMinimumSize(800,25)  
-        
+        footer_group.resize(800,10)
         layout.addWidget(footer_group)
-        
 
-    
-
+        #  Bottom footnote
         warning_label = QLabel("Please ensure to keep the miner program running at all times.", self)
-        warning_label.setFont(QFont("Orbitron", 14))
+        warning_label.setFont(QFont("Georgia", 14))
         warning_label.setStyleSheet("QLabel { color : black;padding: 5px; }")   
         warning_label.setFixedSize(800, 50)     
-        # layout.addWidget(warning_label)
         layout.addWidget(warning_label)
         self.setLayout(layout)
 
@@ -279,55 +275,92 @@ class AddWalletPage(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout()
 
-        # self.setStyleSheet("""
-        #     QWidget {
-        #         color: #00ff00;
-        #         background-color: #000;
-        #         font-family: 'Orbitron', sans-serif;
-        #     }
-        #     QPushButton {
-        #         border: 2px solid #00ff00;
-        #         border-radius: 15px;
-        #         min-height: 30px;
-        #         font-size: 16px;
-        #     }
-        #     QPushButton:hover {
-        #         background-color: #005500;
-        #     }
-        # """)
+        self.setStyleSheet("""
+            QPushButton {
+                font-size: 14px;
+                font-family: Georgia;
+            }
+            #     QPushButton:hover {
+            #         background-color: #005500;
+            #     }
+        """)
 
-        label = QLabel("Add Wallet Details", self)
-        label.setFont(QFont("Orbitron", 18, QFont.Bold))
-        layout.addWidget(label)
+        
+# =====
+
+        # Header Group with links
+        header_group = QGroupBox("BitCurrent", self)
+        header_group.setFont(QFont("Georgia", 18, QFont.Bold))
+        header_group.setAlignment(Qt.AlignLeft) 
+        header_layout = QHBoxLayout(header_group)
+        
+        home_button = QPushButton("Home")
+        home_button.clicked.connect(parent.show_start_page)
+        header_layout.addWidget(home_button)
+
+        wallet_button = QPushButton("Wallet Settings")
+        header_layout.addWidget(wallet_button)
+
+
+        profile_button = QPushButton("Profile")
+        header_layout.addWidget(profile_button)
+
+        log_button = QPushButton("Log Out")
+        header_layout.addWidget(log_button)
+
+
+        test_group = QGroupBox()
+        test_layout = QVBoxLayout(test_group)
+        test_layout.addWidget(QPushButton("Withdraw Earnings"))
+        test_layout.addWidget(QPushButton("Stop Mining"))
+        header_layout.addWidget(test_group)
+        header_group.setFixedHeight(150)
+        
+        layout.addWidget(header_group)
+
+# =====
+       
+        details_box = QGroupBox()
+        details_layout = QVBoxLayout(details_box)
+        
+        label = QLabel("Wallet Details", self)
+        label.setFont(QFont("Georgia", 26, QFont.Bold))
+        details_layout.addWidget(label)
+
 
         # Wallet Name
         wallet_name_label = QLabel("Wallet Name:", self)
-        wallet_name_label.setFont(QFont("Orbitron", 12))
-        layout.addWidget(wallet_name_label)
+        wallet_name_label.setFont(QFont("Georgia", 16, QFont.Bold))
+        details_layout.addWidget(wallet_name_label)
         self.wallet_name_input = QLineEdit(self)
-        layout.addWidget(self.wallet_name_input)
+        details_layout.addWidget(self.wallet_name_input)
 
         # Wallet Path
         wallet_path_label = QLabel("Wallet Path:", self)
-        wallet_path_label.setFont(QFont("Orbitron", 12))
-        layout.addWidget(wallet_path_label)
+        wallet_path_label.setFont(QFont("Georgia", 18))
+        details_layout.addWidget(wallet_path_label)
         self.wallet_path_input = QLineEdit(self)
         self.wallet_path_input.setPlaceholderText("Select wallet path")
         self.wallet_path_input.setText(os.getcwd())
-        layout.addWidget(self.wallet_path_input)
+        details_layout.addWidget(self.wallet_path_input)
         browse_button = QPushButton("Browse", self)
+        browse_button.setFont(QFont("Georgia", 16))
         browse_button.clicked.connect(self.browse_wallet_path)
-        layout.addWidget(browse_button)
+        details_layout.addWidget(browse_button)
+
+        
 
         # Other Fields (Add as necessary)
         # Example: Wallet Password
         wallet_password_label = QLabel("Wallet Password:", self)
-        wallet_password_label.setFont(QFont("Orbitron", 12))
-        layout.addWidget(wallet_password_label)
+        wallet_password_label.setFont(QFont("Georgia", 18, QFont.Bold))
+        details_layout.addWidget(wallet_password_label)
         self.wallet_password_input = QLineEdit(self)
         self.wallet_password_input.setEchoMode(QLineEdit.Password)  # Hides text entry for password
 
-        layout.addWidget(self.wallet_password_input)
+        details_layout.addWidget(self.wallet_password_input)
+
+        layout.addWidget(details_box)
 
         h_layout = QHBoxLayout()
         previous_button = QPushButton("Back to Main Menu", self)
@@ -373,55 +406,78 @@ class GetWalletPage(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout()
 
-        # self.setStyleSheet("""
-        #     QWidget {
-        #         color: #00ff00;
-        #         background-color: #000;
-        #         font-family: 'Orbitron', sans-serif;
-        #     }
-        #     QPushButton {
-        #         border: 2px solid #00ff00;
-        #         border-radius: 15px;
-        #         min-height: 30px;
-        #         font-size: 16px;
-        #     }
-        #     QPushButton:hover {
-        #         background-color: #005500;
-        #     }
-        # """)
+        # Header Group with links
+        header_group = QGroupBox("BitCurrent", self)
+        header_group.setFont(QFont("Georgia", 18, QFont.Bold))
+        header_group.setAlignment(Qt.AlignLeft) 
+        header_layout = QHBoxLayout(header_group)
+        
+        home_button = QPushButton("Home")
+        home_button.clicked.connect(parent.show_start_page)
+        header_layout.addWidget(home_button)
 
-        label = QLabel("Add Wallet Details", self)
-        label.setFont(QFont("Orbitron", 18, QFont.Bold))
-        layout.addWidget(label)
+        wallet_button = QPushButton("Wallet Settings")
+        header_layout.addWidget(wallet_button)
+
+
+        profile_button = QPushButton("Profile")
+        header_layout.addWidget(profile_button)
+
+        log_button = QPushButton("Log Out")
+        header_layout.addWidget(log_button)
+
+
+        test_group = QGroupBox()
+        test_layout = QVBoxLayout(test_group)
+        test_layout.addWidget(QPushButton("Withdraw Earnings"))
+        test_layout.addWidget(QPushButton("Stop Mining"))
+        header_layout.addWidget(test_group)
+        header_group.setFixedHeight(150)
+        
+        layout.addWidget(header_group)
+
+
+        details_box = QGroupBox()
+        details_layout = QVBoxLayout(details_box)
+        
+        label = QLabel("Wallet Details", self)
+        label.setFont(QFont("Georgia", 26, QFont.Bold))
+        details_layout.addWidget(label)
+
 
         # Wallet Name
         wallet_name_label = QLabel("Wallet Name:", self)
-        wallet_name_label.setFont(QFont("Orbitron", 12))
-        layout.addWidget(wallet_name_label)
+        wallet_name_label.setFont(QFont("Georgia", 16, QFont.Bold))
+        details_layout.addWidget(wallet_name_label)
         self.wallet_name_input = QLineEdit(self)
-        layout.addWidget(self.wallet_name_input)
+        details_layout.addWidget(self.wallet_name_input)
 
         # Wallet Path
         wallet_path_label = QLabel("Wallet Path:", self)
-        wallet_path_label.setFont(QFont("Orbitron", 12))
-        layout.addWidget(wallet_path_label)
+        wallet_path_label.setFont(QFont("Georgia", 18))
+        details_layout.addWidget(wallet_path_label)
         self.wallet_path_input = QLineEdit(self)
         self.wallet_path_input.setPlaceholderText("Select wallet path")
         self.wallet_path_input.setText(os.getcwd())
-        layout.addWidget(self.wallet_path_input)
+        details_layout.addWidget(self.wallet_path_input)
         browse_button = QPushButton("Browse", self)
+        browse_button.setFont(QFont("Georgia", 16))
         browse_button.clicked.connect(self.browse_wallet_path)
-        layout.addWidget(browse_button)
+        details_layout.addWidget(browse_button)
+
+        
 
         # Other Fields (Add as necessary)
         # Example: Wallet Password
         wallet_password_label = QLabel("Wallet Password:", self)
-        wallet_password_label.setFont(QFont("Orbitron", 12))
-        layout.addWidget(wallet_password_label)
+        wallet_password_label.setFont(QFont("Georgia", 18, QFont.Bold))
+        details_layout.addWidget(wallet_password_label)
         self.wallet_password_input = QLineEdit(self)
         self.wallet_password_input.setEchoMode(QLineEdit.Password)  # Hides text entry for password
 
-        layout.addWidget(self.wallet_password_input)
+        details_layout.addWidget(self.wallet_password_input)
+
+        layout.addWidget(details_box)
 
         h_layout = QHBoxLayout()
         previous_button = QPushButton("Back to Main Menu", self)
@@ -453,7 +509,7 @@ class GetWalletPage(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyleSheet("QMainWindow::separator { background: rgba(0, 0, 0, 0.3); width: 1px; }")
-    QFontDatabase.addApplicationFont("Orbitron/Orbitron-VariableFont_wght.ttf")  # Add the path to the Orbitron font file
+    # QFontDatabase.addApplicationFont("./Orbitron/Orbitron-VariableFont_wght.ttf")  # Add the path to the Orbitron font file
 
     window = MiningWizard()
     window.show()

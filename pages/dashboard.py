@@ -11,10 +11,13 @@ class SelectDashboardPage(QWidget):
         super().__init__(parent)
         # self.setWindowTitle("Mining Dashboard")
 
-        # central_widget = QWidget(self)
-        # self.setCentralWidget(central_widget)
+        self.setStyleSheet("""
+            QPushButton {
+                font-size: 14px;
+                font-family: Georgia;
+            }
+        """)
 
-        # layout = QVBoxLayout(central_widget)
         layout = QVBoxLayout()
 
         # Header Group with links
@@ -23,14 +26,22 @@ class SelectDashboardPage(QWidget):
         header_group.setAlignment(Qt.AlignLeft) 
         header_layout = QHBoxLayout(header_group)
 
+
         # header_layout.addWidget(QLabel("BITCURRENT"))
         home_button = QPushButton("Home")
         home_button.clicked.connect(parent.show_start_page)
         header_layout.addWidget(home_button)
 
-        header_layout.addWidget(QPushButton("Wallet Settings"))
-        header_layout.addWidget(QPushButton("Profile"))
-        header_layout.addWidget(QPushButton("Log Out"))
+        wallet_button = QPushButton("Wallet Settings")
+        header_layout.addWidget(wallet_button)
+
+
+        profile_button = QPushButton("Profile")
+        header_layout.addWidget(profile_button)
+
+        log_button = QPushButton("Log Out")
+        header_layout.addWidget(log_button)
+
 
         test_group = QGroupBox()
         test_layout = QVBoxLayout(test_group)
@@ -82,24 +93,3 @@ class SelectDashboardPage(QWidget):
         layout.addWidget(charts_group)
 
         self.setLayout(layout)
-
-# class CryptoMiningApp(QMainWindow):
-#     def __init__(self):
-#         super().__init__()
-#         self.setWindowTitle("Crypto Mining App")
-#         self.setGeometry(100, 100, 800, 600)
-
-#         central_widget = QWidget(self)
-#         self.setCentralWidget(central_widget)
-
-#         layout = QVBoxLayout(central_widget)
-
-#         mining_button = QPushButton("Start Mining", self)
-#         mining_button.setStyleSheet("QPushButton { font-size: 20px; padding: 10px; background-color: #3498db; color: #ffffff; border: none; border-radius: 5px;}")
-#         mining_button.clicked.connect(self.show_dashboard)
-#         layout.addWidget(mining_button)
-
-#     def show_dashboard(self):
-#         dashboard = MiningDashboard(self)
-#         dashboard.show()
-
