@@ -5,7 +5,7 @@ import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout,
     QWidget, QLineEdit, QTextEdit, QMessageBox, QStackedWidget, QHBoxLayout, QFileDialog, 
-    QGroupBox, QStatusBar, QSpacerItem, QSizePolicy
+    QGroupBox, QInputDialog, QSpacerItem, QSizePolicy
 )
 from PyQt5.QtGui import QPixmap, QFont, QPalette, QBrush, QColor, QFontDatabase, QDesktopServices
 from PyQt5.QtCore import Qt, QUrl
@@ -14,6 +14,9 @@ from PyQt5.QtCore import Qt, QUrl
 from pages.subnet import SelectSubnetPage
 from pages.neuron import SelectNeuronPage
 from pages.dashboard import SelectDashboardPage
+from pages.get_wallet import GetWalletPage
+from pages.wallet import WalletDetailsTable, wallet_details
+
 
 
 class MiningWizard(QMainWindow):
@@ -25,11 +28,12 @@ class MiningWizard(QMainWindow):
         self.neuron = None
         
         self.setWindowTitle("Plug and play miner")
+        # # Set background image
         # self.setStyleSheet(f"background-image: url('cyberpunk_background.png'); background-position: center; background-repeat: no-repeat; background-attachment: fixed;")
         # self.setStyleSheet("{background: rgba(0, 0, 0, 0.3); width: 1px; }")
         self.setGeometry(100, 100, 800, 600)
 
-        # # Set background image
+
         self.central_widget = QStackedWidget()
         self.setCentralWidget(self.central_widget)
 
@@ -42,6 +46,7 @@ class MiningWizard(QMainWindow):
         self.select_subnet_page = SelectSubnetPage(self)
         self.select_neuron_page = SelectNeuronPage(self)
         self.dashboard_page = SelectDashboardPage(self)
+        self.wallet_page = WalletDetailsTable(self)
 
     
 
@@ -53,6 +58,10 @@ class MiningWizard(QMainWindow):
         self.central_widget.addWidget(self.select_subnet_page)
         self.central_widget.addWidget(self.select_neuron_page)
         self.central_widget.addWidget(self.dashboard_page)
+        self.central_widget.addWidget(self.wallet_page)
+
+        # self.get_wallet_path = self.get_wallet_page.get_full_wallet_path()
+        
 
     def show_start_page(self):
         self.central_widget.setCurrentWidget(self.start_page)
@@ -74,6 +83,11 @@ class MiningWizard(QMainWindow):
 
     def show_dashboard_page(self):
         self.central_widget.setCurrentWidget(self.dashboard_page)
+    def show_wallet_page(self):
+        self.wallet_name, ok = QInputDialog.getText(self, "Wallet Name", "Enter your wallet name:")
+        if ok and self.wallet_name:
+            # wallet_details_widget = WalletDetailsTable(self, wallet_name)
+            self.central_widget.setCurrentWidget(self.wallet_page)
 
 class StartPage(QWidget):
     def __init__(self, parent):
@@ -233,11 +247,11 @@ class MiningPage(QWidget):
         # """)
 
         label = QLabel("Step 2: Start Mining", self)
-        label.setFont(QFont("Orbitron", 16))
+        label.setFont(QFont("Georgia", 16))
         layout.addWidget(label)
 
         label_entry = QLabel("Enter Your Bittensor Address", self)
-        label_entry.setFont(QFont("Orbitron", 12))
+        label_entry.setFont(QFont("Georgia", 12))
         layout.addWidget(label_entry)
 
         self.entry = QLineEdit(self)
@@ -298,7 +312,7 @@ class AddWalletPage(QWidget):
         home_button.clicked.connect(parent.show_start_page)
         header_layout.addWidget(home_button)
 
-        wallet_button = QPushButton("Wallet Settings")
+        wallet_button = QPushButton("Wallet")
         header_layout.addWidget(wallet_button)
 
 
@@ -366,6 +380,7 @@ class AddWalletPage(QWidget):
         previous_button = QPushButton("Back to Main Menu", self)
         previous_button.clicked.connect(parent.show_start_page)
         h_layout.addWidget(previous_button)
+        
         # Save Button
         save_button = QPushButton("Save Wallet & Mine", self)
         save_button.clicked.connect(self.save_wallet_details)
@@ -401,110 +416,129 @@ class AddWalletPage(QWidget):
 
 
 
-class GetWalletPage(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-        layout = QVBoxLayout()
+# class GetWalletPage(QWidget):
+#     def __init__(self, parent):
+#         super().__init__(parent)
+#         layout = QVBoxLayout()
 
-        # Header Group with links
-        header_group = QGroupBox("BitCurrent", self)
-        header_group.setFont(QFont("Georgia", 18, QFont.Bold))
-        header_group.setAlignment(Qt.AlignLeft) 
-        header_layout = QHBoxLayout(header_group)
+#         # Header Group with links
+#         header_group = QGroupBox("BitCurrent", self)
+#         header_group.setFont(QFont("Georgia", 18, QFont.Bold))
+#         header_group.setAlignment(Qt.AlignLeft) 
+#         header_layout = QHBoxLayout(header_group)
         
-        home_button = QPushButton("Home")
-        home_button.clicked.connect(parent.show_start_page)
-        header_layout.addWidget(home_button)
+#         home_button = QPushButton("Home")
+#         home_button.clicked.connect(parent.show_start_page)
+#         header_layout.addWidget(home_button)
 
-        wallet_button = QPushButton("Wallet Settings")
-        header_layout.addWidget(wallet_button)
-
-
-        profile_button = QPushButton("Profile")
-        header_layout.addWidget(profile_button)
-
-        log_button = QPushButton("Log Out")
-        header_layout.addWidget(log_button)
+#         wallet_button = QPushButton("Wallet")
+#         header_layout.addWidget(wallet_button)
 
 
-        test_group = QGroupBox()
-        test_layout = QVBoxLayout(test_group)
-        test_layout.addWidget(QPushButton("Withdraw Earnings"))
-        test_layout.addWidget(QPushButton("Stop Mining"))
-        header_layout.addWidget(test_group)
-        header_group.setFixedHeight(150)
+#         profile_button = QPushButton("Profile")
+#         header_layout.addWidget(profile_button)
+
+#         log_button = QPushButton("Log Out")
+#         header_layout.addWidget(log_button)
+
+
+#         test_group = QGroupBox()
+#         test_layout = QVBoxLayout(test_group)
+#         test_layout.addWidget(QPushButton("Withdraw Earnings"))
+#         test_layout.addWidget(QPushButton("Stop Mining"))
+#         header_layout.addWidget(test_group)
+#         header_group.setFixedHeight(150)
         
-        layout.addWidget(header_group)
+#         layout.addWidget(header_group)
 
 
-        details_box = QGroupBox()
-        details_layout = QVBoxLayout(details_box)
+#         details_box = QGroupBox()
+#         details_layout = QVBoxLayout(details_box)
         
-        label = QLabel("Wallet Details", self)
-        label.setFont(QFont("Georgia", 26, QFont.Bold))
-        details_layout.addWidget(label)
+#         label = QLabel("Wallet Details", self)
+#         label.setFont(QFont("Georgia", 26, QFont.Bold))
+#         details_layout.addWidget(label)
 
 
-        # Wallet Name
-        wallet_name_label = QLabel("Wallet Name:", self)
-        wallet_name_label.setFont(QFont("Georgia", 16, QFont.Bold))
-        details_layout.addWidget(wallet_name_label)
-        self.wallet_name_input = QLineEdit(self)
-        details_layout.addWidget(self.wallet_name_input)
+#         # Wallet Name
+#         wallet_name_label = QLabel("Wallet Name:", self)
+#         wallet_name_label.setFont(QFont("Georgia", 16, QFont.Bold))
+#         details_layout.addWidget(wallet_name_label)
+#         self.wallet_name_input = QLineEdit(self)
+#         details_layout.addWidget(self.wallet_name_input)
 
-        # Wallet Path
-        wallet_path_label = QLabel("Wallet Path:", self)
-        wallet_path_label.setFont(QFont("Georgia", 18))
-        details_layout.addWidget(wallet_path_label)
-        self.wallet_path_input = QLineEdit(self)
-        self.wallet_path_input.setPlaceholderText("Select wallet path")
-        self.wallet_path_input.setText(os.getcwd())
-        details_layout.addWidget(self.wallet_path_input)
-        browse_button = QPushButton("Browse", self)
-        browse_button.setFont(QFont("Georgia", 16))
-        browse_button.clicked.connect(self.browse_wallet_path)
-        details_layout.addWidget(browse_button)
+#         # Wallet Path
+#         wallet_path_label = QLabel("Wallet Path:", self)
+#         wallet_path_label.setFont(QFont("Georgia", 18))
+#         details_layout.addWidget(wallet_path_label)
+#         self.wallet_path_input = QLineEdit(self)
+#         self.wallet_path_input.setPlaceholderText("Select wallet path")
+#         self.wallet_path_input.setText(os.getcwd())
+#         details_layout.addWidget(self.wallet_path_input)
+#         browse_button = QPushButton("Browse", self)
+#         browse_button.setFont(QFont("Georgia", 16))
+#         browse_button.clicked.connect(self.browse_wallet_path)
+#         details_layout.addWidget(browse_button)
 
         
 
-        # Other Fields (Add as necessary)
-        # Example: Wallet Password
-        wallet_password_label = QLabel("Wallet Password:", self)
-        wallet_password_label.setFont(QFont("Georgia", 18, QFont.Bold))
-        details_layout.addWidget(wallet_password_label)
-        self.wallet_password_input = QLineEdit(self)
-        self.wallet_password_input.setEchoMode(QLineEdit.Password)  # Hides text entry for password
+#         # Other Fields (Add as necessary)
+#         # Example: Wallet Password
+#         wallet_password_label = QLabel("Wallet Password:", self)
+#         wallet_password_label.setFont(QFont("Georgia", 18, QFont.Bold))
+#         details_layout.addWidget(wallet_password_label)
+#         self.wallet_password_input = QLineEdit(self)
+#         self.wallet_password_input.setEchoMode(QLineEdit.Password)  # Hides text entry for password
 
-        details_layout.addWidget(self.wallet_password_input)
+#         details_layout.addWidget(self.wallet_password_input)
 
-        layout.addWidget(details_box)
+#         layout.addWidget(details_box)
 
-        h_layout = QHBoxLayout()
-        previous_button = QPushButton("Back to Main Menu", self)
-        previous_button.clicked.connect(parent.show_start_page)
-        h_layout.addWidget(previous_button)
-        # Save Button
-        save_button = QPushButton("Get Wallet & Mine", self)
-        save_button.clicked.connect(self.get_wallet_details)
-        save_button.clicked.connect(parent.show_select_subnet_page)#TODO move wallet details
-        h_layout.addWidget(save_button)
+#         h_layout = QHBoxLayout()
+#         previous_button = QPushButton("Back to Main Menu", self)
+#         previous_button.clicked.connect(parent.show_start_page)
+#         h_layout.addWidget(previous_button)
+#         # Save Button
+#         save_button = QPushButton("Get Wallet & Mine", self)
+#         save_button.clicked.connect(self.get_wallet_details)
+#         save_button.clicked.connect(parent.show_select_subnet_page)#TODO move wallet details
+#         h_layout.addWidget(save_button)
 
-        # Add more fields as needed...
+#         # Add more fields as needed...
         
-        layout.addLayout(h_layout)
+#         layout.addLayout(h_layout)
 
-        self.setLayout(layout)
+#         self.setLayout(layout)
 
-    def browse_wallet_path(self):
-        # Open a QFileDialog to select the path
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        wallet_path = QFileDialog.getExistingDirectory(self, "Select Wallet Path", options=options)
-        if wallet_path:
-            self.wallet_path_input.setText(wallet_path)
+#     def browse_wallet_path(self):
+#         # Open a QFileDialog to select the path
+#         options = QFileDialog.Options()
+#         options |= QFileDialog.DontUseNativeDialog
+#         wallet_path = QFileDialog.getExistingDirectory(self, "Select Wallet Path", options=options)
+#         if wallet_path:
+#             self.wallet_path_input.setText(wallet_path)
 
-    def get_wallet_details(self):
-        pass
+#     def get_wallet_details(self):
+#         pass
+
+#     def get_full_wallet_path(self):
+#         # Get the wallet name from the input field
+#         wallet_name = self.wallet_name_input.text()
+
+#         # Check if the wallet name is not empty
+#         if wallet_name:
+#             # Construct the full path based on the wallet name
+#             full_wallet_path = os.path.join(self.wallet_path_input, wallet_name)
+
+#             # Optionally, you can check if the path exists
+#             if not os.path.exists(full_wallet_path):
+#                 # Handle the case where the path doesn't exist
+#                 pass
+
+#             return full_wallet_path
+
+#         return None
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

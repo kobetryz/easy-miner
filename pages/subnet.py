@@ -50,7 +50,7 @@ class SelectSubnetPage(QWidget):
         # """)
 
         label = QLabel("Select Subnet to Mine On", self)
-        label.setFont(QFont("Orbitron", 18, QFont.Bold))
+        label.setFont(QFont("Georgia", 18, QFont.Bold))
         layout.addWidget(label)
 
         # Radio buttons

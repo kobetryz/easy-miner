@@ -48,10 +48,12 @@ class SelectNeuronPage(QWidget):
         #         background-color: #005500;
         #     }
         # """)
+
+        
         main_window = self.window()
         label = QLabel(f"Select Neuron to Mine On Subnet {main_window.subnet}", self)
         label.setText(f"Select Neuron to Mine On Subnet {main_window.subnet}")
-        label.setFont(QFont("Orbitron", 18, QFont.Bold))
+        label.setFont(QFont("Georgia", 18, QFont.Bold))
         layout.addWidget(label)
 
         # Radio buttons
