@@ -2,9 +2,12 @@ import sys
 import json
 import requests
 
+from config import search_directory
 import bittensor as bt
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout,QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox
+
+
+from PyQt5.QtWidgets import QApplication, QPushButton, QVBoxLayout,QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 import pyqtgraph as pg
@@ -16,6 +19,29 @@ class SelectDashboardPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
+        # with open(f'{parent.wallet_path}/hotkeys/default', 'r') as f:
+        #     my_wallet = json.load(f)
+
+        # if my_wallet['ss58Address'] in parent.subnet.hotkeys:
+        #     uid = parent.subnet.hotkeys.index(my_wallet['ss58Address'])
+ 
+        #     parent.wallet_details = {
+        #     'coldkey' : parent.subnet.coldkeys[uid],
+        #     'hotkey' : parent.subnet.hotkeys[uid],
+        #     'uid' : uid,
+        #     'active' : parent.subnet.active.tolist()[uid],
+        #     'stake' : parent.subnet.stake.tolist()[uid],
+        #     'rank' : parent.subnet.ranks.tolist()[uid],
+        #     'trust' : parent.subnet.trust.tolist()[uid],
+        #     'consensus' : parent.subnet.consensus.tolist()[uid],
+        #     'incentive' : parent.subnet.incentive.tolist()[uid],
+        #     'dividends' : parent.subnet.dividends.tolist()[uid],
+        #     'vtrust' : parent.subnet.validator_trust.tolist()[uid]
+        # }
+
+        # else:
+        #     uid = None
+    
         self.setStyleSheet("""
             QPushButton {
                 font-size: 14px;
@@ -71,19 +97,14 @@ class SelectDashboardPage(QWidget):
         response = requests.get(url)
         taostats = json.loads(response.content)
         price = float(taostats[0]['price'])
-
         
-        # wallet balance we need to figure out how to get this number
-        # get uid
-        # subnet = bt.metagraph(netuid = 25)
-        # with open('/Users/beekin/projects/btt-plug-n-play/my_wallet/hotkeys/default', 'r') as f:
-        #     my_wallet = json.load(f)
-        
-        # uid = subnet.hotkeys.index(my_wallet['ss58_address'])
-        
+        # get user stake
+        # if uid:
+        #     wallet_bal_tao = parent.subnet.stake.tolist()[uid]
+        # else: 
+        #     wallet_bal_tao = 0
 
-
-        wallet_bal_tao = 0.8566
+        wallet_bal_tao = 1.0
         wallet_bal_dol = round(wallet_bal_tao * price, 2)
 
         earnings_group = QGroupBox()
@@ -192,146 +213,3 @@ class SelectDashboardPage(QWidget):
 
 
 
-
-
-# # import sys
-# # from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
-# # from PyQt5.QtWebEngineWidgets import QWebEngineView
-# # from PyQt5.QtCore import QUrl
-
-# # class CryptoChartApp(QMainWindow):
-# #     def __init__(self):
-# #         super().__init__()
-# #         self.setWindowTitle("Crypto Chart App")
-# #         self.setGeometry(100, 100, 800, 600)
-
-# #         central_widget = QWidget(self)
-# #         self.setCentralWidget(central_widget)
-
-# #         layout = QVBoxLayout(central_widget)
-
-# #         # Create a QWebEngineView widget
-# #         chart_view = QWebEngineView(self)
-
-# #         # Set the URL of the dynamic chart
-# #         chart_url = "https://taostats.io"
-# #         chart_view.setUrl(QUrl(chart_url))
-
-# #         # Add the QWebEngineView widget to the layout
-# #         script = """
-# #         var chartSection = document.getElementById('SvgjsSvg11327');
-# #         document.body.innerHTML = chartSection.outerHTML;
-# #             """
-# #         chart_view.page().runJavaScript(script)
-# #         layout.addWidget(chart_view)
-
-# # if __name__ == '__main__':
-# #     app = QApplication(sys.argv)
-# #     crypto_chart_app = CryptoChartApp()
-# #     crypto_chart_app.show()
-# #     sys.exit(app.exec_())
-
-
-
-
-
-
-
-
-# import sys
-# from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
-# from PyQt5.QtWebEngineWidgets import QWebEngineView
-# from PyQt5.QtCore import QUrl, pyqtSlot
-
-# # class CryptoChartApp(QMainWindow):
-# #     def __init__(self):
-# #         super().__init__()
-# #         self.setWindowTitle("Crypto Chart App")
-# #         self.setGeometry(100, 100, 800, 600)
-
-# #         central_widget = QWidget(self)
-# #         self.setCentralWidget(central_widget)
-
-# #         layout = QVBoxLayout(central_widget)
-
-# #         # Create a QWebEngineView widget
-# #         chart_view = QWebEngineView(self)
-
-# #         # Set the URL of the dynamic chart
-# #         chart_url = "https://taostats.io"
-# #         chart_view.setUrl(QUrl(chart_url))
-
-# #         # Connect the loadFinished signal to a slot
-# #         chart_view.page().loadFinished.connect(self.on_page_load_finished)
-
-# #         # Add the QWebEngineView widget to the layout
-# #         layout.addWidget(chart_view)
-
-# #     @pyqtSlot(bool)
-# #     def on_page_load_finished(self, success):
-# #         if success:
-# #             # Load only the specific section of the webpage using JavaScript injection
-# #             script = """
-# #             var chartSection = document.getElementById('metagraph_view'); // Replace 'chart-section' with the actual ID or class of the HTML element
-# #             if (chartSection) {
-# #                 document.body.innerHTML = chartSection.outerHTML;
-# #             }
-# #             """
-# #             self.sender().runJavaScript(script)
-
-# # if __name__ == '__main__':
-# #     app = QApplication(sys.argv)
-# #     crypto_chart_app = CryptoChartApp()
-# #     crypto_chart_app.show()
-# #     sys.exit(app.exec_())
-
-
-# from PyQt5.QtCore import Qt, QUrl
-# from PyQt5.QtGui import QFont
-# from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
-# from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
-
-# class WebPage(QWebEnginePage):
-#     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
-#         print("Console({}): {} at {} - {}".format(level, message, lineNumber, sourceID))
-
-# class CryptoStatsApp(QMainWindow):
-#     def __init__(self):
-#         super().__init__()
-
-#         self.setWindowTitle("Crypto Stats App")
-#         self.setGeometry(100, 100, 800, 600)
-
-#         central_widget = QWidget(self)
-#         self.setCentralWidget(central_widget)
-
-#         layout = QVBoxLayout(central_widget)
-
-#         # Create a QWebEngineView to display the embedded webpage
-#         self.webview = QWebEngineView(self)
-#         layout.addWidget(self.webview)
-
-#         # Load the embedded webpage with specific JavaScript to extract only the chart section
-#         chart_url =  "https://taostats.io/" #"https://coinmarketcap.com/currencies/bittensor/"
-#         self.webview.setPage(WebPage(self.webview))
-#         self.webview.page().runJavaScript('''
-#             document.addEventListener("DOMContentLoaded", function() {
-#                 var chartSection = document.getElementsByClassName("metagraph_view");
-#                 if (chartSection) {
-#                     document.body.innerHTML = chartSection.outerHTML;
-#                 }
-#             });
-#         ''')
-#         # self.webview.page().runJavaScript('''
-#         #     document.addEventListener("DOMContentLoaded", function() {
-#         #         console.log(document.body.innerHTML);
-#         #     });
-#         # ''')
-
-#         self.webview.setUrl(QUrl(chart_url))
-
-# if __name__ == '__main__':
-#     app = QApplication([])
-#     crypto_app = CryptoStatsApp()
-#     crypto_app.show()
-#     app.exec_()
