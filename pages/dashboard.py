@@ -7,7 +7,7 @@ import bittensor as bt
 
 
 
-from PyQt5.QtWidgets import QApplication, QPushButton, QVBoxLayout,QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox
+from PyQt5.QtWidgets import QPushButton, QVBoxLayout,QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox,QMessageBox
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 import pyqtgraph as pg
@@ -19,28 +19,47 @@ class SelectDashboardPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
-        # with open(f'{parent.wallet_path}/hotkeys/default', 'r') as f:
-        #     my_wallet = json.load(f)
+        if not parent.wallet_details:
+            with open(f'{parent.wallet_path}/hotkeys/default', 'r') as f:
+                my_wallet = json.load(f)
 
-        # if my_wallet['ss58Address'] in parent.subnet.hotkeys:
-        #     uid = parent.subnet.hotkeys.index(my_wallet['ss58Address'])
- 
-        #     parent.wallet_details = {
-        #     'coldkey' : parent.subnet.coldkeys[uid],
-        #     'hotkey' : parent.subnet.hotkeys[uid],
-        #     'uid' : uid,
-        #     'active' : parent.subnet.active.tolist()[uid],
-        #     'stake' : parent.subnet.stake.tolist()[uid],
-        #     'rank' : parent.subnet.ranks.tolist()[uid],
-        #     'trust' : parent.subnet.trust.tolist()[uid],
-        #     'consensus' : parent.subnet.consensus.tolist()[uid],
-        #     'incentive' : parent.subnet.incentive.tolist()[uid],
-        #     'dividends' : parent.subnet.dividends.tolist()[uid],
-        #     'vtrust' : parent.subnet.validator_trust.tolist()[uid]
-        # }
+            if my_wallet['ss58Address'] in parent.subnet.hotkeys:
+                uid = parent.subnet.hotkeys.index(my_wallet['ss58Address'])
+            else:
+                warning_msg = f"You are not registered would you like to "
+                reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Ok | QMessageBox.Cancel)
 
-        # else:
-        #     uid = None
+    
+            #     parent.wallet_details = {
+            #     'coldkey' : parent.subnet.coldkeys[uid],
+            #     'hotkey' : parent.subnet.hotkeys[uid],
+            #     'uid' : uid,
+            #     'active' : parent.subnet.active.tolist()[uid],
+            #     'stake' : parent.subnet.stake.tolist()[uid],
+            #     'rank' : parent.subnet.ranks.tolist()[uid],
+            #     'trust' : parent.subnet.trust.tolist()[uid],
+            #     'consensus' : parent.subnet.consensus.tolist()[uid],
+            #     'incentive' : parent.subnet.incentive.tolist()[uid],
+            #     'dividends' : parent.subnet.dividends.tolist()[uid],
+            #     'vtrust' : parent.subnet.validator_trust.tolist()[uid]
+            # }
+
+            # else:
+            #     print(f"{my_wallet['ss58Address']} not registered")
+            #     uid = 1
+            #     parent.wallet_details = {
+            #     'coldkey' : parent.subnet.coldkeys[uid],
+            #     'hotkey' : parent.subnet.hotkeys[uid],
+            #     'uid' : uid,
+            #     'active' : parent.subnet.active.tolist()[uid],
+            #     'stake' : parent.subnet.stake.tolist()[uid],
+            #     'rank' : parent.subnet.ranks.tolist()[uid],
+            #     'trust' : parent.subnet.trust.tolist()[uid],
+            #     'consensus' : parent.subnet.consensus.tolist()[uid],
+            #     'incentive' : parent.subnet.incentive.tolist()[uid],
+            #     'dividends' : parent.subnet.dividends.tolist()[uid],
+            #     'vtrust' : parent.subnet.validator_trust.tolist()[uid]
+            # }
     
         self.setStyleSheet("""
             QPushButton {
@@ -195,11 +214,6 @@ class SelectDashboardPage(QWidget):
     # def show_wallet_details(self):
     #     wallet_details_page = WalletDetailsTable(data=wallet_details)
     #     wallet_details_page.show
-
-
-
-
-
 
 
 

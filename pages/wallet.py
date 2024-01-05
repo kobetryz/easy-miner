@@ -7,55 +7,53 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
 
-with open('../my_wallet/hotkeys/default', 'r') as f:
-    my_wallet = json.load(f)
 
-
-# wallet_name, ok = QInputDialog.getText(None, "Wallet Name", "Enter your wallet name:")
-# if not ok:
-#     sys.exit()  
-
-# print(my_wallet['ss58Address'])
-# subnet = bt.metagraph(netuid = 25)
-
-# ###  check if wallet is registered on subnet
-# if my_wallet['ss58Address'] in subnet.hotkeys:
-#     uid = subnet.hotkeys.index(my_wallet['ss58Address'])
-# else: uid = 1    
-
-# wallet_details = {
-#     'coldkey' : subnet.coldkeys[uid],
-#     'hotkey' : subnet.hotkeys[uid],
-#     'uid' : uid,
-#     'active' : subnet.active.tolist()[uid],
-#     'stake' : subnet.stake.tolist()[uid],
-#     'rank' : subnet.ranks.tolist()[uid],
-#     'trust' : subnet.trust.tolist()[uid],
-#     'consensus' : subnet.consensus.tolist()[uid],
-#     'incentive' : subnet.incentive.tolist()[uid],
-#     'dividends' : subnet.dividends.tolist()[uid],
-#     'vtrust' : subnet.validator_trust.tolist()[uid]
-# }
     
-wallet_details = {"Name": "John", "Age": 30, "Location": "City"}
+# wallet_details = {"Name": "John", "Age": 30, "Location": "City"}
 
 
 class WalletDetailsTable(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
+        
+        
+        with open(f'{parent.wallet_path}/hotkeys/default', 'r') as f:
+            my_wallet = json.load(f)
 
-        # self.wallet_name, ok = QInputDialog.getText(None, "Wallet Name", "Enter your wallet name:")
-        # if not ok:
-        #     sys.exit()  
+        if my_wallet['ss58Address'] in parent.subnet.hotkeys:
+            uid = parent.subnet.hotkeys.index(my_wallet['ss58Address'])
+ 
+            parent.wallet_details = {
+            'coldkey' : parent.subnet.coldkeys[uid],
+            'hotkey' : parent.subnet.hotkeys[uid],
+            'uid' : uid,
+            'active' : parent.subnet.active.tolist()[uid],
+            'stake' : parent.subnet.stake.tolist()[uid],
+            'rank' : parent.subnet.ranks.tolist()[uid],
+            'trust' : parent.subnet.trust.tolist()[uid],
+            'consensus' : parent.subnet.consensus.tolist()[uid],
+            'incentive' : parent.subnet.incentive.tolist()[uid],
+            'dividends' : parent.subnet.dividends.tolist()[uid],
+            'vtrust' : parent.subnet.validator_trust.tolist()[uid]
+        }
 
-        # print(parent.get_wallet_path)
-
-        # self.setWindowTitle("Wallet Details")
-
-        # central_widget = QWidget(self)
-        # self.setCentralWidget(central_widget)
-
-        # layout = QVBoxLayout(central_widget)
+        else:
+            print(f"{my_wallet['ss58Address']} not registered")
+            uid = 1
+            parent.wallet_details = {
+            'coldkey' : parent.subnet.coldkeys[uid],
+            'hotkey' : parent.subnet.hotkeys[uid],
+            'uid' : uid,
+            'active' : parent.subnet.active.tolist()[uid],
+            'stake' : parent.subnet.stake.tolist()[uid],
+            'rank' : parent.subnet.ranks.tolist()[uid],
+            'trust' : parent.subnet.trust.tolist()[uid],
+            'consensus' : parent.subnet.consensus.tolist()[uid],
+            'incentive' : parent.subnet.incentive.tolist()[uid],
+            'dividends' : parent.subnet.dividends.tolist()[uid],
+            'vtrust' : parent.subnet.validator_trust.tolist()[uid]
+        }
+        
 
         layout = QVBoxLayout()
 
@@ -73,7 +71,7 @@ class WalletDetailsTable(QWidget):
 
         # Add table
         table_widget = QTableWidget(self)
-        self.populate_table(table_widget, wallet_details)
+        self.populate_table(table_widget)
 
         table_widget.setFixedSize(500, 400)
         header_layout.addWidget(table_widget)   
@@ -90,8 +88,8 @@ class WalletDetailsTable(QWidget):
         layout.addLayout(h_layout)
         self.setLayout(layout)
     
-    def populate_table(self, table_widget, wallet_details):
-        table_widget.setRowCount(len(wallet_details))
+    def populate_table(self, table_widget):
+        table_widget.setRowCount(len(self.parent().wallet_details))
         table_widget.setColumnCount(2)
         table_widget.setHorizontalHeaderLabels(["Parameter", "Value"])
 
@@ -101,7 +99,7 @@ class WalletDetailsTable(QWidget):
 
         
         font2 = QFont("Georgia", 14)
-        for row, (key, value) in enumerate(wallet_details.items()):
+        for row, (key, value) in enumerate(self.parent().wallet_details.items()):
             key_item = QTableWidgetItem(str(key))
             key_item.setFont(font2)
             value_item = QTableWidgetItem(str(value))
