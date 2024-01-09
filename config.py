@@ -1,7 +1,12 @@
 # import bittensor as bt
 import os
+import re
+
+import pandas as pd
+from datetime import datetime
 import logging
 from logging.handlers import TimedRotatingFileHandler
+
 
 # function performs a deeper search past the bitcurrent directory 
 def search_directory(start_directory, target_directory):
@@ -29,11 +34,32 @@ def configure_logger(log_file):
 
     # Create a file handler that logs to the file without rotation
     file_handler = logging.FileHandler(log_file)
-    
     # You can configure a formatter if needed
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    formatter = logging.Formatter(f'%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     file_handler.setFormatter(formatter)
 
     logger.addHandler(file_handler)
 
     return logger
+
+# should go to utils
+def get_earnings_by_date_range(log_file):
+    earnings_data = []
+    date_pattern = re.compile(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - INFO -  Balance - Start: (\d+)')
+    
+    with open(log_file, 'r') as f:
+        log_entries = f.readlines()
+
+    for entry in log_entries:
+        match = date_pattern.search(entry)
+        if match:
+            entry_date = datetime.strptime(match.group(1), '%Y-%m-%d %H:%M:%S')
+            earnings = int(match.group(2))
+            
+            # Append the date and earnings to the list
+            earnings_data.append((entry_date, earnings))
+    earnings_data = pd.DataFrame(earnings_data)
+    earnings_data.columns = ['date', 'balance']
+    earnings_data = earnings_data.groupby(earnings_data['date'].dt.date).balance.max().reset_index()
+ 
+    return earnings_data
