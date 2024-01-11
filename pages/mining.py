@@ -83,9 +83,7 @@ class MiningPage(QWidget):
         print('2,', self.wallet_name, self.parent.wallet_name)
     
         self.parent.wallet_name = self.parent.wallet_name
-        print('3,', self.wallet_name, self.parent.wallet_name)
-        
-      
+        print('3,', self.wallet_name, self.parent.wallet_name)   
     
 
     def register_on_subnet(self):

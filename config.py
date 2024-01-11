@@ -63,3 +63,21 @@ def get_earnings_by_date_range(log_file):
     earnings_data = earnings_data.groupby(earnings_data['date'].dt.date).balance.max().reset_index()
  
     return earnings_data
+
+
+def get_total_mining(log_file):
+    mining_time = []
+    date_pattern = re.compile(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - INFO -  Activity: Mining Time - (\d+)')    
+    with open(log_file, 'r') as f:
+        log_entries = f.readlines()
+    for entry in log_entries:
+        match = date_pattern.search(entry)
+        if match:
+            entry_date = datetime.strptime(match.group(1), '%Y-%m-%d %H:%M:%S')
+            m_time = int(match.group(2))
+            mining_time.append((entry_date, m_time))
+    mining_time_data = pd.DataFrame(mining_time)
+    mining_time_data.columns = ['date', 'time(s)']
+    mining_time_data = mining_time_data.groupby(mining_time_data['date'].dt.date)['time(s)'].sum().reset_index()
+ 
+    return mining_time_data

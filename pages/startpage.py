@@ -57,13 +57,8 @@ class StartPage(QWidget):
         new_wallet_button.clicked.connect(parent.show_create_wallet_page)
         options_layout.addWidget(new_wallet_button)
 
-        # Using existing Wallet
-        existing_wallet_button = QPushButton("Mine to Existing Wallet", self)
-        existing_wallet_button.clicked.connect(parent.show_get_wallet_page)
-        options_layout.addWidget(existing_wallet_button)
-
         # to dashboard
-        view_dashboard_button = QPushButton("View Dashboard", self)
+        view_dashboard_button = QPushButton("Mine to Existing Wallet", self)
         view_dashboard_button.clicked.connect(parent.show_dashboard_page)
         options_layout.addWidget(view_dashboard_button)
 
