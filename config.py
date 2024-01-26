@@ -28,7 +28,7 @@ def search_directory(start_directory, target_directory):
     raise FileNotFoundError(f"Directory '{target_directory}' not found in or above '{start_directory}'")
 
 
-def configure_logger(log_file):
+def configure_logger_data(log_file):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
 
@@ -39,8 +39,26 @@ def configure_logger(log_file):
     file_handler.setFormatter(formatter)
 
     logger.addHandler(file_handler)
-
     return logger
+
+
+def configure_logger_console(log_file):
+    logger = logging.getLogger(__name__)
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+
+    # Create a file handler that logs to the file without rotation
+    file_handler = logging.FileHandler(log_file)
+    # You can configure a formatter if needed
+    formatter = logging.Formatter(f'%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    file_handler.setFormatter(formatter)
+    console.setFormatter(formatter)
+    logging.getLogger("").addHandler(console)
+
+    logger.addHandler(file_handler)
+    return logger
+
+
 
 # should go to utils
 def get_earnings_by_date_range(log_file):
@@ -81,3 +99,5 @@ def get_total_mining(log_file):
     mining_time_data = mining_time_data.groupby(mining_time_data['date'].dt.date)['time(s)'].sum().reset_index()
  
     return mining_time_data
+
+

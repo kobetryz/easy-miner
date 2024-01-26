@@ -7,27 +7,23 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
 
-
-    
-# wallet_details = {"Name": "John", "Age": 30, "Location": "City"}
-
-
 class WalletDetailsTable(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
         
+        if not self.parent.hotkey:
+            hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path,'hotkeys'))]
+            hotkey_file = hotkey_files[-1]
+            with open(f'{self.parent.wallet_path}/hotkeys/{hotkey_file}', 'r') as f:
+                my_wallet = json.load(f)
+            self.parent.hotkey= my_wallet['ss58Address']
         
-        with open(f'{self.parent.wallet_path}/coldkey', 'r') as f:
-            my_wallet = json.load(f)
-            coldkey = my_wallet['ss58Address']
-
-        if coldkey in parent.subnet.coldkeys:
-            uid = self.parent.subnet.coldkeys.index(coldkey)
- 
+        if self.parent.hotkey in parent.subnet.hotkeys:
+            uid = self.parent.subnet.hotkeys.index(self.parent.hotkey)
             self.parent.wallet_details = {
-            'coldkey' : coldkey,
-            'hotkey' : self.parent.subnet.hotkeys[uid],
+            'coldkey' : self.parent.subnet.coldkeys[uid],
+            'hotkey' : self.parent.hotkey,
             'uid' : uid,
             'active' : self.parent.subnet.active.tolist()[uid],
             'stake' : self.parent.subnet.stake.tolist()[uid],
@@ -38,20 +34,15 @@ class WalletDetailsTable(QWidget):
             'dividends' : self.parent.subnet.dividends.tolist()[uid],
             'vtrust' : self.parent.subnet.validator_trust.tolist()[uid]
         }
-
         else:
-            print(f"{coldkey} not registered")
-            uid = 000
-            hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path,'hotkeys'))]
-            hotkey_file = hotkey_files[-1]
-            print(f"{self.parent.wallet_path}/hotkeys/{hotkey_file}")
-            with open(f'{self.parent.wallet_path}/hotkeys/{hotkey_file}', 'r') as f:
-                my_wallet = json.load(f)
-                hotkey= my_wallet['ss58Address']
-   
+            print(f"{self.parent.hotkey} not registered")
+            with open(f'{os.path.join(self.parent.wallet_path)}/coldkeypub.txt', 'r') as f:
+                address_json = json.load(f)
+                self.parent.coldkey = address_json['ss58Address']
+            uid = 000   
             self.parent.wallet_details = {
-            'coldkey' : coldkey,
-            'hotkey' : hotkey,
+            'coldkey' : self.parent.coldkey,
+            'hotkey' : self.parent.hotkey,
             'uid' : uid,
             'active' : 0,
             'stake' : 0,
@@ -65,8 +56,6 @@ class WalletDetailsTable(QWidget):
         
 
         layout = QVBoxLayout()
-
-
         # bit_label
         header_group = QGroupBox("BitCurrent", self)
         header_group.setFont(QFont("Georgia", 18, QFont.Bold))
@@ -75,7 +64,6 @@ class WalletDetailsTable(QWidget):
 
         page_label = QLabel("Wallet Overview", self)
         page_label.setFont(QFont("Georgia", 24, QFont.Bold))
-
         header_layout.addWidget(page_label)
 
         # Add table

@@ -1,45 +1,51 @@
 import os
 import re
 import json
+import time
 import requests
+import traceback
 import pandas as pd
 
 
 import bittensor as bt
 import matplotlib.dates as mdates
-from datetime import datetime,time
-import datetime as dt
+from datetime import datetime
+
 
 from PyQt5.QtWidgets import QPushButton, QVBoxLayout,QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox,QMessageBox, QTextEdit, QLineEdit
-from PyQt5.QtGui import QFont,QDesktopServices
+from PyQt5.QtGui import QFont,QDesktopServices, QTextOption, QTextCursor
 from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment, QTimer, QDateTime, QUrl
 import pyqtgraph as pg
 
-from config import configure_logger, get_earnings_by_date_range, get_total_mining
+from config import configure_logger_data, get_earnings_by_date_range, get_total_mining
 # from utils import MiningManager
 
 class SelectDashboardPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
-        self.data_logger = configure_logger(f"./{self.parent.wallet_name}/full_user_data.log")
-        self.parent.output = None
+        self.data_logger = configure_logger_data(f"./{self.parent.wallet_name}/full_user_data.log")
+        # self.parent.output = None
+        
        # Connect to taostats
         url = "https://taostats.io/data.json"
         response = requests.get(url)
         taostats = json.loads(response.content)
         price = float(taostats[0]['price'])  
 
-        with open(f'{os.path.join(self.parent.wallet_path)}/coldkey', 'r') as f:
-            address_json = json.load(f)
-        self.coldkey = address_json['ss58Address']
+        if not hasattr(self.parent, 'hotkey'):
+            hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path,'hotkeys'))]
+            hotkey_file = hotkey_files[-1]
+            with open(f'{self.parent.wallet_path}/hotkeys/{hotkey_file}', 'r') as f:
+                my_wallet = json.load(f)
+            self.parent.hotkey= my_wallet['ss58Address']
 
-        if self.coldkey in self.parent.subnet.coldkeys:
-            uid = self.parent.subnet.coldkeys.index(self.coldkey)
+        if self.parent.hotkey in self.parent.subnet.hotkeys:
+            uid = self.parent.subnet.hotkeys.index(self.parent.hotkey)
             self.wallet_bal_tao = self.parent.subnet.stake.tolist()[uid]
             self.registered = True
         else:
-            wallet_bal_tao = str(self.parent.subtensor.get_balance(address = self.coldkey))[1:]
+            wallet_bal_tao = str(self.parent.subtensor.get_balance(address = self.parent.hotkey))[1:]
             self.wallet_bal_tao = float(wallet_bal_tao)
             self.registered = False
         self.data_logger.info(f' Balance - Start: {self.wallet_bal_tao}')
@@ -170,6 +176,7 @@ class SelectDashboardPage(QWidget):
         layout.addWidget(self.toggle_button)
         
         self.output_area = QTextEdit(self)
+        self.output_area.setWordWrapMode(QTextOption.NoWrap)
         self.output_area.setReadOnly(False)  # Make it read-only
         self.output_area.hide()  # Hide initially
         layout.addWidget(self.output_area)  # Add it to the main layout
@@ -178,12 +185,10 @@ class SelectDashboardPage(QWidget):
         self.input_line.hide()  # Initially hide the input line
         layout.addWidget(self.input_line)  # Add it to your layout
 
-
         self.input_button = QPushButton("Enter")
         self.input_button.clicked.connect(self.send_input)
         self.input_button.hide()
         layout.addWidget(self.input_button)  # Place the button below the QTextEdit
-
 
         # Charts Section
         self.charts_group = QGroupBox()
@@ -195,12 +200,11 @@ class SelectDashboardPage(QWidget):
         charts_layout.addWidget(activity_plot)
 
         layout.addWidget(self.charts_group)
-
         self.setLayout(layout)
      
-    # *******
+    # ********
     # Methods
-    # *******
+    # ********
     def toggle_mining(self):
         """changes start mining button to stop mining"""
         if self.mining_process is None or self.mining_process.state() == QProcess.NotRunning:
@@ -213,8 +217,6 @@ class SelectDashboardPage(QWidget):
         if self.charts_group.isVisible():
             self.charts_group.hide()
             self.output_area.show()
-            self.output_area.clear()
-            self.output_area.append(self.parent.output)
             self.toggle_button.setText("Show Charts")
         else:
             self.output_area.hide()
@@ -222,14 +224,17 @@ class SelectDashboardPage(QWidget):
             self.toggle_button.setText("Show Logs")
 
     def start_mining(self):
+        self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Checking for registration')
         while not self.registered:
             response = self.handle_registration()
             if response == None:
                 break
         if self.registered:
+            self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You are registered and ready to mine')
             self.run_mining_script()
 
     def handle_registration(self):
+        self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You are not registered')
         self.registration_cost = self.parent.subtensor.burn(netuid=25)
         warning_msg = f"You are not registered to mine on Bitcurrent!\nRegistration cost for Bitcurrent is {self.registration_cost}\n Do you want to register?\nNote this amount will be deducted from your wallet."
         reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
@@ -244,9 +249,10 @@ class SelectDashboardPage(QWidget):
 
     def register_on_subnet(self):
         self.wallet = bt.wallet(name=self.parent.wallet_name, path=os.path.dirname(self.parent.wallet_path))
-        wallet_bal = self.parent.subtensor.get_balance(address=self.coldkey)
+        wallet_bal = self.parent.subtensor.get_balance(address=self.parent.hotkey)
         # check wallet balance
         if wallet_bal < self.registration_cost:
+            self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You don\'t have sufficient funds')
             warning_msg = f"You don't have sufficient funds in your account\nWould you like to add funds to you account?"
             reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
 
@@ -256,14 +262,15 @@ class SelectDashboardPage(QWidget):
             else:
                 return None
         else:
+            self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Registration in Progress!!')
             success = self.parent.subtensor.burned_register(wallet=self.wallet, netuid=25)
             if success:
+                self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Registration complete')
                 info_msg = f"Congratulations!\nRegistration Successful!!\nYou are ready to mine"
                 final_reply = QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
                 return final_reply
 
     def run_mining_script(self):
-        script_path = os.path.join(os.getcwd(), 'gpu_cpu.py') # Replace with the actual path
         self.mining_process = QProcess(self)
         self.mining_process.setProcessChannelMode(QProcess.MergedChannels)
         self.mining_process.readyReadStandardOutput.connect(self.handle_output)
@@ -284,12 +291,14 @@ class SelectDashboardPage(QWidget):
             "DistributedTraining/neurons/miner.py",
             "--netuid", "34",
             "--subtensor.network", "test",
-            "--wallet.name", "kobonsu_bit",
-            "--wallet.hotkey", "5Eqwb58GrukT5EkJpGjJecRk2TJ1DsnV3Lw6S3oW4WUdJEtw",
+            "--wallet.name", "<....>",
+            "--wallet.hotkey", "...........",
             "--logging.debug",
-            "--dht.announce_ip", "80.44.55.158",
-            "--neuron.initial_peers", "/ip4/192.168.1.131/tcp/8000/p2p/12D3KooWAZSh2wvkFkHivyWCAPzQbS2HNjzej15FxnbPhHPUugPr","/ip4/161.97.156.125/tcp/8001/p2p/12D3KooWNrfkQ8DX2RHW4c98c8As11wMNA425WTNohijyJQdA84Y","/ip4/54.205.54.19/tcp/8008/p2p/12D3KooWMY4YGYZ6JkWaCNKUeKQHAuxeQcMeoNfKHbbRXVoBaMiZ",
-            "--neuron.wandb_project", "subnet25_test"
+            "--axon.port", "......",
+            "--dht.port", "......",
+            "--dht.announce_ip", "<ip address>",
+            "--neuron.initial_peers", "............",
+            # "--neuron.wandb_project", "subnet25_test"
         ]
         
         self.mining_process.start(command, args)
@@ -310,10 +319,8 @@ class SelectDashboardPage(QWidget):
             self.mine_button.setText("Start Mining")
 
     def handle_output(self):
-        # Handle output from the mining script if needed
-        self.timer.stop()
         self.parent.output = self.mining_process.readAllStandardOutput().data().decode("utf-8")
-        self.output_area.append(self.parent.output)
+        self.output_area.append(self.parent.output.replace('|',' ').replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').strip())   
          # Check for common prompt indicators
         if self.parent.output.strip().endswith(":") or "?" in self.parent.output:
             self.input_line.show()
@@ -325,7 +332,7 @@ class SelectDashboardPage(QWidget):
             self.input_line.hide()
             self.input_button.hide()
             self.output_area.setReadOnly(True)
-
+        self.timer.stop()
         self.data_logger.info(f' Balance - Stop: {self.wallet_bal_tao}') 
         self.data_logger.info(f' Activity: Stop Mining')
         self.data_logger.info(f' Activity: Mining Time - {self.elapsed_time}') 
@@ -339,6 +346,21 @@ class SelectDashboardPage(QWidget):
             # time_taken_cpu = float(time_taken_cpu_match.group(1))     
         # print(self.parent.output)
 
+    # def display_errors(self, error_message):
+    #     error_traceback = traceback.format_exc()
+    #     current_font = self.output_area.font()
+    #     current_wrap_mode = self.output_area.wordWrapMode()
+    #     # Set monospace font and turn off word wrap for better error display
+    #     self.output_area.setFont(QFont("Courier New"))
+    #     self.output_area.setWordWrapMode(QTextOption.NoWrap)
+    #     # Append the error traceback as plain text
+    #     self.output_area.append(error_traceback) 
+    #     # Restore the original font and word wrap mode
+    #     self.output_area.setFont(current_font)
+    #     self.output_area.setWordWrapMode(current_wrap_mode)
+    #     # Ensure the latest output/error is visible in the QTextEdit
+    #     self.output_area.moveCursor(QTextCursor.End)
+
     def update_timer(self):
         # This function is called every second to update the timer display
         if self.mining_process is not None and self.mining_process.state() == QProcess.Running:
@@ -349,23 +371,6 @@ class SelectDashboardPage(QWidget):
             seconds = self.elapsed_time % 60
             self.timer_label.setText(f"{hours}h: {minutes}m: {seconds}s") 
             # print(self.timer_label.text())
-    
-    # ************
-    # interactions
-    # *************
-
-    # def send_input(self):
-    #     all_text = self.output_area.toPlainText() + '\n'
-    #     last_line = all_text.split('`n')[-1]
-    #     if ':' in last_line:
-    #         input_text = last_line.split(':')[-1].strip()
-    #     elif '?' in last_line:
-    #         input_text = last_line.split('?')[-1].strip()
-    #     print(input_text)
-    #     self.mining_process.write(input_text.encode())
-    #     # self.output_area.clear()
-    #     self.output_area.setReadOnly(True)
-    #     self.input_button.hide()
 
     def send_input(self):
         input_text = self.input_line.text() + '\n'
@@ -375,8 +380,7 @@ class SelectDashboardPage(QWidget):
         self.input_button.hide()
 
             
-    
-    
+      
     def logout(self):
         warning_msg = f"Are you sure you want to log out?"
         reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)

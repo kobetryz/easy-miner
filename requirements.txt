@@ -1,4 +1,5 @@
 bittensor
+pandas
 PyQt5==5.15.10
 PyQt5-Qt5==5.15.11
 PyQt5-sip==12.13.0

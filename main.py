@@ -1,3 +1,7 @@
+# Plug and Play miner
+# Kofi Osei - Bonsu 
+# 30/12/2023 
+
 
 import os
 import sys
@@ -11,12 +15,10 @@ from PyQt5.QtWidgets import (
     QWidget, QLineEdit, QTextEdit, QMessageBox, QStackedWidget, QHBoxLayout, QFileDialog, 
     QGroupBox, QInputDialog, QSpacerItem, QSizePolicy
 )
+
 from PyQt5.QtGui import QPixmap, QFont, QPalette, QBrush, QColor, QFontDatabase, QDesktopServices
 from PyQt5.QtCore import Qt, QUrl
 
-
-# from pages.subnet import SelectSubnetPage
-# from pages.neuron import SelectNeuronPage
 from pages.startpage import StartPage
 from pages.add_wallet import AddWalletPage
 from pages.mining import MiningPage
@@ -81,7 +83,7 @@ class MiningWizard(QMainWindow):
                 if not ok:
                     break  # Break out of the loop if the user cancels
                 try:
-                    self.wallet_path = search_directory(".", self.wallet_name)
+                    self.wallet_path = search_directory(os.path.expanduser('~'), self.wallet_name)
                     # print(self.wallet_path)
                     if self.wallet_path:
                         self.dashboard_page = SelectDashboardPage(self)
@@ -120,8 +122,6 @@ class MiningWizard(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyleSheet("QMainWindow::separator { background: rgba(0, 0, 0, 0.3); width: 1px; }")
-    # QFontDatabase.addApplicationFont("./Orbitron/Orbitron-VariableFont_wght.ttf")  # Add the path to the Orbitron font file
-
     window = MiningWizard()
     window.show()
     sys.exit(app.exec_())
