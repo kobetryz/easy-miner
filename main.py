@@ -87,7 +87,7 @@ class MiningWizard(QMainWindow):
     
     def show_dashboard_page_from_mining(self, wallet_name):
             self.wallet_name = wallet_name
-            self.wallet_path = search_directory(".", self.wallet_name)
+            self.wallet_path = search_directory(os.path.expanduser('~'), self.wallet_name)
             if self.wallet_path:
                 self.dashboard_page = SelectDashboardPage(self)
                 self.central_widget.addWidget(self.dashboard_page)
