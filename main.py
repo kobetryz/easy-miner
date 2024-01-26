@@ -21,9 +21,7 @@ from PyQt5.QtCore import Qt, QUrl
 
 from pages.startpage import StartPage
 from pages.add_wallet import AddWalletPage
-from pages.mining import MiningPage
 from pages.dashboard import SelectDashboardPage
-from pages.get_wallet import GetWalletPage
 from pages.wallet import WalletDetailsTable
 
 
@@ -44,14 +42,11 @@ class MiningWizard(QMainWindow):
         
         # Initialize pages
         self.start_page = StartPage(self)
-        self.get_wallet_page = GetWalletPage(self)
         
         # Adding pages to the stack
         self.central_widget.addWidget(self.start_page)
-        self.central_widget.addWidget(self.get_wallet_page)
 
         # initialise vars
-
         self.wallet_name = None
         self.wallet_path = None
 
@@ -59,18 +54,11 @@ class MiningWizard(QMainWindow):
     def show_start_page(self):
         self.central_widget.setCurrentWidget(self.start_page)
 
-    def show_mining_page(self):
-        self.mining_page = MiningPage(self)
-        self.central_widget.addWidget(self.mining_page)
-        self.central_widget.setCurrentWidget(self.mining_page)
-
     def show_create_wallet_page(self):
         self.create_wallet_page = AddWalletPage(self)
         self.central_widget.addWidget(self.create_wallet_page)
         self.central_widget.setCurrentWidget(self.create_wallet_page)
 
-    def show_get_wallet_page(self):
-        self.central_widget.setCurrentWidget(self.get_wallet_page)
 
     def show_dashboard_page(self):
         if self.wallet_name is not None:
