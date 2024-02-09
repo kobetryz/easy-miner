@@ -1,12 +1,10 @@
 import os
 import re
 import json
-import time
-import requests
-import traceback
 import pandas as pd
-
-
+import numpy as np
+import plotly.io as pio
+import plotly.graph_objects as go
 import bittensor as bt
 import matplotlib.dates as mdates
 from datetime import datetime
@@ -15,77 +13,57 @@ from datetime import datetime
 from PyQt5.QtWidgets import QPushButton, QVBoxLayout,QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox,QMessageBox, QTextEdit, QLineEdit
 from PyQt5.QtGui import QFont,QDesktopServices, QTextOption, QTextCursor
 from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment, QTimer, QDateTime, QUrl
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 import pyqtgraph as pg
 
-from config import configure_logger_data, get_earnings_by_date_range, get_total_mining
-# from utils import MiningManager
+from config import configure_logger_data, get_earnings_by_date_range, get_total_mining, INITIAL_PEERS, IP_ADDRESS, tao_price
 
-class SelectDashboardPage(QWidget):
+class DashboardPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
-        self.data_logger = configure_logger_data(f"./{self.parent.wallet_name}/full_user_data.log")
-        # self.parent.output = None
+        # self.addDetail = self.parent.addDetail
+        self.data_logger = configure_logger_data(f"{self.parent.wallet_path}/full_user_data.log")
         
-       # Connect to taostats
-        url = "https://taostats.io/data.json"
-        response = requests.get(url)
-        taostats = json.loads(response.content)
-        price = float(taostats[0]['price'])  
-
-        if not hasattr(self.parent, 'hotkey'):
-            hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path,'hotkeys'))]
-            hotkey_file = hotkey_files[-1]
-            with open(f'{self.parent.wallet_path}/hotkeys/{hotkey_file}', 'r') as f:
-                my_wallet = json.load(f)
-            self.parent.hotkey= my_wallet['ss58Address']
-
-        if self.parent.hotkey in self.parent.subnet.hotkeys:
-            uid = self.parent.subnet.hotkeys.index(self.parent.hotkey)
-            self.wallet_bal_tao = self.parent.subnet.stake.tolist()[uid]
-            self.registered = True
-        else:
-            wallet_bal_tao = str(self.parent.subtensor.get_balance(address = self.parent.hotkey))[1:]
-            self.wallet_bal_tao = float(wallet_bal_tao)
-            self.registered = False
+        self.get_user_hotkey_and_set_reg()
+        self.setupUI()
+        
         self.data_logger.info(f' Balance - Start: {self.wallet_bal_tao}')
         self.data_logger.info('Activity: Log in')
         self.data_logger.info(f' Activity: Mining Time - 0') 
-        reward_data = get_earnings_by_date_range(f"./{self.parent.wallet_name}/full_user_data.log")
-        activity_data = get_total_mining(f"./{self.parent.wallet_name}/full_user_data.log")
+        reward_data = get_earnings_by_date_range(f"{self.parent.wallet_path}/full_user_data.log")
+        activity_data = get_total_mining(f"{self.parent.wallet_path}/full_user_data.log")
         
-        self.setStyleSheet("""
-            QPushButton {
-                font-size: 14px;
-                font-family: Georgia;
-            }
-        """)
+        # self.setStyleSheet("""
+        #     QPushButton {
+        #         font-size: 14px;
+        #         font-family: Georgia;
+        #     }
+        # """)
+    
+        # layout = QVBoxLayout()
+        # # Header Group with links
+        # header_group = QGroupBox("BitCurrent")
+        # header_group.setFont(QFont("Georgia", 18, QFont.Bold))
+        # header_group.setAlignment(Qt.AlignLeft) 
+        # header_layout = QHBoxLayout(header_group)
 
+        # home_button = QPushButton("Home")
+        # home_button.clicked.connect(self.parent.show_start_page)
+        # header_layout.addWidget(home_button)
 
-        layout = QVBoxLayout()
-        # Header Group with links
-        header_group = QGroupBox("BitCurrent")
-        header_group.setFont(QFont("Georgia", 18, QFont.Bold))
-        header_group.setAlignment(Qt.AlignLeft) 
-        header_layout = QHBoxLayout(header_group)
+        # wallet_button = QPushButton("Wallet")
+        # wallet_button.clicked.connect(self.parent.show_wallet_page)
+        # header_layout.addWidget(wallet_button)
 
-        # header_layout.addWidget(QLabel("BITCURRENT"))
-        home_button = QPushButton("Home")
-        home_button.clicked.connect(self.parent.show_start_page)
-        header_layout.addWidget(home_button)
+        # self.mine_button = QPushButton("Start Mining")
+        # self.mine_button.clicked.connect(self.toggle_mining)
+        # header_layout.addWidget(self.mine_button)
 
-        wallet_button = QPushButton("Wallet")
-        wallet_button.clicked.connect(self.parent.show_wallet_page)
-        header_layout.addWidget(wallet_button)
-
-        self.mine_button = QPushButton("Start Mining")
-        self.mine_button.clicked.connect(self.toggle_mining)
-        header_layout.addWidget(self.mine_button)
-
-        log_button = QPushButton("Log Out")
-        log_button.clicked.connect(self.logout)
-        header_layout.addWidget(log_button)
-        layout.addWidget(header_group)
+        # log_button = QPushButton("Log Out")
+        # log_button.clicked.connect(self.logout)
+        # header_layout.addWidget(log_button)
+        # layout.addWidget(header_group)
             
         # SUMMARY STATS
         summary_group = QGroupBox(f'Welcome {self.parent.wallet_name}!!')
@@ -93,7 +71,7 @@ class SelectDashboardPage(QWidget):
         summary_group.setAlignment(Qt.AlignLeft) 
         summary_layout = QHBoxLayout(summary_group)
 
-        wallet_bal_dol = round(self.wallet_bal_tao * price, 2)
+        wallet_bal_dol = round(self.wallet_bal_tao * tao_price, 2)
         earnings_group = QGroupBox()
         earnings_layout = QVBoxLayout(earnings_group)
         earnings_layout.addWidget(QLabel("Wallet Balance",font=QFont('Georgia', 10)))
@@ -141,7 +119,7 @@ class SelectDashboardPage(QWidget):
         self.start_time = QDateTime.currentDateTime()
         self.timer.timeout.connect(self.update_timer)
         summary_layout.addWidget(timer_group)
-        layout.addWidget(summary_group)
+        self.layout.addWidget(summary_group)
 
         # User Activity Chart
         activity_plot = pg.PlotWidget()
@@ -151,9 +129,9 @@ class SelectDashboardPage(QWidget):
         activity_plot.getPlotItem().getAxis('left').setTextPen((200, 200, 200))
         activity_plot.getPlotItem().getAxis('bottom').setTextPen((200, 200, 200))
         activity_plot.showGrid(x=True, y=True, alpha=0.5)
-        activity_plot.plot([0, 1, 2, 3,5], [0, 5, 3, 8, 2], pen='r', symbol='o', symbolPen='r', symbolBrush=(255, 0, 0), symbolSize=10)
+        # activity_plot.plot([0, 1, 2, 3,5], [0, 5, 3, 8, 2], pen='r', symbol='o', symbolPen='r', symbolBrush=(255, 0, 0), symbolSize=10)
         num_dates = mdates.date2num(activity_data['date'].tolist()).tolist()
-        activity_plot.plot(num_dates, activity_data['time(s)'].tolist(), pen='g', symbol='o', symbolPen='g', symbolBrush=(50, 205, 50), symbolSize=10)
+        activity_plot.plot(num_dates, activity_data['time(s)'].tolist(), pen='g', symbol='o', symbolPen='r', symbolBrush=(50, 205, 50), symbolSize=10)
         activity_plot.getAxis('bottom').setTicks([[(num_dates[i], activity_data['date'].tolist()[i].strftime('%Y-%m-%d')) for i in range(len(activity_data['date'].tolist()))]])
 
         # Reward History Chart
@@ -173,38 +151,91 @@ class SelectDashboardPage(QWidget):
         # *****************************
         self.toggle_button = QPushButton("Show Logs")
         self.toggle_button.clicked.connect(self.toggle_view)
-        layout.addWidget(self.toggle_button)
+        self.layout.addWidget(self.toggle_button)
         
         self.output_area = QTextEdit(self)
         self.output_area.setWordWrapMode(QTextOption.NoWrap)
         self.output_area.setReadOnly(False)  # Make it read-only
         self.output_area.hide()  # Hide initially
-        layout.addWidget(self.output_area)  # Add it to the main layout
+        self.layout.addWidget(self.output_area)  # Add it to the main layout
 
         self.input_line = QLineEdit(self)
         self.input_line.hide()  # Initially hide the input line
-        layout.addWidget(self.input_line)  # Add it to your layout
+        self.layout.addWidget(self.input_line)  # Add it to your layout
 
         self.input_button = QPushButton("Enter")
         self.input_button.clicked.connect(self.send_input)
         self.input_button.hide()
-        layout.addWidget(self.input_button)  # Place the button below the QTextEdit
+        self.layout.addWidget(self.input_button)  # Place the button below the QTextEdit
 
         # Charts Section
         self.charts_group = QGroupBox()
         # self.charts_group.setStyleSheet("QGroupBox { font-size: 18px; color: #ffffff; border: 2px solid #3498db; border-radius: 5px; margin-top: 10px;}")
         charts_layout = QVBoxLayout(self.charts_group)
-        charts_layout.addWidget(QLabel("Cumulative Earnings", font=QFont('Georgia', 14, QFont.Bold)))
-        charts_layout.addWidget(reward_plot)
-        charts_layout.addWidget(QLabel("Daily Mining Time", font=QFont('Georgia', 14, QFont.Bold)))
-        charts_layout.addWidget(activity_plot)
-
-        layout.addWidget(self.charts_group)
-        self.setLayout(layout)
+        # charts_layout.addWidget(QLabel("Cumulative Earnings", font=QFont('Georgia', 12, QFont.Bold)))
+        # charts_layout.addWidget(reward_plot)
+        # charts_layout.addWidget(QLabel("Daily Mining Time", font=QFont('Georgia', 12, QFont.Bold)))
+        # charts_layout.addWidget(activity_plot)
+        self.plot_graph(reward_data['date'], reward_data['balance'])
+        charts_layout.addWidget(self.webEngineView)
+        self.layout.addWidget(self.charts_group)
+        self.setLayout(self.layout)
      
     # ********
     # Methods
     # ********
+        
+    def setupUI(self):
+        self.layout = QVBoxLayout()
+        self.createHeader()
+
+    def createHeader(self):
+        header_group = QGroupBox("BitCurrent", self)
+        header_group.setFont(QFont("Georgia", 20, QFont.Bold))
+        header_layout = QHBoxLayout(header_group)
+        # header_group.setLayout(header_layout)
+        # header_group.setFixedHeight(30) 
+
+        home_button = QPushButton("Home")
+        self.parent.addDetail(header_layout, home_button, 14)
+        home_button.clicked.connect(self.parent.show_start_page)
+
+        wallet_button = QPushButton("Wallet")
+        self.parent.addDetail(header_layout, wallet_button, 14)
+        wallet_button.clicked.connect(self.parent.show_wallet_page)
+
+        self.mine_button = QPushButton("Start Mining")
+        self.parent.addDetail(header_layout,  self.mine_button, 14)
+        self.mine_button.clicked.connect(self.toggle_mining)
+
+        log_button = QPushButton("Log Out")
+        self.parent.addDetail(header_layout, log_button, 14)
+        log_button.clicked.connect(self.logout)
+        
+        self.layout.addWidget(header_group)
+
+
+    def get_user_hotkey_and_set_reg(self):
+        """
+        get users hotkey and checks if registered on subnet
+        """
+        if not hasattr(self.parent, 'hotkey'):
+            hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path,'hotkeys'))]
+            hotkey_file = hotkey_files[-1]
+            with open(f'{self.parent.wallet_path}/hotkeys/{hotkey_file}', 'r') as f:
+                my_wallet = json.load(f)
+            self.parent.hotkey= my_wallet['ss58Address']
+
+        if self.parent.hotkey in self.parent.subnet.hotkeys:
+            uid = self.parent.subnet.hotkeys.index(self.parent.hotkey)
+            self.wallet_bal_tao = self.parent.subnet.stake.tolist()[uid]
+            self.registered = True
+        else:
+            wallet_bal_tao = str(self.parent.subtensor.get_balance(address = self.parent.hotkey))[1:]
+            self.wallet_bal_tao = float(wallet_bal_tao)
+            self.registered = False
+
+
     def toggle_mining(self):
         """changes start mining button to stop mining"""
         if self.mining_process is None or self.mining_process.state() == QProcess.NotRunning:
@@ -287,17 +318,17 @@ class SelectDashboardPage(QWidget):
         # Log balance and start of mining
         self.data_logger.info(f' Balance - Start: {self.wallet_bal_tao}')
         command = "python"
-        args = [
+        args = ["-u",
             "DistributedTraining/neurons/miner.py",
             "--netuid", "34",
             "--subtensor.network", "test",
-            "--wallet.name", "<....>",
-            "--wallet.hotkey", "...........",
+            "--wallet.name", f"{self.parent.wallet_name}",
+            "--wallet.hotkey", f"{self.parent.hotkey}",
             "--logging.debug",
-            "--axon.port", "......",
-            "--dht.port", "......",
-            "--dht.announce_ip", "<ip address>",
-            "--neuron.initial_peers", "............",
+            "--axon.port", "8000",
+            "--dht.port", "8001",
+            "--dht.announce_ip", f"{IP_ADDRESS}",
+            "--neuron.initial_peers", f"{INITIAL_PEERS}",
             # "--neuron.wandb_project", "subnet25_test"
         ]
         
@@ -378,14 +409,43 @@ class SelectDashboardPage(QWidget):
         self.input_line.clear()
         self.input_line.hide()  # Hide the input line after sending input
         self.input_button.hide()
-
-            
+         
       
     def logout(self):
         warning_msg = f"Are you sure you want to log out?"
         reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
         if reply == QMessageBox.Yes:
+            del self.parent.dashboardpage
+            if hasattr(self.parent, 'walletdetailstable'):
+                del self.parent.walletdetailstable
             self.parent.wallet_name = None
+            self.parent.wallet_path = None
             self.parent.show_start_page()
 
- 
+
+    def plot_graph(self, x, y):
+        # Create a QWebEngineView to display the Plotly chart
+        self.webEngineView = QWebEngineView()
+        # Sample data generation for demonstration
+        dates = x #pd.date_range(start="2023-01-01", periods=100, freq='D')
+        earnings = y  # Cumulative earnings
+
+        fig = go.Figure(data=[go.Scatter(x=dates, y=earnings, mode='lines+markers', name='Cumulative Earnings',line=dict(color='Green', width=2),marker=dict(color='green', size=3))])
+        # fig.update_layout(title='Cumulative Earnings Over Time', xaxis_title='Time', yaxis_title='Cumulative Earnings')
+
+        fig.update_layout(
+            title_text='Cumulative Earnings Over Time',
+            xaxis_title='Time',
+            yaxis_title='Cumulative Earnings',
+            template="plotly_dark"  # Use Plotly's dark theme
+        )
+        # # Create a Plotly figure
+        # fig = go.Figure(data=[go.Scatter(x=[1, 2, 3, 4], y=[10, 11, 12, 13])])
+        # fig.update_layout(title='Plotly Chart in PyQt')
+
+        # Convert the figure to HTML and load it into the QWebEngineView
+        raw_html = '<html><head><meta charset="utf-8" /></head><body>'
+        raw_html += pio.to_html(fig, full_html=False, include_plotlyjs='cdn')
+        raw_html += '</body></html>'
+        self.webEngineView.setHtml(raw_html)
+        # self.layout.addWidget(self.webEngineView)

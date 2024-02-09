@@ -9,6 +9,7 @@ from PyQt5.QtCore import QUrl
 class StartPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
+        self.parent = parent
         layout = QVBoxLayout()
 
         # Add a cyberpunk style
@@ -54,13 +55,18 @@ class StartPage(QWidget):
         
         # Use new wallet
         new_wallet_button = QPushButton("Create New Wallet and Mine", self) 
-        new_wallet_button.clicked.connect(parent.show_create_wallet_page)
+        new_wallet_button.clicked.connect(self.parent.show_create_wallet_page)
         options_layout.addWidget(new_wallet_button)
 
         # to dashboard
         view_dashboard_button = QPushButton("Mine to Existing Wallet", self)
-        view_dashboard_button.clicked.connect(parent.show_dashboard_page)
+        view_dashboard_button.clicked.connect(self.parent.show_dashboard_page)
         options_layout.addWidget(view_dashboard_button)
+
+         # to dashboard
+        select_machine = QPushButton("Select machine", self)
+        select_machine.clicked.connect(self.parent.show_machine_options_page)
+        options_layout.addWidget(select_machine)
 
 
         layout.addWidget(options_group)
