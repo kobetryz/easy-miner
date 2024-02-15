@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QRadioButton, QLabel, QStackedWidget, QPushButton, QGroupBox,
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QRadioButton, QLabel, QStackedWidget, QPushButton, QGroupBox,
                              QHBoxLayout, QSpacerItem, QSizePolicy)
 # from PyQt5.QtGui import QFont,QDesktopServices, QTextOption, QTextCursor
 from PyQt5.QtCore import Qt
@@ -90,7 +90,7 @@ class MachineOptionPage(QWidget):
 
     def runPodAction(self):
         # Placeholder for RunPod action
-        print("RunPod selected")
+        self.parent.show_runpod_page()
 
     def vastAiAction(self):
         # Placeholder for Vast.ai action

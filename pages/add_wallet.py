@@ -7,7 +7,7 @@ import bittensor as bt
 from datetime import datetime
 from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout,QWidget, QLineEdit, 
                              QMessageBox, QHBoxLayout, QFileDialog, QGroupBox, QSpacerItem, 
-                             QTextEdit,QSizePolicy,QApplication)
+                             QTextEdit,QSizePolicy)
 from PyQt5.QtGui import QFont, QTextOption
 from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment,QTimer, QDateTime
 
@@ -26,9 +26,9 @@ class AddWalletPage(QWidget):
         self.layout = QVBoxLayout()
         self.layout.setSpacing(5)
         self.layout.setContentsMargins(10, 10, 10, 10)
+        self.layout.addSpacerItem(QSpacerItem(10, 20, QSizePolicy.Minimum, QSizePolicy.Expanding))
         self.createHeader()
         self.createWalletDetails()
-        self.layout.addSpacerItem(QSpacerItem(10, 20, QSizePolicy.Minimum, QSizePolicy.Expanding))
         self.createFooter()   
 
     def createHeader(self):

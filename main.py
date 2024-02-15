@@ -5,10 +5,10 @@
 
 import os
 import sys
-import json
+
 
 import bittensor as bt
-from config import search_directory
+from config import search_directory, get_runpod_api_key, save_runpod_api_key
 
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout,
@@ -24,6 +24,8 @@ from pages.add_wallet import AddWalletPage
 from pages.dashboard import DashboardPage
 from pages.wallet import WalletDetailsTable
 from pages.machineOptions import MachineOptionPage
+from pages.runpodSetup import RunpodSetupPage
+
 
 
 class MiningWizard(QMainWindow):
@@ -41,7 +43,7 @@ class MiningWizard(QMainWindow):
     def initialize_subtensor(self):
         self.subtensor = bt.subtensor(network='test')
         self.subnet = self.subtensor.metagraph(netuid=25)
-    
+
     def setup_ui(self):
         self.setWindowTitle("Easy Miner")
         self.setGeometry(100, 100, 800, 600)
@@ -88,25 +90,23 @@ class MiningWizard(QMainWindow):
         if self.wallet_name:
             self.show_page(WalletDetailsTable)
 
-    
+    def show_runpod_page(self):
+        api_key = get_runpod_api_key()
+        if not api_key:
+            api_key, ok = QInputDialog.getText(self, "RunPod API Key", "Enter your RunPod API Key:")
+            if ok and api_key:
+                save_runpod_api_key(api_key)
+                self.show_page(RunpodSetupPage)
+            else:
+                QMessageBox.warning(self, "API Key Required", "RunPod API Key is required to proceed.")
+        else:
+            self.show_page(RunpodSetupPage)
+
+        
     def addDetail(self, temp_layout, widget, fontsize, bold = False):
         fontWeight = QFont.Bold if bold else QFont.Normal 
         widget.setFont(QFont("Georgia", fontsize, fontWeight))
         temp_layout.addWidget(widget)
-
-    # def prompt_for_wallet_name(self):
-    #     wallet_name, ok = QInputDialog.getText(self, "Wallet Name", "Please confirm wallet name:")
-    #     while True:
-    #         if not ok and wallet_name:
-    #             try:
-    #                 self.wallet_path = search_directory(os.path.join(os.path.expanduser('~'), '.bittesor/wallets'), self.wallet_name)
-    #                 self.wallet_name = wallet_name
-    #                 self.show_page(DashboardPage)
-    #             except FileNotFoundError as e:
-    #                 QInputDialog.getText(self, "Wallet not found", str(e) + "\nEnter a valid wallet name:")
-    #                 self.prompt_for_wallet_name()
-    #         elif not ok:
-    #             pass
 
     def print_attributes(self):
         for attr_name in dir(self):
@@ -136,42 +136,6 @@ class MiningWizard(QMainWindow):
                     break  # Break out of the loop if the user cancels
                 self.wallet_name = new_wallet_name  # Update the wallet name for the next iteration   
        
-       
-    #     else:
-    #         self.wallet_name, ok = QInputDialog.getText(self, "Wallet Name", "Please confirm wallet name:")
-    #         while True:
-    #             if not ok:
-    #                 break  # Break out of the loop if the user cancels
-    #             try:
-    #                 self.wallet_path = search_directory(os.path.join(os.path.expanduser('~'), '.bittesor/wallets'), self.wallet_name)
-    #                 print(self.wallet_path)
-    #                 if self.wallet_path:
-    #                     self.dashboard_page = DashboardPage(self)
-    #                     self.central_widget.addWidget(self.dashboard_page)
-    #                     self.central_widget.setCurrentWidget(self.dashboard_page)
-    #                     break  # Break out of the loop if the directory is found
-    #             except FileNotFoundError as e:
-    #                 new_directory, ok = QInputDialog.getText(self, "Wallet not found", str(e) + "\nEnter a valid wallet name:")
-    #                 if not ok:
-    #                     # print("User canceled")
-    #                     break  # Break out of the loop if the user cancels
-    #                 self.wallet_name = new_directory  # Update the wallet name for the next iteration
-    
-
-
-    # def show_wallet_page(self):
-    #     if self.wallet_name != None:
-    #         self.wallet_page = WalletDetailsTable(self)
-    #         self.central_widget.addWidget(self.wallet_page)
-    #         self.central_widget.setCurrentWidget(self.wallet_page)
-    #     else:
-    #         self.wallet_name, ok = QInputDialog.getText(self, "Wallet Name", "Plese confirm wallet name:")
-    #         if ok and self.wallet_name:
-    #             self.wallet_page = WalletDetailsTable(self)
-    #             self.central_widget.addWidget(self.wallet_page)
-    #             self.central_widget.setCurrentWidget(self.wallet_page)
-
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
