@@ -1,0 +1,19 @@
+# ignore all __pycache__
+*__pycache__
+# files 
+get-pip.py
+gpu-cpu.py
+
+# logs
+*.log
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+# Environments
+.env
+.venv
+env/
+

@@ -2,12 +2,12 @@ import json
 import os
 import bittensor as bt
 
-from runpod_api.runpod import GPU_DICT,GPU_LIST_TO_USE
+from runpod import GPU_DICT,GPU_LIST_TO_USE
 from PyQt5.QtWidgets import (QInputDialog, QPushButton, QComboBox, QTableWidgetItem, 
                              QVBoxLayout,QHBoxLayout, QWidget, QGroupBox, QLabel,QSpacerItem, QRadioButton,
                              QTextEdit,QSizePolicy)
-from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont, QTextOption
+from PyQt5.QtCore import Qt, QProcess
 
 
 class RunpodSetupPage(QWidget):
@@ -62,9 +62,10 @@ class RunpodSetupPage(QWidget):
         self.update_gpu_specs()  # Display the initial GPU specs
         self.create_cloud_option()
 
-        self.deploy = QPushButton('Deploy')
-        self.deploy.setMaximumWidth(350)
-        self.parent.addDetail(self.layout, self.deploy, 16, bold = True)
+        self.deploy_button = QPushButton('Deploy')
+        self.deploy_button.setMaximumWidth(350)
+        self.parent.addDetail(self.layout, self.deploy_button, 16, bold = True)
+        self.deploy_button.clicked.connect(self.deploy_selected_gpu)
 
     def update_gpu_specs(self):
         # Clear the previous specs
@@ -75,7 +76,7 @@ class RunpodSetupPage(QWidget):
 
         # Get the current GPU and its specs
         current_gpu = self.gpu_drop_down.currentText()
-        temp_dict = GPU_DICT.get(current_gpu, {})  # Use an empty dict as a default to prevent KeyError
+        self.temp_dict = GPU_DICT.get(current_gpu, {})  # Use an empty dict as a default to prevent KeyError
 
         # Define labels and values to use
         labels_values_to_use = {
@@ -86,7 +87,7 @@ class RunpodSetupPage(QWidget):
         }
         # Add the specs to the specs_layout
         for label, value in labels_values_to_use.items():
-            self.parent.addDetail(self.specs_layout, QLabel(f"{label}: {temp_dict.get(value, 'N/A')}"), 14)
+            self.parent.addDetail(self.specs_layout, QLabel(f"{label}: {self.temp_dict.get(value, 'N/A')}"), 14)
     
     
     def create_cloud_option(self):
@@ -100,10 +101,83 @@ class RunpodSetupPage(QWidget):
         # Set Community Cloud as the default selected option
         self.community_cloud_radio.setChecked(True)
 
+        
+    def create_output_area(self):    
+        self.output_area = QTextEdit(self)
+        self.output_area.setWordWrapMode(QTextOption.NoWrap)
+        self.output_area.setReadOnly(True)  # Make it read-only
+        self.output_area.hide()  # Hide initially
+        self.layout.addWidget(self.output_area)  # Add it to the main layout
 
-    def on_deploy_clicked(self):
+    def deploy_selected_gpu(self):
+        # self.output_area.show()
         # Determine which cloud option is selected
         cloud_option = "Community" if self.community_cloud_radio.isChecked() else "Secure"
         print(f"Deploying on {cloud_option} Cloud")  # Example action, replace with your deployment logic
         # Your additional logic for deployment based on the selected cloud option
 
+        self.deploy_gpu = QProcess()
+        self.deploy_gpu.setProcessChannelMode(QProcess.MergedChannels)
+        self.deploy_gpu.readyReadStandardOutput.connect(self.handle_output)
+
+        # self.deploy_gpu.readyReadStandardOutput.connect(lambda: self.handle_output())
+        print('working_directory', os.getcwd())
+        command = "python"
+        args = [ "-u",
+        "create_on_demand_pod.py",
+        "--country_code", "US",
+        "--cloud_type",  f"{cloud_option.upper()}",
+        "--gpu_type_id", f"{self.temp_dict['id']}",
+        "--ports", f"{22,70000,70001,70002,70003,70004,70005,70006,70007,70008}" ,
+        # " --persistent_disk_size_gb", 
+        # " --os_disk_size_gb", 
+        # "--name", 
+        # "--image_name"    
+        # "--min_download", "100",
+        # Add all other required arguments here...
+        ]
+
+        print(args)
+        self.deploy_gpu.start(command, args)
+
+    def handle_output(self):
+        self.output = self.deploy_gpu.readAllStandardOutput().data().decode()
+        print(self.output)  # Or update your UI based on the output
+
+        # self.parent.output = self.mining_process.readAllStandardOutput().data().decode("utf-8")
+        # self.output_area.append(self.parent.output.replace('|',' ').replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').strip())   
+        #  # Check for common prompt indicators
+        # if self.parent.output.strip().endswith(":") or "?" in self.parent.output:
+        #     self.input_line.show()
+        #     self.input_line.setFocus()
+        #     self.input_button.show()
+        #     self.output_area.setReadOnly(False)
+
+
+
+# from PyQt5.QtCore import QProcess
+
+# # Function to start the create_pod process
+# def start_create_pod_process():
+#     process = QProcess()
+#     process.readyReadStandardOutput.connect(lambda: handle_output(process))
+
+#     # Construct the command and arguments
+#     command = "python"
+#     args = [
+#         "create_pod_script.py",
+#         "--country_code", "US",
+#         "--min_download", "100",
+#         # Add all other required arguments here...
+#     ]
+
+#     process.start(command, args)
+
+
+
+# # Function to handle the output from the create_pod process
+# def handle_output(process):
+#     output = process.readAllStandardOutput().data().decode()
+#     print(output)  # Or update your UI based on the output
+
+# start_create_pod_process()

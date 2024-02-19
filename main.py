@@ -31,7 +31,7 @@ from pages.runpodSetup import RunpodSetupPage
 class MiningWizard(QMainWindow):
     def __init__(self):
         super().__init__()
-        # self.initialize_subtensor()
+        self.initialize_subtensor()
         self.setup_ui()
         self.initialize_pages()
 

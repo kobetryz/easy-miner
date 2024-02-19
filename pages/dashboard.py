@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import QPushButton, QVBoxLayout,QHBoxLayout, QWidget, QLabe
 from PyQt5.QtGui import QFont,QDesktopServices, QTextOption, QTextCursor
 from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment, QTimer, QDateTime, QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-import pyqtgraph as pg
+# import pyqtgraph as pg
 
 from config import configure_logger_data, get_earnings_by_date_range, get_total_mining, INITIAL_PEERS, IP_ADDRESS, tao_price
 
@@ -121,30 +121,30 @@ class DashboardPage(QWidget):
         summary_layout.addWidget(timer_group)
         self.layout.addWidget(summary_group)
 
-        # User Activity Chart
-        activity_plot = pg.PlotWidget()
-        activity_plot.setBackground((50, 50, 50))
-        activity_plot.getPlotItem().getAxis('left').setPen((200, 200, 200))
-        activity_plot.getPlotItem().getAxis('bottom').setPen((200, 200, 200))
-        activity_plot.getPlotItem().getAxis('left').setTextPen((200, 200, 200))
-        activity_plot.getPlotItem().getAxis('bottom').setTextPen((200, 200, 200))
-        activity_plot.showGrid(x=True, y=True, alpha=0.5)
-        # activity_plot.plot([0, 1, 2, 3,5], [0, 5, 3, 8, 2], pen='r', symbol='o', symbolPen='r', symbolBrush=(255, 0, 0), symbolSize=10)
-        num_dates = mdates.date2num(activity_data['date'].tolist()).tolist()
-        activity_plot.plot(num_dates, activity_data['time(s)'].tolist(), pen='g', symbol='o', symbolPen='r', symbolBrush=(50, 205, 50), symbolSize=10)
-        activity_plot.getAxis('bottom').setTicks([[(num_dates[i], activity_data['date'].tolist()[i].strftime('%Y-%m-%d')) for i in range(len(activity_data['date'].tolist()))]])
+        # # User Activity Chart
+        # activity_plot = pg.PlotWidget()
+        # activity_plot.setBackground((50, 50, 50))
+        # activity_plot.getPlotItem().getAxis('left').setPen((200, 200, 200))
+        # activity_plot.getPlotItem().getAxis('bottom').setPen((200, 200, 200))
+        # activity_plot.getPlotItem().getAxis('left').setTextPen((200, 200, 200))
+        # activity_plot.getPlotItem().getAxis('bottom').setTextPen((200, 200, 200))
+        # activity_plot.showGrid(x=True, y=True, alpha=0.5)
+        # # activity_plot.plot([0, 1, 2, 3,5], [0, 5, 3, 8, 2], pen='r', symbol='o', symbolPen='r', symbolBrush=(255, 0, 0), symbolSize=10)
+        # num_dates = mdates.date2num(activity_data['date'].tolist()).tolist()
+        # activity_plot.plot(num_dates, activity_data['time(s)'].tolist(), pen='g', symbol='o', symbolPen='r', symbolBrush=(50, 205, 50), symbolSize=10)
+        # activity_plot.getAxis('bottom').setTicks([[(num_dates[i], activity_data['date'].tolist()[i].strftime('%Y-%m-%d')) for i in range(len(activity_data['date'].tolist()))]])
 
-        # Reward History Chart
-        reward_plot = pg.PlotWidget()
-        reward_plot.setBackground((50, 50, 50))
-        reward_plot.getPlotItem().getAxis('left').setPen((200, 200, 200))
-        reward_plot.getPlotItem().getAxis('bottom').setPen((200, 200, 200))
-        reward_plot.getPlotItem().getAxis('left').setTextPen((200, 200, 200))
-        reward_plot.getPlotItem().getAxis('bottom').setTextPen((200, 200, 200))
-        reward_plot.showGrid(x=True, y=True, alpha=0.5)
-        num_dates = mdates.date2num(reward_data['date'].tolist()).tolist()
-        reward_plot.plot(num_dates, reward_data['balance'].tolist(), pen='g', symbol='o', symbolPen='g', symbolBrush=(50, 205, 50), symbolSize=10)
-        reward_plot.getAxis('bottom').setTicks([[(num_dates[i], reward_data['date'].tolist()[i].strftime('%Y-%m-%d')) for i in range(len(reward_data['date'].tolist()))]])
+        # # Reward History Chart
+        # reward_plot = pg.PlotWidget()
+        # reward_plot.setBackground((50, 50, 50))
+        # reward_plot.getPlotItem().getAxis('left').setPen((200, 200, 200))
+        # reward_plot.getPlotItem().getAxis('bottom').setPen((200, 200, 200))
+        # reward_plot.getPlotItem().getAxis('left').setTextPen((200, 200, 200))
+        # reward_plot.getPlotItem().getAxis('bottom').setTextPen((200, 200, 200))
+        # reward_plot.showGrid(x=True, y=True, alpha=0.5)
+        # num_dates = mdates.date2num(reward_data['date'].tolist()).tolist()
+        # reward_plot.plot(num_dates, reward_data['balance'].tolist(), pen='g', symbol='o', symbolPen='g', symbolBrush=(50, 205, 50), symbolSize=10)
+        # reward_plot.getAxis('bottom').setTicks([[(num_dates[i], reward_data['date'].tolist()[i].strftime('%Y-%m-%d')) for i in range(len(reward_data['date'].tolist()))]])
 
         # *****************************
         # button to show charts or logs
@@ -266,8 +266,8 @@ class DashboardPage(QWidget):
 
     def handle_registration(self):
         self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You are not registered')
-        self.registration_cost = self.parent.subtensor.burn(netuid=25)
-        warning_msg = f"You are not registered to mine on Bitcurrent!\nRegistration cost for Bitcurrent is {self.registration_cost}\n Do you want to register?\nNote this amount will be deducted from your wallet."
+        self.registration_cost = self.parent.subtensor.recycle(netuid=25)
+        warning_msg = f"You are not registered to mine on Bitcurrent!\nRegistration cost is {self.registration_cost} TAO\n Do you want to register?\nNote this amount will be deducted from your wallet."
         reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
 
         if reply == QMessageBox.Yes:
@@ -284,7 +284,7 @@ class DashboardPage(QWidget):
         # check wallet balance
         if wallet_bal < self.registration_cost:
             self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You don\'t have sufficient funds')
-            warning_msg = f"You don't have sufficient funds in your account\nWould you like to add funds to you account?"
+            warning_msg = f"[red]Insufficient balance {wallet_bal} to register neuron.t\nWould you like to add funds to you account?"
             reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
 
             if reply == QMessageBox.Yes:
