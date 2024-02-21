@@ -13,11 +13,11 @@ class WalletDetailsTable(QWidget):
         self.parent = parent
         
         if not self.parent.hotkey:
-            hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path,'hotkeys'))]
+            hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path, 'hotkeys'))]
             hotkey_file = hotkey_files[-1]
             with open(f'{self.parent.wallet_path}/hotkeys/{hotkey_file}', 'r') as f:
                 my_wallet = json.load(f)
-            self.parent.hotkey= my_wallet['ss58Address']
+            self.parent.hotkey = my_wallet['ss58Address']
         
         if self.parent.hotkey in parent.subnet.hotkeys:
             uid = self.parent.subnet.hotkeys.index(self.parent.hotkey)
@@ -53,7 +53,6 @@ class WalletDetailsTable(QWidget):
             'dividends' : 0,
             'vtrust' : 0
         }
-        
 
         layout = QVBoxLayout()
         # bit_label
@@ -94,7 +93,6 @@ class WalletDetailsTable(QWidget):
         font1 = QFont("Georgia", 18, QFont.Bold)  
         header.setFont(font1)
 
-        
         font2 = QFont("Georgia", 14)
         for row, (key, value) in enumerate(self.parent.wallet_details.items()):
             key_item = QTableWidgetItem(str(key))
@@ -106,4 +104,3 @@ class WalletDetailsTable(QWidget):
             table_widget.setItem(row, 1, value_item)
         table_widget.setColumnWidth(0, 150)  # Set the width of the first column to 150 pixels
         table_widget.setColumnWidth(1, 350) 
-

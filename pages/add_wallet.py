@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout,QWidget, QLineEdit
 from PyQt5.QtGui import QFont, QTextOption
 from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment,QTimer, QDateTime
 
+
 class AddWalletPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
@@ -20,8 +21,6 @@ class AddWalletPage(QWidget):
         self.mining_process = None
         self.timer = QTimer(self) # Create timer
 
-    
-    
     def setupUI(self):
         self.layout = QVBoxLayout()
         self.layout.setSpacing(5)
@@ -39,7 +38,6 @@ class AddWalletPage(QWidget):
         header_group.setFixedHeight(30)   
         self.layout.addWidget(header_group)
 
-    
     def createWalletDetails(self):
         details_box = QGroupBox()
         details_layout = QVBoxLayout(details_box)
@@ -167,13 +165,6 @@ class AddWalletPage(QWidget):
             file_path = f'{self.parent.wallet_path}/hotkeys/default'
             ok = self.edit_file_name(file_path)
 
-
-    # def process_finished(self):
-    #     if self.mining_process is not None and self.mining_process.state() == QProcess.Running:
-    #         self.mining_process.terminate()
-    #         self.mining_process.waitForFinished()
-    #         self.mining_process = None
-
     def edit_file_name(self, file_path):
         try:
             with open(file_path, 'r') as f:
@@ -202,7 +193,6 @@ class AddWalletPage(QWidget):
             # seconds = self.elapsed_time % 60
             # self.timer_label.setText(f"{hours}h: {minutes}m: {seconds}s") 
 
-
     def handle_output(self):
         self.parent.output = self.mining_process.readAllStandardOutput().data().decode("utf-8")
         self.output_area.append(self.parent.output)   
@@ -210,24 +200,3 @@ class AddWalletPage(QWidget):
         if self.parent.output.lower().strip().endswith(":") or "password" in self.parent.output.lower():
             input_text =   self.confirmed_password.text + '\n'
             self.process.write(input_text.text().encode())
-         
-    
-    # def handle_output(self):
-    #     self.parent.output1 = self.mining_process.readAllStandardOutput().data().decode("utf-8")
-    #     self.output_area.append(self.parent.output1.replace('|',' ').replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').strip())
-    #     # QApplication.processEvents()    
-    #     if self.parent.output1.strip().endswith(":") or "password" in self.parent.output1:
-    #         print('prompted!!')
-    #         self.process.write(self.wallet_password_input.text().encode()+ b'\n')
-
-    # def handle_output(self):
-    #     self.parent.output = self.mining_process.readAllStandardOutput().data().decode("utf-8")
-    #     self.output_area.append(self.parent.output.replace('|',' ').replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').strip())   
-    #      # Check for common prompt indicators
-    #     if 'password' in self.parent.output:
-    #         input_text = self.confirmed_password.text() + '\n'
-    #         self.mining_process.write(self.input.text().encode())
-        # elif self.parent.output1.strip().endswith(":") or "password" in self.parent.output1:
-        #     self.input_line.hide()
-        #     self.input_button.hide()
-        #     self.output_area.setReadOnly(True)

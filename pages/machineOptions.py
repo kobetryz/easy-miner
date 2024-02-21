@@ -4,8 +4,9 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QRadioButton, QLabel, QStacke
 # from PyQt5.QtGui import QFont,QDesktopServices, QTextOption, QTextCursor
 from PyQt5.QtCore import Qt
 
+
 class MachineOptionPage(QWidget):
-    def __init__(self,parent):
+    def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
         
@@ -20,12 +21,11 @@ class MachineOptionPage(QWidget):
         self.createSelectionPool()
         self.createFooter()
         self.setLayout(self.layout)
-        
 
     def createHeader(self):
         header = QLabel("BitCurrent", self)
         header.setAlignment(Qt.AlignLeft)
-        self.parent.addDetail(self.layout, header, 20, bold = True)
+        self.parent.addDetail(self.layout, header, 20, bold=True)
  
     def createMachineOptions(self):
         option_group = QGroupBox("Select Machine to Use", self) 
@@ -79,7 +79,7 @@ class MachineOptionPage(QWidget):
         previous_button.clicked.connect(self.parent.show_start_page)
         self.parent.addDetail(h_layout, previous_button, 12)
         self.layout.addLayout(h_layout)
- 
+
     def showLocalOptions(self):
         # Placeholder for local machine options action
         print("Local machine selected")

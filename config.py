@@ -32,7 +32,6 @@ def search_directory(start_directory, target_directory):
     raise FileNotFoundError(f"Directory '{target_directory}' not found in or above '{start_directory}'")
 
 
-
 def configure_logger_data(log_file):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -45,24 +44,6 @@ def configure_logger_data(log_file):
 
     logger.addHandler(file_handler)
     return logger
-
-
-# def configure_logger_console(log_file):
-#     logger = logging.getLogger(__name__)
-#     console = logging.StreamHandler()
-#     console.setLevel(logging.INFO)
-
-#     # Create a file handler that logs to the file without rotation
-#     file_handler = logging.FileHandler(log_file)
-#     # You can configure a formatter if needed
-#     formatter = logging.Formatter(f'%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-#     file_handler.setFormatter(formatter)
-#     console.setFormatter(formatter)
-#     logging.getLogger("").addHandler(console)
-
-#     logger.addHandler(file_handler)
-#     return logger
-
 
 
 # should go to utils
@@ -112,10 +93,12 @@ def get_public_ip():
     public_ip = response.json()['origin']
     return public_ip
 
+
 def get_initial_num_pers():
     open_port = 8000
-    dht = DHT(host_maddrs=[f"/ip4/0.0.0.0/tcp/{open_port}"], start = True)
+    dht = DHT(host_maddrs=[f"/ip4/0.0.0.0/tcp/{open_port}"], start=True)
     return str(dht.get_visible_maddrs()[0])
+
 
 def get_tao_price():
     # Connect to taostats
@@ -126,19 +109,16 @@ def get_tao_price():
 
 
 # runpod
-
 def get_runpod_api_key():
     load_dotenv()  # Load environment variables from .env file
     return os.getenv("RUNPOD_API_KEY")
+
 
 def save_runpod_api_key(api_key):
     with open(".env", "a") as env_file:
         env_file.write(f"RUNPOD_API_KEY=\"{api_key}\"\n")
 
 
-
 INITIAL_PEERS = get_initial_num_pers()
 IP_ADDRESS = get_public_ip()
 tao_price = get_tao_price()
-
-

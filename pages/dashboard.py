@@ -1,8 +1,6 @@
 import os
 import re
 import json
-import pandas as pd
-import numpy as np
 import plotly.io as pio
 import plotly.graph_objects as go
 import bittensor as bt
@@ -10,13 +8,14 @@ import matplotlib.dates as mdates
 from datetime import datetime
 
 
-from PyQt5.QtWidgets import QPushButton, QVBoxLayout,QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox,QMessageBox, QTextEdit, QLineEdit
-from PyQt5.QtGui import QFont,QDesktopServices, QTextOption, QTextCursor
+from PyQt5.QtWidgets import  QVBoxLayout,QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox,QMessageBox, QTextEdit, QLineEdit
+from PyQt5.QtGui import QFont,QDesktopServices, QTextOption
 from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment, QTimer, QDateTime, QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 import pyqtgraph as pg
 
 from config import configure_logger_data, get_earnings_by_date_range, get_total_mining, INITIAL_PEERS, IP_ADDRESS, tao_price
+
 
 class DashboardPage(QWidget):
     def __init__(self, parent):
@@ -33,38 +32,7 @@ class DashboardPage(QWidget):
         self.data_logger.info(f' Activity: Mining Time - 0') 
         reward_data = get_earnings_by_date_range(f"{self.parent.wallet_path}/full_user_data.log")
         activity_data = get_total_mining(f"{self.parent.wallet_path}/full_user_data.log")
-        
-        # self.setStyleSheet("""
-        #     QPushButton {
-        #         font-size: 14px;
-        #         font-family: Georgia;
-        #     }
-        # """)
-    
-        # layout = QVBoxLayout()
-        # # Header Group with links
-        # header_group = QGroupBox("BitCurrent")
-        # header_group.setFont(QFont("Georgia", 18, QFont.Bold))
-        # header_group.setAlignment(Qt.AlignLeft) 
-        # header_layout = QHBoxLayout(header_group)
 
-        # home_button = QPushButton("Home")
-        # home_button.clicked.connect(self.parent.show_start_page)
-        # header_layout.addWidget(home_button)
-
-        # wallet_button = QPushButton("Wallet")
-        # wallet_button.clicked.connect(self.parent.show_wallet_page)
-        # header_layout.addWidget(wallet_button)
-
-        # self.mine_button = QPushButton("Start Mining")
-        # self.mine_button.clicked.connect(self.toggle_mining)
-        # header_layout.addWidget(self.mine_button)
-
-        # log_button = QPushButton("Log Out")
-        # log_button.clicked.connect(self.logout)
-        # header_layout.addWidget(log_button)
-        # layout.addWidget(header_group)
-            
         # SUMMARY STATS
         summary_group = QGroupBox(f'Welcome {self.parent.wallet_name}!!')
         summary_group.setFont(QFont("Georgia", 26, QFont.Bold, italic=True))
@@ -115,7 +83,7 @@ class DashboardPage(QWidget):
         timer_info_layout.addWidget(QLabel(" ", font= QFont('Georgia', 10)))
         
         # # Define Mining/Live time
-        self.mining_process = None #just removed
+        self.mining_process = None
         self.start_time = QDateTime.currentDateTime()
         self.timer.timeout.connect(self.update_timer)
         summary_layout.addWidget(timer_group)
@@ -184,7 +152,7 @@ class DashboardPage(QWidget):
     # ********
     # Methods
     # ********
-        
+
     def setupUI(self):
         self.layout = QVBoxLayout()
         self.createHeader()
@@ -214,7 +182,6 @@ class DashboardPage(QWidget):
         
         self.layout.addWidget(header_group)
 
-
     def get_user_hotkey_and_set_reg(self):
         """
         get users hotkey and checks if registered on subnet
@@ -235,14 +202,14 @@ class DashboardPage(QWidget):
             self.wallet_bal_tao = float(wallet_bal_tao)
             self.registered = False
 
-
     def toggle_mining(self):
         """changes start mining button to stop mining"""
+        print("toogler")
         if self.mining_process is None or self.mining_process.state() == QProcess.NotRunning:
             self.start_mining()
         else:
             self.stop_mining()
-    
+
     # changes chat to logs
     def toggle_view(self):
         if self.charts_group.isVisible():
@@ -266,7 +233,7 @@ class DashboardPage(QWidget):
 
     def handle_registration(self):
         self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You are not registered')
-        self.registration_cost = self.parent.subtensor.burn(netuid=25)
+        self.registration_cost = self.parent.subtensor.recycle(netuid=25)
         warning_msg = f"You are not registered to mine on Bitcurrent!\nRegistration cost for Bitcurrent is {self.registration_cost}\n Do you want to register?\nNote this amount will be deducted from your wallet."
         reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
 
@@ -318,9 +285,10 @@ class DashboardPage(QWidget):
         # Log balance and start of mining
         self.data_logger.info(f' Balance - Start: {self.wallet_bal_tao}')
         command = "python"
-        args = ["-u",
+        args = [
+            "-u",
             "DistributedTraining/neurons/miner.py",
-            "--netuid", "34",
+            "--netuid", "25",
             "--subtensor.network", "test",
             "--wallet.name", f"{self.parent.wallet_name}",
             "--wallet.hotkey", f"{self.parent.hotkey}",
@@ -328,17 +296,14 @@ class DashboardPage(QWidget):
             "--axon.port", "8000",
             "--dht.port", "8001",
             "--dht.announce_ip", f"{IP_ADDRESS}",
-            "--neuron.initial_peers", f"{INITIAL_PEERS}",
-            # "--neuron.wandb_project", "subnet25_test"
+            "--neuron.initial_peers", f"{INITIAL_PEERS}"
         ]
-        
+
         self.mining_process.start(command, args)
-        # self.mining_process.start("python", [script_path])
         if self.charts_group.isVisible():
             self.toggle_view()
         self.mining_process.finished.connect(self.stop_mining)
         self.mine_button.setText("Stop Mining")
-
 
     def stop_mining(self):
         if self.mining_process is not None and self.mining_process.state() == QProcess.Running:
@@ -363,11 +328,9 @@ class DashboardPage(QWidget):
             self.input_line.hide()
             self.input_button.hide()
             self.output_area.setReadOnly(True)
-        self.timer.stop()
         self.data_logger.info(f' Balance - Stop: {self.wallet_bal_tao}') 
         self.data_logger.info(f' Activity: Stop Mining')
-        self.data_logger.info(f' Activity: Mining Time - {self.elapsed_time}') 
-        self.mine_button.setText("Start Mining")
+        self.data_logger.info(f' Activity: Mining Time - {self.elapsed_time}')
 
         cpu_usage_match = re.search(r'CPU Usage: ([\d.]+)%', self.parent.output)
         # time_taken_cpu_match = re.search(r'Time taken on CPU: ([\d.]+) seconds', output)
@@ -376,21 +339,6 @@ class DashboardPage(QWidget):
             self.data_logger.info(f' Activity - CPU Usage%: {cpu_usage}')
             # time_taken_cpu = float(time_taken_cpu_match.group(1))     
         # print(self.parent.output)
-
-    # def display_errors(self, error_message):
-    #     error_traceback = traceback.format_exc()
-    #     current_font = self.output_area.font()
-    #     current_wrap_mode = self.output_area.wordWrapMode()
-    #     # Set monospace font and turn off word wrap for better error display
-    #     self.output_area.setFont(QFont("Courier New"))
-    #     self.output_area.setWordWrapMode(QTextOption.NoWrap)
-    #     # Append the error traceback as plain text
-    #     self.output_area.append(error_traceback) 
-    #     # Restore the original font and word wrap mode
-    #     self.output_area.setFont(current_font)
-    #     self.output_area.setWordWrapMode(current_wrap_mode)
-    #     # Ensure the latest output/error is visible in the QTextEdit
-    #     self.output_area.moveCursor(QTextCursor.End)
 
     def update_timer(self):
         # This function is called every second to update the timer display
@@ -409,8 +357,7 @@ class DashboardPage(QWidget):
         self.input_line.clear()
         self.input_line.hide()  # Hide the input line after sending input
         self.input_button.hide()
-         
-      
+
     def logout(self):
         warning_msg = f"Are you sure you want to log out?"
         reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
@@ -421,7 +368,6 @@ class DashboardPage(QWidget):
             self.parent.wallet_name = None
             self.parent.wallet_path = None
             self.parent.show_start_page()
-
 
     def plot_graph(self, x, y):
         # Create a QWebEngineView to display the Plotly chart

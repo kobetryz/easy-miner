@@ -1,10 +1,9 @@
-import bittensor as bt
-
-from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout, QWidget, 
+from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout, QWidget,
                              QMessageBox, QHBoxLayout, QGroupBox)
 
 from PyQt5.QtGui import QFont,QDesktopServices
 from PyQt5.QtCore import QUrl
+
 
 class StartPage(QWidget):
     def __init__(self, parent):

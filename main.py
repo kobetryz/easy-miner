@@ -7,17 +7,14 @@ import os
 import sys
 
 
-import bittensor as bt
+from bittensor import subtensor, wallet
 from config import search_directory, get_runpod_api_key, save_runpod_api_key
 
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout,
-    QWidget, QLineEdit, QTextEdit, QMessageBox, QStackedWidget, QHBoxLayout, QFileDialog, 
-    QGroupBox, QInputDialog, QSpacerItem, QSizePolicy
+    QApplication, QMainWindow,QMessageBox, QStackedWidget, QInputDialog
 )
 
-from PyQt5.QtGui import QPixmap, QFont, QPalette, QBrush, QColor, QFontDatabase, QDesktopServices
-from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtGui import QFont
 
 from pages.startpage import StartPage
 from pages.add_wallet import AddWalletPage
@@ -27,11 +24,10 @@ from pages.machineOptions import MachineOptionPage
 from pages.runpodSetup import RunpodSetupPage
 
 
-
 class MiningWizard(QMainWindow):
     def __init__(self):
         super().__init__()
-        # self.initialize_subtensor()
+        self.initialize_subtensor()
         self.setup_ui()
         self.initialize_pages()
 
@@ -41,7 +37,7 @@ class MiningWizard(QMainWindow):
 
     # methods to open pages
     def initialize_subtensor(self):
-        self.subtensor = bt.subtensor(network='test')
+        self.subtensor = subtensor(network='test')
         self.subnet = self.subtensor.metagraph(netuid=25)
 
     def setup_ui(self):
@@ -59,7 +55,6 @@ class MiningWizard(QMainWindow):
         with open("style.qss", "r") as file:
             self.setStyleSheet(file.read())
 
-  
     def show_page(self, page_class):
         if hasattr(self, page_class.__name__.lower()):
             page = getattr(self, page_class.__name__.lower())
@@ -102,7 +97,6 @@ class MiningWizard(QMainWindow):
         else:
             self.show_page(RunpodSetupPage)
 
-        
     def addDetail(self, temp_layout, widget, fontsize, bold = False):
         fontWeight = QFont.Bold if bold else QFont.Normal 
         widget.setFont(QFont("Georgia", fontsize, fontWeight))
@@ -114,8 +108,7 @@ class MiningWizard(QMainWindow):
             if not attr_name.startswith('__'):
                 attr_value = getattr(self, attr_name)
                 print(f"{attr_name}: {attr_value}")
- 
-       
+
     def prompt_for_wallet_name(self):
         self.wallet_name, ok = QInputDialog.getText(self, "Wallet Name", "Please confirm wallet name:")
         while True:
@@ -139,9 +132,6 @@ class MiningWizard(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    # app.setStyleSheet("QMainWindow::separator { background: rgba(0, 0, 0, 0.3); width: 1px; }")
     window = MiningWizard()
     window.show()
     sys.exit(app.exec_())
-
-

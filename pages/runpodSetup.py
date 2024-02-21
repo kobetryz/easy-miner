@@ -1,12 +1,5 @@
-import json
-import os
-import bittensor as bt
-
-from runpod_api.runpod import GPU_DICT,GPU_LIST_TO_USE
-from PyQt5.QtWidgets import (QInputDialog, QPushButton, QComboBox, QTableWidgetItem, 
-                             QVBoxLayout,QHBoxLayout, QWidget, QGroupBox, QLabel,QSpacerItem, QRadioButton,
-                             QTextEdit,QSizePolicy)
-from PyQt5.QtGui import QFont
+from runpod_api.runpod import GPU_DICT, GPU_LIST_TO_USE
+from PyQt5.QtWidgets import QPushButton, QComboBox, QVBoxLayout, QHBoxLayout, QWidget, QGroupBox, QLabel, QRadioButton
 from PyQt5.QtCore import Qt
 
 
@@ -17,8 +10,6 @@ class RunpodSetupPage(QWidget):
         self.setup_ui()
         self.setLayout(self.layout)
 
-
-    
     def setup_ui(self):
         self.layout = QVBoxLayout()
         self.layout.setSpacing(5)
@@ -28,8 +19,6 @@ class RunpodSetupPage(QWidget):
         self.create_gpu_options()        
         self.layout.addStretch()  # Add a stretchable space that expands to fill any remaining space at the end of the layout
 
-        
-  
     def create_header(self):
         header = QLabel("BitCurrent", self)
         header.setAlignment(Qt.AlignLeft| Qt.AlignTop)
@@ -87,8 +76,7 @@ class RunpodSetupPage(QWidget):
         # Add the specs to the specs_layout
         for label, value in labels_values_to_use.items():
             self.parent.addDetail(self.specs_layout, QLabel(f"{label}: {temp_dict.get(value, 'N/A')}"), 14)
-    
-    
+
     def create_cloud_option(self):
         cloud_layout = QHBoxLayout()
         self.community_cloud_radio = QRadioButton("Community Cloud")
@@ -99,7 +87,6 @@ class RunpodSetupPage(QWidget):
         self.layout.addLayout(cloud_layout)  # Add this layout to the main layout
         # Set Community Cloud as the default selected option
         self.community_cloud_radio.setChecked(True)
-
 
     def on_deploy_clicked(self):
         # Determine which cloud option is selected

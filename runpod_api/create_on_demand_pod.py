@@ -17,7 +17,6 @@ PORTS = '22/tcp,3000/http,3010/http,3020/http,6006/http,8000/http,8888/http'
 # PORTS = '22/tcp,3000/tcp,8010/tcp,8020/tcp,3010/http,3020/http,6006/http,8888/http'
 # PORTS = '22/tcp,8888/http,3000/http,5000/http,5005/http'
 
-
 def create_pod():
     pod_config = f"""
         countryCode: "{COUNTRY_CODE}",

@@ -6,7 +6,8 @@ def create_wallet(wallet_name, wallet_path):
     wallet = bt.wallet(name=wallet_name, path=wallet_path)
     # wallet.create_if_non_existent()
     wallet.create_new_hotkey(use_password=False)
-    wallet.create_new_coldkey(use_password = False)
+    wallet.create_new_coldkey(use_password=False)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create a new Bittensor wallet.')

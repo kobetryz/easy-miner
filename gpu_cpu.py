@@ -56,9 +56,11 @@ import torch
 # cpu_gpu = configure_logger('test_logging.log')
 matrix = 5000
 
+
 def get_cpu_usage():
     cpu_usage = psutil.cpu_percent(interval=1)
     return f"CPU Usage: {cpu_usage}%"
+
 
 def get_gpu_usage():
     try:
@@ -82,11 +84,13 @@ def get_gpu_usage():
     except Exception as e:
         return f"Error retrieving GPU usage: {e}"
 
+
 def matrix_multiply_cpu():
     # Perform a simple matrix multiplication on CPU
     matrix_a = torch.rand((matrix, matrix))
     matrix_b = torch.rand((matrix, matrix))
     result = torch.matmul(matrix_a, matrix_b)
+
 
 def matrix_multiply_gpu():
     try:
@@ -96,6 +100,7 @@ def matrix_multiply_gpu():
         result = torch.matmul(matrix_a, matrix_b)
     except Exception as e:
         return f"Error performing GPU matrix multiplication: {e}"
+
 
 if __name__ == "__main__":
     # Measure CPU usage
