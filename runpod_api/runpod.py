@@ -8,7 +8,6 @@ class API(object):
     def __init__(self):
         load_dotenv()  # Load environment variables from .env file
         self.API_KEY = os.getenv("RUNPOD_API_KEY")
-       
 
     def _run_query(self, payload, auth_required=False):
         url = 'https://api.runpod.io/graphql'
@@ -417,7 +416,7 @@ class API(object):
     # https://docs.runpod.io/docs/create-pod
     def create_on_demand_pod(self, pod_config):
         return self._run_query({
-            "query": """
+            "query": f"""
                 mutation {{
                     podFindAndDeployOnDemand(input: {{ {pod_config} }}) {{
                         containerDiskInGb
@@ -711,7 +710,6 @@ def get_runpod_api_key():
 api = API()
 response = api.get_gpu_types()
 GPU_DICT = response.json()['data']['gpuTypes']
-GPU_DICT = {gpu['displayName']:gpu for gpu in GPU_DICT}
+GPU_DICT = {gpu['displayName']: gpu for gpu in GPU_DICT}
 
-GPU_LIST_TO_USE = ['RTX 3090','RTX A4000', 'RTX 4090', 'RTX A4500' ,'RTX A5000']  
-print(GPU_LIST_TO_USE)
+GPU_LIST_TO_USE = ['RTX 3090', 'RTX A4000', 'RTX 4090', 'RTX A4500', 'RTX A5000']

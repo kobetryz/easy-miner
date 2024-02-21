@@ -16,16 +16,16 @@ class RunpodSetupPage(QWidget):
         self.layout.setContentsMargins(10, 10, 10, 10)
         # self.layout.addSpacerItem(QSpacerItem(10, 20, QSizePolicy.Minimum, QSizePolicy.Expanding))
         self.create_header()
-        self.create_gpu_options()        
+        self.create_gpu_options()
         self.layout.addStretch()  # Add a stretchable space that expands to fill any remaining space at the end of the layout
 
     def create_header(self):
         header = QLabel("BitCurrent", self)
-        header.setAlignment(Qt.AlignLeft| Qt.AlignTop)
-        self.parent.addDetail(self.layout, header, 20, bold = True)
+        header.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.parent.addDetail(self.layout, header, 20, bold=True)
 
     def create_gpu_options(self):
-        option_group = QGroupBox("Select GPU", self) 
+        option_group = QGroupBox("Select GPU", self)
         options_layout = QVBoxLayout(option_group)
         options_layout.setAlignment(Qt.AlignTop)
         options_layout.setSpacing(10)
@@ -47,13 +47,13 @@ class RunpodSetupPage(QWidget):
         # Connect the signal to update the GPU specs when a different GPU is selected
         self.gpu_drop_down.currentIndexChanged.connect(self.update_gpu_specs)
 
-        self.parent.addDetail(self.layout, option_group, 20, bold = True)
+        self.parent.addDetail(self.layout, option_group, 20, bold=True)
         self.update_gpu_specs()  # Display the initial GPU specs
         self.create_cloud_option()
 
         self.deploy = QPushButton('Deploy')
         self.deploy.setMaximumWidth(350)
-        self.parent.addDetail(self.layout, self.deploy, 16, bold = True)
+        self.parent.addDetail(self.layout, self.deploy, 16, bold=True)
 
     def update_gpu_specs(self):
         # Clear the previous specs
@@ -93,4 +93,3 @@ class RunpodSetupPage(QWidget):
         cloud_option = "Community" if self.community_cloud_radio.isChecked() else "Secure"
         print(f"Deploying on {cloud_option} Cloud")  # Example action, replace with your deployment logic
         # Your additional logic for deployment based on the selected cloud option
-

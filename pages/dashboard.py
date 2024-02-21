@@ -1,20 +1,22 @@
 import os
 import re
 import json
+
 import plotly.io as pio
 import plotly.graph_objects as go
 import bittensor as bt
 import matplotlib.dates as mdates
 from datetime import datetime
 
-
-from PyQt5.QtWidgets import  QVBoxLayout,QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox,QMessageBox, QTextEdit, QLineEdit
-from PyQt5.QtGui import QFont,QDesktopServices, QTextOption
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox, QMessageBox, QTextEdit, \
+    QLineEdit
+from PyQt5.QtGui import QFont, QDesktopServices, QTextOption
 from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment, QTimer, QDateTime, QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 import pyqtgraph as pg
 
-from config import configure_logger_data, get_earnings_by_date_range, get_total_mining, INITIAL_PEERS, IP_ADDRESS, tao_price
+from config import configure_logger_data, get_earnings_by_date_range, get_total_mining, INITIAL_PEERS, IP_ADDRESS, \
+    tao_price
 
 
 class DashboardPage(QWidget):
@@ -23,36 +25,36 @@ class DashboardPage(QWidget):
         self.parent = parent
         # self.addDetail = self.parent.addDetail
         self.data_logger = configure_logger_data(f"{self.parent.wallet_path}/full_user_data.log")
-        
+
         self.get_user_hotkey_and_set_reg()
         self.setupUI()
-        
+
         self.data_logger.info(f' Balance - Start: {self.wallet_bal_tao}')
         self.data_logger.info('Activity: Log in')
-        self.data_logger.info(f' Activity: Mining Time - 0') 
+        self.data_logger.info(f' Activity: Mining Time - 0')
         reward_data = get_earnings_by_date_range(f"{self.parent.wallet_path}/full_user_data.log")
         activity_data = get_total_mining(f"{self.parent.wallet_path}/full_user_data.log")
 
         # SUMMARY STATS
         summary_group = QGroupBox(f'Welcome {self.parent.wallet_name}!!')
         summary_group.setFont(QFont("Georgia", 26, QFont.Bold, italic=True))
-        summary_group.setAlignment(Qt.AlignLeft) 
+        summary_group.setAlignment(Qt.AlignLeft)
         summary_layout = QHBoxLayout(summary_group)
 
         wallet_bal_dol = round(self.wallet_bal_tao * tao_price, 2)
         earnings_group = QGroupBox()
         earnings_layout = QVBoxLayout(earnings_group)
-        earnings_layout.addWidget(QLabel("Wallet Balance",font=QFont('Georgia', 10)))
-        earnings_layout.addWidget(QLabel(f"${wallet_bal_dol}", font= QFont('Georgia', 20, QFont.Bold)))
-        earnings_layout.addWidget(QLabel(f"TAO {self.wallet_bal_tao}", font= QFont('Georgia', 10))) 
+        earnings_layout.addWidget(QLabel("Wallet Balance", font=QFont('Georgia', 10)))
+        earnings_layout.addWidget(QLabel(f"${wallet_bal_dol}", font=QFont('Georgia', 20, QFont.Bold)))
+        earnings_layout.addWidget(QLabel(f"TAO {self.wallet_bal_tao}", font=QFont('Georgia', 10)))
         summary_layout.addWidget(earnings_group)
-       
+
         # Mining infomation
         mining_info_group = QGroupBox()
         mining_info_layout = QVBoxLayout(mining_info_group)
         mining_info_layout.addWidget(QLabel("Average Mining Time", font=QFont('Georgia', 10)))
-        mining_info_layout.addWidget(QLabel("0.0HRS", font= QFont('Georgia', 20, QFont.Bold)))
-        mining_info_layout.addWidget(QLabel(" ", font= QFont('Georgia', 10)))
+        mining_info_layout.addWidget(QLabel("0.0HRS", font=QFont('Georgia', 20, QFont.Bold)))
+        mining_info_layout.addWidget(QLabel(" ", font=QFont('Georgia', 10)))
         summary_layout.addWidget(mining_info_group)
         # layout.addWidget(summary_group)
 
@@ -60,30 +62,31 @@ class DashboardPage(QWidget):
         cpu_info_group = QGroupBox()
         cpu_info_layout = QVBoxLayout(cpu_info_group)
         cpu_info_layout.addWidget(QLabel("CPU Usage", font=QFont('Georgia', 10)))
-        cpu_info_layout.addWidget(QLabel("0.0%", font= QFont('Georgia', 20, QFont.Bold)))
-        cpu_info_layout.addWidget(QLabel(" ", font= QFont('Georgia', 10)))        
+        cpu_info_layout.addWidget(QLabel("0.0%", font=QFont('Georgia', 20, QFont.Bold)))
+        cpu_info_layout.addWidget(QLabel(" ", font=QFont('Georgia', 10)))
         summary_layout.addWidget(cpu_info_group)
 
         # GPU USAGE
         gpu_info_group = QGroupBox()
         gpu_info_layout = QVBoxLayout(gpu_info_group)
         gpu_info_layout.addWidget(QLabel("GPU Usage", font=QFont('Georgia', 10)))
-        gpu_info_layout.addWidget(QLabel("0.0%", font= QFont('Georgia', 20, QFont.Bold)))
-        gpu_info_layout.addWidget(QLabel(" ", font= QFont('Georgia', 10)))
+        gpu_info_layout.addWidget(QLabel("0.0%", font=QFont('Georgia', 20, QFont.Bold)))
+        gpu_info_layout.addWidget(QLabel(" ", font=QFont('Georgia', 10)))
         summary_layout.addWidget(gpu_info_group)
-        
+
         # Timer
-        self.timer = QTimer(self) # Create timer 
+        self.timer = QTimer(self)  # Create timer
         timer_group = QGroupBox()
         timer_info_layout = QVBoxLayout(timer_group)
         timer_info_layout.addWidget(QLabel("Live Mining Time", font=QFont('Georgia', 10)))
         self.timer_label = QLabel("0h: 0m: 0s", self)
-        self.timer_label.setFont(QFont("Georgia", 20, QFont.Bold)) 
+        self.timer_label.setFont(QFont("Georgia", 20, QFont.Bold))
         timer_info_layout.addWidget(self.timer_label)
-        timer_info_layout.addWidget(QLabel(" ", font= QFont('Georgia', 10)))
-        
+        timer_info_layout.addWidget(QLabel(" ", font=QFont('Georgia', 10)))
+
         # # Define Mining/Live time
         self.mining_process = None
+        self.update_script_process = None
         self.start_time = QDateTime.currentDateTime()
         self.timer.timeout.connect(self.update_timer)
         summary_layout.addWidget(timer_group)
@@ -99,8 +102,11 @@ class DashboardPage(QWidget):
         activity_plot.showGrid(x=True, y=True, alpha=0.5)
         # activity_plot.plot([0, 1, 2, 3,5], [0, 5, 3, 8, 2], pen='r', symbol='o', symbolPen='r', symbolBrush=(255, 0, 0), symbolSize=10)
         num_dates = mdates.date2num(activity_data['date'].tolist()).tolist()
-        activity_plot.plot(num_dates, activity_data['time(s)'].tolist(), pen='g', symbol='o', symbolPen='r', symbolBrush=(50, 205, 50), symbolSize=10)
-        activity_plot.getAxis('bottom').setTicks([[(num_dates[i], activity_data['date'].tolist()[i].strftime('%Y-%m-%d')) for i in range(len(activity_data['date'].tolist()))]])
+        activity_plot.plot(num_dates, activity_data['time(s)'].tolist(), pen='g', symbol='o', symbolPen='r',
+                           symbolBrush=(50, 205, 50), symbolSize=10)
+        activity_plot.getAxis('bottom').setTicks([[(
+                                                   num_dates[i], activity_data['date'].tolist()[i].strftime('%Y-%m-%d'))
+                                                   for i in range(len(activity_data['date'].tolist()))]])
 
         # Reward History Chart
         reward_plot = pg.PlotWidget()
@@ -111,8 +117,10 @@ class DashboardPage(QWidget):
         reward_plot.getPlotItem().getAxis('bottom').setTextPen((200, 200, 200))
         reward_plot.showGrid(x=True, y=True, alpha=0.5)
         num_dates = mdates.date2num(reward_data['date'].tolist()).tolist()
-        reward_plot.plot(num_dates, reward_data['balance'].tolist(), pen='g', symbol='o', symbolPen='g', symbolBrush=(50, 205, 50), symbolSize=10)
-        reward_plot.getAxis('bottom').setTicks([[(num_dates[i], reward_data['date'].tolist()[i].strftime('%Y-%m-%d')) for i in range(len(reward_data['date'].tolist()))]])
+        reward_plot.plot(num_dates, reward_data['balance'].tolist(), pen='g', symbol='o', symbolPen='g',
+                         symbolBrush=(50, 205, 50), symbolSize=10)
+        reward_plot.getAxis('bottom').setTicks([[(num_dates[i], reward_data['date'].tolist()[i].strftime('%Y-%m-%d'))
+                                                 for i in range(len(reward_data['date'].tolist()))]])
 
         # *****************************
         # button to show charts or logs
@@ -120,7 +128,7 @@ class DashboardPage(QWidget):
         self.toggle_button = QPushButton("Show Logs")
         self.toggle_button.clicked.connect(self.toggle_view)
         self.layout.addWidget(self.toggle_button)
-        
+
         self.output_area = QTextEdit(self)
         self.output_area.setWordWrapMode(QTextOption.NoWrap)
         self.output_area.setReadOnly(False)  # Make it read-only
@@ -148,7 +156,7 @@ class DashboardPage(QWidget):
         charts_layout.addWidget(self.webEngineView)
         self.layout.addWidget(self.charts_group)
         self.setLayout(self.layout)
-     
+
     # ********
     # Methods
     # ********
@@ -173,13 +181,13 @@ class DashboardPage(QWidget):
         wallet_button.clicked.connect(self.parent.show_wallet_page)
 
         self.mine_button = QPushButton("Start Mining")
-        self.parent.addDetail(header_layout,  self.mine_button, 14)
+        self.parent.addDetail(header_layout, self.mine_button, 14)
         self.mine_button.clicked.connect(self.toggle_mining)
 
         log_button = QPushButton("Log Out")
         self.parent.addDetail(header_layout, log_button, 14)
         log_button.clicked.connect(self.logout)
-        
+
         self.layout.addWidget(header_group)
 
     def get_user_hotkey_and_set_reg(self):
@@ -187,18 +195,18 @@ class DashboardPage(QWidget):
         get users hotkey and checks if registered on subnet
         """
         if not hasattr(self.parent, 'hotkey'):
-            hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path,'hotkeys'))]
+            hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path, 'hotkeys'))]
             hotkey_file = hotkey_files[-1]
             with open(f'{self.parent.wallet_path}/hotkeys/{hotkey_file}', 'r') as f:
                 my_wallet = json.load(f)
-            self.parent.hotkey= my_wallet['ss58Address']
+            self.parent.hotkey = my_wallet['ss58Address']
 
         if self.parent.hotkey in self.parent.subnet.hotkeys:
             uid = self.parent.subnet.hotkeys.index(self.parent.hotkey)
             self.wallet_bal_tao = self.parent.subnet.stake.tolist()[uid]
             self.registered = True
         else:
-            wallet_bal_tao = str(self.parent.subtensor.get_balance(address = self.parent.hotkey))[1:]
+            wallet_bal_tao = str(self.parent.subtensor.get_balance(address=self.parent.hotkey))[1:]
             self.wallet_bal_tao = float(wallet_bal_tao)
             self.registered = False
 
@@ -221,15 +229,15 @@ class DashboardPage(QWidget):
             self.toggle_button.setText("Show Logs")
 
     def start_mining(self):
-        print(self.parent.wallet_name, os.path.dirname(self.parent.wallet_path))
         self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Checking for registration')
         while not self.registered:
             response = self.handle_registration()
             if response == None:
                 break
         if self.registered:
-            self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You are registered and ready to mine')
-            self.run_mining_script()
+            self.output_area.append(
+                f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You are registered and ready to mine')
+            self.update_miner()
 
     def handle_registration(self):
         self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You are not registered')
@@ -243,14 +251,14 @@ class DashboardPage(QWidget):
                 self.registered = True
             else:
                 self.registered = False
-                return None
 
     def register_on_subnet(self):
         self.wallet = bt.wallet(name=self.parent.wallet_name, path=os.path.dirname(self.parent.wallet_path))
         wallet_bal = self.parent.subtensor.get_balance(address=self.parent.hotkey)
         # check wallet balance
         if wallet_bal < self.registration_cost:
-            self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You don\'t have sufficient funds')
+            self.output_area.append(
+                f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You don\'t have sufficient funds')
             warning_msg = f"You don't have sufficient funds in your account\nWould you like to add funds to you account?"
             reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
 
@@ -267,6 +275,20 @@ class DashboardPage(QWidget):
                 info_msg = f"Congratulations!\nRegistration Successful!!\nYou are ready to mine"
                 final_reply = QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
                 return final_reply
+
+    def update_miner(self):
+        if self.charts_group.isVisible():
+            self.toggle_view()
+
+        self.update_script_process = QProcess(self)
+        self.update_script_process.setProcessChannelMode(QProcess.MergedChannels)
+        self.update_script_process.readyReadStandardOutput.connect(self.handle_update_script_output)
+        self.update_script_process.start('sh', ['update_miner.sh'])
+        self.update_script_process.finished.connect(self.run_mining_script)
+
+    def handle_update_script_output(self):
+        output = self.update_script_process.readAllStandardOutput().data().decode('utf-8')
+        self.output_area.append(output)
 
     def run_mining_script(self):
         self.mining_process = QProcess(self)
@@ -309,15 +331,18 @@ class DashboardPage(QWidget):
         if self.mining_process is not None and self.mining_process.state() == QProcess.Running:
             self.mining_process.terminate()
             self.timer.stop()
-            self.data_logger.info(f' Activity: Mining Time - {self.elapsed_time}') 
+            self.data_logger.info(f' Activity: Mining Time - {self.elapsed_time}')
             self.mining_process.waitForFinished()
             self.mining_process = None
             self.mine_button.setText("Start Mining")
+            self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Stop Mining')
 
     def handle_output(self):
         self.parent.output = self.mining_process.readAllStandardOutput().data().decode("utf-8")
-        self.output_area.append(self.parent.output.replace('|',' ').replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').strip())   
-         # Check for common prompt indicators
+        self.output_area.append(
+            self.parent.output.replace('|', ' ').replace('&', '&amp;').replace('<', '&lt;').replace('>',
+                                                                                                    '&gt;').strip())
+        # Check for common prompt indicators
         if self.parent.output.strip().endswith(":") or "?" in self.parent.output:
             self.input_line.show()
             self.input_line.setFocus()
@@ -328,13 +353,13 @@ class DashboardPage(QWidget):
             self.input_line.hide()
             self.input_button.hide()
             self.output_area.setReadOnly(True)
-        self.data_logger.info(f' Balance - Stop: {self.wallet_bal_tao}') 
+        self.data_logger.info(f' Balance - Stop: {self.wallet_bal_tao}')
         self.data_logger.info(f' Activity: Stop Mining')
         self.data_logger.info(f' Activity: Mining Time - {self.elapsed_time}')
 
         cpu_usage_match = re.search(r'CPU Usage: ([\d.]+)%', self.parent.output)
         # time_taken_cpu_match = re.search(r'Time taken on CPU: ([\d.]+) seconds', output)
-        if cpu_usage_match: # and time_taken_cpu_match:
+        if cpu_usage_match:  # and time_taken_cpu_match:
             cpu_usage = float(cpu_usage_match.group(1))
             self.data_logger.info(f' Activity - CPU Usage%: {cpu_usage}')
             # time_taken_cpu = float(time_taken_cpu_match.group(1))     
@@ -348,7 +373,7 @@ class DashboardPage(QWidget):
             hours = self.elapsed_time // 3600
             minutes = (self.elapsed_time % 3600) // 60
             seconds = self.elapsed_time % 60
-            self.timer_label.setText(f"{hours}h: {minutes}m: {seconds}s") 
+            self.timer_label.setText(f"{hours}h: {minutes}m: {seconds}s")
             # print(self.timer_label.text())
 
     def send_input(self):
@@ -373,10 +398,11 @@ class DashboardPage(QWidget):
         # Create a QWebEngineView to display the Plotly chart
         self.webEngineView = QWebEngineView()
         # Sample data generation for demonstration
-        dates = x #pd.date_range(start="2023-01-01", periods=100, freq='D')
+        dates = x  # pd.date_range(start="2023-01-01", periods=100, freq='D')
         earnings = y  # Cumulative earnings
 
-        fig = go.Figure(data=[go.Scatter(x=dates, y=earnings, mode='lines+markers', name='Cumulative Earnings',line=dict(color='Green', width=2),marker=dict(color='green', size=3))])
+        fig = go.Figure(data=[go.Scatter(x=dates, y=earnings, mode='lines+markers', name='Cumulative Earnings',
+                                         line=dict(color='Green', width=2), marker=dict(color='green', size=3))])
         # fig.update_layout(title='Cumulative Earnings Over Time', xaxis_title='Time', yaxis_title='Cumulative Earnings')
 
         fig.update_layout(
