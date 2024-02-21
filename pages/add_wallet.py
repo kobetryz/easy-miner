@@ -1,15 +1,12 @@
 import os
 import json
-import sys
-import time
-import bittensor as bt
 
 from datetime import datetime
-from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout,QWidget, QLineEdit, 
-                             QMessageBox, QHBoxLayout, QFileDialog, QGroupBox, QSpacerItem, 
-                             QTextEdit,QSizePolicy)
+from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout, QWidget, QLineEdit,
+                             QMessageBox, QHBoxLayout, QFileDialog, QGroupBox, QSpacerItem,
+                             QTextEdit, QSizePolicy)
 from PyQt5.QtGui import QFont, QTextOption
-from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment,QTimer, QDateTime
+from PyQt5.QtCore import QProcess, QProcessEnvironment, QTimer, QDateTime
 
 
 class AddWalletPage(QWidget):
@@ -48,22 +45,7 @@ class AddWalletPage(QWidget):
         # add space for wallet name
         self.wallet_name_input = QLineEdit(self)
         self.addDetail(details_layout, self.wallet_name_input, 14)
-
-        # Path
-        wallet_path_label = QLabel("Wallet Path", self)
-        self.addDetail(details_layout, wallet_path_label, 20, bold = True) 
-        
-        self.wallet_path_input = QLineEdit(self)
-        self.wallet_path_input.setPlaceholderText("Select wallet path")
-        # self.wallet_path_input.setText(os.path.join(os.path.expanduser('~'), '.bittensor/wallets'))
-        self.wallet_path_input.setText(os.getcwd())
-
-        self.addDetail(details_layout, self.wallet_path_input, 14)
-        
-        self.browse_button = QPushButton("Browse", self)
-        self.browse_button.clicked.connect(self.browse_wallet_path)
-        self.addDetail(details_layout, self.browse_button , 14)
-
+        # Password
         wallet_password_label = QLabel("Wallet Password", self)
         self.addDetail(details_layout, wallet_password_label, 20, bold = True) 
 
@@ -130,7 +112,7 @@ class AddWalletPage(QWidget):
         # self.output_area.show()   
         self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Checking your password')
         self.wallet_name = self.wallet_name_input.text()
-        self.wallet_path = self.wallet_path_input.text()
+        self.wallet_path = os.path.join(os.path.expanduser('~'), '.bittensor/wallets')
         # self.wallet_password = self.wallet_password_input.text()
         # if self.output_area.isVisible():
         self.create_wallet()    

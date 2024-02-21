@@ -6,14 +6,9 @@
 import os
 import sys
 
-
-from bittensor import subtensor, wallet
+from bittensor import subtensor
 from config import search_directory, get_runpod_api_key, save_runpod_api_key
-
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow,QMessageBox, QStackedWidget, QInputDialog
-)
-
+from PyQt5.QtWidgets import QApplication, QMainWindow,QMessageBox, QStackedWidget, QInputDialog
 from PyQt5.QtGui import QFont
 
 from pages.startpage import StartPage

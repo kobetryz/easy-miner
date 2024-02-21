@@ -204,7 +204,6 @@ class DashboardPage(QWidget):
 
     def toggle_mining(self):
         """changes start mining button to stop mining"""
-        print("toogler")
         if self.mining_process is None or self.mining_process.state() == QProcess.NotRunning:
             self.start_mining()
         else:
@@ -222,6 +221,7 @@ class DashboardPage(QWidget):
             self.toggle_button.setText("Show Logs")
 
     def start_mining(self):
+        print(self.parent.wallet_name, os.path.dirname(self.parent.wallet_path))
         self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Checking for registration')
         while not self.registered:
             response = self.handle_registration()
