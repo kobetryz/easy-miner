@@ -1,6 +1,8 @@
 import os
 import re
 import json
+from enum import Enum
+from functools import partial
 
 import plotly.io as pio
 import plotly.graph_objects as go
@@ -17,6 +19,11 @@ import pyqtgraph as pg
 
 from config import configure_logger_data, get_earnings_by_date_range, get_total_mining, INITIAL_PEERS, IP_ADDRESS, \
     tao_price
+
+
+class MinerType(Enum):
+    MINER = 'miner'
+    VALIDATOR = 'validator'
 
 
 class DashboardPage(QWidget):
@@ -235,9 +242,28 @@ class DashboardPage(QWidget):
             if response == None:
                 break
         if self.registered:
+            miner_type = self.choose_miner_type()
             self.output_area.append(
                 f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You are registered and ready to mine')
-            self.update_miner()
+            self.update_miner(miner_type)
+
+    def choose_miner_type(self):
+        message_box = QMessageBox(self)
+        message_box.setStandardButtons(QMessageBox.NoButton)
+        message_box.setText("Do you want to launch miner or validator")
+        message_box.setWindowTitle("Choose what to do")
+
+        miner_button = QPushButton("Miner", message_box)
+        message_box.addButton(miner_button, QMessageBox.ActionRole)
+
+        validator_button = QPushButton("Validator", message_box)
+        message_box.addButton(validator_button, QMessageBox.ActionRole)
+
+        message_box.exec()
+        if message_box.clickedButton() == miner_button:
+            return MinerType.MINER
+        elif message_box.clickedButton() == validator_button:
+            return MinerType.VALIDATOR
 
     def handle_registration(self):
         self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You are not registered')
@@ -276,7 +302,7 @@ class DashboardPage(QWidget):
                 final_reply = QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
                 return final_reply
 
-    def update_miner(self):
+    def update_miner(self, miner_type):
         if self.charts_group.isVisible():
             self.toggle_view()
 
@@ -284,13 +310,13 @@ class DashboardPage(QWidget):
         self.update_script_process.setProcessChannelMode(QProcess.MergedChannels)
         self.update_script_process.readyReadStandardOutput.connect(self.handle_update_script_output)
         self.update_script_process.start('sh', ['update_miner.sh'])
-        self.update_script_process.finished.connect(self.run_mining_script)
+        self.update_script_process.finished.connect(partial(self.run_mining_script, miner_type))
 
     def handle_update_script_output(self):
         output = self.update_script_process.readAllStandardOutput().data().decode('utf-8')
         self.output_area.append(output)
 
-    def run_mining_script(self):
+    def run_mining_script(self, miner_type):
         self.mining_process = QProcess(self)
         self.mining_process.setProcessChannelMode(QProcess.MergedChannels)
         self.mining_process.readyReadStandardOutput.connect(self.handle_output)
@@ -309,7 +335,7 @@ class DashboardPage(QWidget):
         command = "python"
         args = [
             "-u",
-            "DistributedTraining/neurons/miner.py",
+            f"DistributedTraining/neurons/{miner_type.value}.py",
             "--netuid", "25",
             "--subtensor.network", "test",
             "--wallet.name", f"{self.parent.wallet_name}",
