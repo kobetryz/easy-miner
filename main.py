@@ -11,6 +11,7 @@ from config import search_directory, get_runpod_api_key, save_runpod_api_key
 from PyQt5.QtWidgets import QApplication, QMainWindow,QMessageBox, QStackedWidget, QInputDialog
 from PyQt5.QtGui import QFont
 
+from pages.minerOptions import MinerOptionsPage
 from pages.startpage import StartPage
 from pages.add_wallet import AddWalletPage
 from pages.dashboard import DashboardPage
@@ -29,6 +30,8 @@ class MiningWizard(QMainWindow):
         #initialise vars
         self.wallet_name = None
         self.wallet_path = None
+        self.miner_type = None
+        self.net = None
 
     # methods to open pages
     def initialize_subtensor(self):
@@ -66,7 +69,10 @@ class MiningWizard(QMainWindow):
     
     def show_create_wallet_page(self):
         self.show_page(AddWalletPage)
-    
+
+    def show_miner_options_page(self):
+        self.show_page(MinerOptionsPage)
+
     def show_machine_options_page(self):
         self.show_page(MachineOptionPage)
     

@@ -46,7 +46,7 @@ class MachineOptionPage(QWidget):
         self.optionsStack = QStackedWidget()  
         # local option
         self.localOptions = self.createOptionWidget("Options", self.showLocalOptions,
-                                                    [('Use my manchine', self.parent.show_dashboard_page)])
+                                                    [('Use my machine', self.parent.show_miner_options_page)])
         self.optionsStack.addWidget(self.localOptions)
         
         self.cloudOptions = self.createOptionWidget("Options", self.showCloudOptions, [("RunPod", self.runPodAction), ("Vast.ai", self.vastAiAction)])
