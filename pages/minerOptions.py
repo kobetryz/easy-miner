@@ -1,14 +1,10 @@
-from enum import Enum
-
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QRadioButton, QVBoxLayout, QLabel, QGroupBox
+from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QRadioButton, QVBoxLayout, \
+    QLabel, QGroupBox, QMessageBox
 
-
-class MinerType(Enum):
-    MINER = 'miner'
-    VALIDATOR = 'validator'
+from config import SubnetType, MinerType
 
 
 class MinerOptionsPage(QWidget):
@@ -23,8 +19,8 @@ class MinerOptionsPage(QWidget):
         self.layout.setSpacing(5)
         self.layout.setContentsMargins(10, 10, 10, 10)
         self.createHeader()
-        self.createMinerOptions()
         self.createNetOptions()
+        self.createMinerOptions()
         self.createFooter()
 
         self.setLayout(self.layout)
@@ -35,31 +31,30 @@ class MinerOptionsPage(QWidget):
         self.parent.addDetail(self.layout, header, 20, bold=True)
 
     def createMinerOptions(self):
-        self.miner_option_group = QGroupBox("Select mode")
-        options_layout = QVBoxLayout(self.miner_option_group)
+        self.miner_option_group = QGroupBox("Run as")
+        options_layout = QHBoxLayout(self.miner_option_group)
         options_layout.setSpacing(15)
 
-        self.minerRadioButton = QRadioButton("Miner")
-        self.minerRadioButton.setChecked(True)
-        self.parent.addDetail(options_layout, self.minerRadioButton, 16)
-
-        self.validatorRadioButton = QRadioButton("Validator")
-        self.parent.addDetail(options_layout, self.validatorRadioButton, 16)
+        for miner_type in MinerType:
+            radioButton = QRadioButton(miner_type.value.capitalize())
+            radioButton.setChecked(miner_type == MinerType.MINER)
+            self.parent.addDetail(options_layout, radioButton, 16)
 
         self.parent.addDetail(self.layout, self.miner_option_group, 20, bold=True)
 
     def createNetOptions(self):
-        self.net_option_group = QGroupBox("Select net")
-        self.net_option_group.setAlignment(Qt.AlignTop)
+        self.net_option_group = QGroupBox("Select subnet")
         options_layout = QVBoxLayout(self.net_option_group)
         options_layout.setSpacing(15)
-        #  TODO: change the nets to the actual nets
-        nets = [
-            25,
-        ]
-        for net in nets:
-            radioButton = QRadioButton(str(net))
-            radioButton.setChecked(net == nets[0])
+
+        for net in SubnetType:
+            radioButton = QRadioButton(net.value.upper())
+
+            if net == SubnetType.COMPUTE:
+                radioButton.setChecked(True)
+                radioButton.toggled.connect(self.onNetRadioClicked)  # noqa
+            else:
+                radioButton.clicked.connect(self.showSubnetNotImplemented)  # noqa
             self.parent.addDetail(options_layout, radioButton, 16)
 
         self.parent.addDetail(self.layout, self.net_option_group, 20, bold=True)
@@ -80,13 +75,23 @@ class MinerOptionsPage(QWidget):
     def nextClicked(self):
         checked_miner = self.find_checked_radiobutton(self.miner_option_group.findChildren(QtWidgets.QRadioButton))
         checked_net = self.find_checked_radiobutton(self.net_option_group.findChildren(QtWidgets.QRadioButton))
+        if checked_net.lower() != SubnetType.COMPUTE.value:
+            self.showSubnetNotImplemented()
+            return
         self.parent.miner_type = MinerType(checked_miner.lower())
-        self.parent.net = checked_net
-        self.parent.show_dashboard_page()  # noqa
+        self.parent.net = SubnetType(checked_net.lower())
+        self.parent.show_machine_options_page()  # noqa
+
+    def showSubnetNotImplemented(self):
+        QMessageBox.warning(self, "Warning", "Current subnet is not implemented")
+
+    def onNetRadioClicked(self):
+        sender = self.sender()
+        self.next_button.setEnabled(sender.isChecked())
 
     @staticmethod
     def find_checked_radiobutton(radiobuttons):
-        ''' find the checked radiobutton '''
+        """find the checked radiobutton"""
         for items in radiobuttons:
             if items.isChecked():
                 checked_radiobutton = items.text()

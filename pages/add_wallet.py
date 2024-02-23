@@ -83,7 +83,7 @@ class AddWalletPage(QWidget):
         # Add more fields as needed...
         self.finish_button = QPushButton('Finish', self)
         self.addDetail(h_layout, self.finish_button, 12)
-        self.finish_button.clicked.connect(self.parent.show_dashboard_page)
+        self.finish_button.clicked.connect(self.parent.show_miner_options_page)
         self.finish_button.setEnabled(False)
 
         self.layout.addLayout(h_layout)

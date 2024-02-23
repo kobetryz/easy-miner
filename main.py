@@ -71,16 +71,15 @@ class MiningWizard(QMainWindow):
         self.show_page(AddWalletPage)
 
     def show_miner_options_page(self):
+        if not self.wallet_path:
+            self.prompt_for_wallet_name()
         self.show_page(MinerOptionsPage)
 
     def show_machine_options_page(self):
         self.show_page(MachineOptionPage)
     
     def show_dashboard_page(self):
-        if self.wallet_name:
-            self.show_page(DashboardPage)
-        else:
-            self.prompt_for_wallet_name()
+        self.show_page(DashboardPage)
        
     def show_wallet_page(self):
         if self.wallet_name:
@@ -110,19 +109,21 @@ class MiningWizard(QMainWindow):
                 attr_value = getattr(self, attr_name)
                 print(f"{attr_name}: {attr_value}")
 
+    # TODO: Need refactoring
     def prompt_for_wallet_name(self):
         self.wallet_name, ok = QInputDialog.getText(self, "Wallet Name", "Please confirm wallet name:")
         while True:
             if not ok:
-                if hasattr(self, 'dashboardpage'):
-                    del self.dashboardpage
+                # if hasattr(self, 'dashboardpage'):
+                #     breakpoint()
+                #     del self.dashboardpage
                 break  # Break out of the loop if the user cancels
-                pass
+                # pass
             try:
                 self.wallet_path = search_directory(os.path.join(os.path.expanduser('~'), '.bittesor/wallets'), self.wallet_name)
                 if self.wallet_path:
-                    self.show_page(DashboardPage)
-                    break  # Break out of the loop if the directory is found
+                    return
+                    # break  # Break out of the loop if the directory is found
             except FileNotFoundError as e:
                 new_wallet_name, ok = QInputDialog.getText(self, "Wallet not found", str(e) + "\nEnter a valid wallet name:")
                 if not ok:

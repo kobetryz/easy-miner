@@ -2,6 +2,7 @@
 import os
 import re
 import json
+from enum import Enum
 import requests
 
 import pandas as pd
@@ -12,7 +13,21 @@ from hivemind import DHT
 from dotenv import load_dotenv
 
 
+class MinerType(Enum):
+    MINER = 'miner'
+    VALIDATOR = 'validator'
+
+
+class SubnetType(Enum):
+    COMPUTE = 'compute'
+    STORAGE = 'storage'
+    DISTRIBUTED_TRAINING = 'distributed training'
+    FINE_TUNING = 'fine tuning'
+    MAP_REDUCE = 'map reduce'
+
+
 # function performs a deeper search past the bitcurrent directory TODO maybe utils
+# TODO: Need refactoring
 def search_directory(start_directory, target_directory):
     current_directory = start_directory
     while current_directory:

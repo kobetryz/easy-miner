@@ -41,7 +41,7 @@ class StartPage(QWidget):
                                    margin-top: 22px; margin-bottom: 20px;")
        
         header_layout = QHBoxLayout(header_group)
-        welcome_message = QLabel("Making Mining Accessible to All")
+        welcome_message = QLabel("Easy Miner")
         welcome_message.setFont(QFont("Georgia", 42, QFont.Bold, italic=True))
         header_layout.addWidget(welcome_message)
 
@@ -57,18 +57,11 @@ class StartPage(QWidget):
         new_wallet_button.clicked.connect(self.parent.show_create_wallet_page)
         options_layout.addWidget(new_wallet_button)
 
-        view_dashboard_button = QPushButton("Mine to Existing Wallet", self)
-        view_dashboard_button.clicked.connect(self.parent.show_miner_options_page)
-        options_layout.addWidget(view_dashboard_button)
-
-         # to dashboard
-        select_machine = QPushButton("Select machine", self)
-        select_machine.clicked.connect(self.parent.show_machine_options_page)
-        options_layout.addWidget(select_machine)
-
+        miner_option_button = QPushButton("Mine to Existing Wallet", self)
+        miner_option_button.clicked.connect(self.parent.show_miner_options_page)
+        options_layout.addWidget(miner_option_button)
 
         layout.addWidget(options_group)
-        options_group.setFixedSize(800,200)
         
         # footer group
         footer_group = QGroupBox()

@@ -41,17 +41,17 @@ class MachineOptionPage(QWidget):
         
         self.parent.addDetail(self.layout, option_group, 20, bold=True)
 
-    def createSelectionPool(self):    
+    def createSelectionPool(self):
         # Stacked widget to hold different option sets
-        self.optionsStack = QStackedWidget()  
+        self.optionsStack = QStackedWidget()
         # local option
         self.localOptions = self.createOptionWidget("Options", self.showLocalOptions,
-                                                    [('Use my machine', self.parent.show_miner_options_page)])
+                                                    [('Use my machine', self.parent.show_dashboard_page)])
         self.optionsStack.addWidget(self.localOptions)
-        
+
         self.cloudOptions = self.createOptionWidget("Options", self.showCloudOptions, [("RunPod", self.runPodAction), ("Vast.ai", self.vastAiAction)])
         self.optionsStack.addWidget(self.cloudOptions)
-        
+
         self.layout.addWidget(self.optionsStack)
 
         # Connect radio buttons to change the stacked widget index
