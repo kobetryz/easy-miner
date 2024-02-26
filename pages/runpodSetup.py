@@ -1,6 +1,14 @@
-from runpod_api.runpod import GPU_DICT, GPU_LIST_TO_USE
-from PyQt5.QtWidgets import QPushButton, QComboBox, QVBoxLayout, QHBoxLayout, QWidget, QGroupBox, QLabel, QRadioButton
+import json
+import os
+import time
+
+from config import COUNTRY_CODE, PERSISTENT_DISK_SIZE_GB, OS_DISK_SIZE_GB
+from runpod_api.runpod import GPU_DICT, GPU_LIST_TO_USE, api
+from PyQt5.QtWidgets import QPushButton, QComboBox, QVBoxLayout, QHBoxLayout, QWidget, QGroupBox, QLabel, QRadioButton, \
+    QMessageBox
 from PyQt5.QtCore import Qt
+
+from utils import get_secret_hotkey
 
 
 class RunpodSetupPage(QWidget):
@@ -52,6 +60,7 @@ class RunpodSetupPage(QWidget):
         self.create_cloud_option()
 
         self.deploy = QPushButton('Deploy')
+        self.deploy.clicked.connect(self.on_deploy_clicked)
         self.deploy.setMaximumWidth(350)
         self.parent.addDetail(self.layout, self.deploy, 16, bold=True)
 
@@ -63,8 +72,8 @@ class RunpodSetupPage(QWidget):
                 child.widget().deleteLater()
 
         # Get the current GPU and its specs
-        current_gpu = self.gpu_drop_down.currentText()
-        temp_dict = GPU_DICT.get(current_gpu, {})  # Use an empty dict as a default to prevent KeyError
+        self.selected_gpu = self.gpu_drop_down.currentText()
+        temp_dict = GPU_DICT.get(self.selected_gpu, {})  # Use an empty dict as a default to prevent KeyError
 
         # Define labels and values to use
         labels_values_to_use = {
@@ -88,8 +97,95 @@ class RunpodSetupPage(QWidget):
         # Set Community Cloud as the default selected option
         self.community_cloud_radio.setChecked(True)
 
+    @staticmethod
+    def get_template_id():
+        myself = json.loads(api.get_myself().text)
+        for pod in myself["data"]["myself"]["podTemplates"]:
+            if pod["name"] == "Easy miner subnet 25":
+                return pod["id"]
+
+    def create_pod(self, template_id, attempts=0, error_message=None):
+        if attempts > 3 or not template_id:
+            QMessageBox.warning(self, "Warning", error_message)
+            self.deploy.setEnabled(True)
+            return
+        pod_config = f"""
+               countryCode: "{COUNTRY_CODE}",
+               gpuCount: 1,
+               volumeInGb: {PERSISTENT_DISK_SIZE_GB},
+               containerDiskInGb: {OS_DISK_SIZE_GB},
+               gpuTypeId: "{self.selected_gpu}",
+               cloudType: {self.cloud_option.upper()},
+               supportPublicIp: true,
+               name: "subnet-{self.parent.net_id}"
+               templateId: "{template_id}",
+               dockerArgs: "",
+               volumeMountPath: "/workspace",
+           """
+
+        response = api.create_on_demand_pod(pod_config)
+        resp_json = response.json()
+        if response.status_code == 200:
+            if 'errors' in resp_json:
+                for error in resp_json['errors']:
+                    if error['message'] == 'There are no longer any instances available with the requested specifications. Please refresh and try again.':
+                        error_message = 'No resources currently available.'
+                        print(error_message)
+                        time.sleep(5)
+                        return self.create_pod(template_id, attempts + 1, error_message)
+                    elif error['message'] == 'There are no longer any instances available with enough disk space.':
+                        error_message = 'No instances with enough disk space available.'
+                        print(error_message)
+                        time.sleep(5)
+                        return self.create_pod(template_id, attempts + 1, error_message)
+                    else:
+                        QMessageBox.warning(self, "Warning", error['message'])
+                        print('ERROR: ' + error['message'])
+                        return None
+            else:
+                print(json.dumps(resp_json, indent=4, default=str))
+
+    def create_template(self):
+        self.cloud_option = "Community" if self.community_cloud_radio.isChecked() else "Secure"
+        template_id = self.get_template_id()
+        if template_id:
+            return template_id
+        mnemonic = get_secret_hotkey(self.parent.wallet_path)
+        template_query = f"""
+                    containerDiskInGb: {OS_DISK_SIZE_GB},
+                    dockerArgs: "",
+                    env: [
+                      {{
+                        key: "WAND_API_KEY",
+                        value: "8ca0b4aabb043cc14ebd4aaed118bc5ce0277811"
+                      }},
+                      {{ key: "NET_UID", value: "25" }},
+                      {{ key: "NETWORK", value: "test" }},
+                      {{ key: "WALLET", value: "{self.parent.wallet_name}" }},
+                      {{ key: "HOTKEY", value: "hotkey" }},
+                      {{ key: "AXON_PORT", value: "21077" }},
+                      {{ key: "DHT_PORT", value: "21078" }},
+                      {{
+                        key: "MNEMONIC"
+                        value: "{mnemonic}"
+                      }},
+                      {{ key: "MINER_TYPE", value: "{self.parent.miner_type.value}" }}
+                    ],
+                    imageName: "squirre11/subnet-25:latest",
+                    name: "Easy miner subnet 25",
+                    ports: "21077/tcp, 21078/tcp",
+                    readme: "## Its easy miner template, nothing special!",
+                    volumeInGb: {PERSISTENT_DISK_SIZE_GB},
+                    volumeMountPath: "/workspace"
+                """
+        resp = api.create_template(template_query).json()
+        return resp.get('data', {}).get('saveTemplate', {}).get('id', '')
+
     def on_deploy_clicked(self):
-        # Determine which cloud option is selected
-        cloud_option = "Community" if self.community_cloud_radio.isChecked() else "Secure"
-        print(f"Deploying on {cloud_option} Cloud")  # Example action, replace with your deployment logic
-        # Your additional logic for deployment based on the selected cloud option
+        self.deploy.setEnabled(False)
+        QMessageBox.information(self, "Deploying", "Deploying the miner, press OK to continue")
+        template_id = self.create_template()
+        pod_id = self.create_pod(template_id)
+        if not pod_id:
+            return
+        # self.parent.show_miner_options_page()

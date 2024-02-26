@@ -7,7 +7,7 @@ import os
 import sys
 
 from bittensor import subtensor
-from config import search_directory, get_runpod_api_key, save_runpod_api_key
+from utils import get_runpod_api_key, save_runpod_api_key
 from PyQt5.QtWidgets import QApplication, QMainWindow,QMessageBox, QStackedWidget, QInputDialog
 from PyQt5.QtGui import QFont
 
@@ -73,7 +73,8 @@ class MiningWizard(QMainWindow):
     def show_miner_options_page(self):
         if not self.wallet_path:
             self.prompt_for_wallet_name()
-        self.show_page(MinerOptionsPage)
+        if self.wallet_path:
+            self.show_page(MinerOptionsPage)
 
     def show_machine_options_page(self):
         self.show_page(MachineOptionPage)
@@ -109,27 +110,23 @@ class MiningWizard(QMainWindow):
                 attr_value = getattr(self, attr_name)
                 print(f"{attr_name}: {attr_value}")
 
-    # TODO: Need refactoring
     def prompt_for_wallet_name(self):
         self.wallet_name, ok = QInputDialog.getText(self, "Wallet Name", "Please confirm wallet name:")
         while True:
             if not ok:
-                # if hasattr(self, 'dashboardpage'):
-                #     breakpoint()
-                #     del self.dashboardpage
-                break  # Break out of the loop if the user cancels
-                # pass
-            try:
-                self.wallet_path = search_directory(os.path.join(os.path.expanduser('~'), '.bittesor/wallets'), self.wallet_name)
-                if self.wallet_path:
-                    return
-                    # break  # Break out of the loop if the directory is found
-            except FileNotFoundError as e:
-                new_wallet_name, ok = QInputDialog.getText(self, "Wallet not found", str(e) + "\nEnter a valid wallet name:")
+                return
+            path_wallets = os.path.join(os.path.expanduser('~'), '.bittensor/wallets')
+            if self.wallet_name in os.listdir(path_wallets):
+                self.wallet_path = os.path.join(path_wallets, self.wallet_name)
+                return
+            else:
+                new_wallet_name, ok = QInputDialog.getText(self, "Wallet not found", "Wallet not found\nEnter a valid wallet name:")
                 if not ok:
                     # print("User canceled")
                     break  # Break out of the loop if the user cancels
-                self.wallet_name = new_wallet_name  # Update the wallet name for the next iteration   
+                self.wallet_name = new_wallet_name  # Update the wallet name for the next iteration
+                self.wallet_path = os.path.join(path_wallets, self.wallet_name)
+
        
 
 if __name__ == "__main__":

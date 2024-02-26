@@ -15,8 +15,9 @@ from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment, QTimer, QDateTime, Q
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 import pyqtgraph as pg
 
-from config import configure_logger_data, get_earnings_by_date_range, get_total_mining, INITIAL_PEERS, IP_ADDRESS, \
+from config import INITIAL_PEERS, IP_ADDRESS, \
     tao_price
+from utils import get_earnings_by_date_range, get_total_mining, configure_logger_data
 
 
 class DashboardPage(QWidget):
@@ -310,7 +311,7 @@ class DashboardPage(QWidget):
         args = [
             "-u",
             f"DistributedTraining/neurons/{self.parent.miner_type.value}.py",
-            "--netuid", self.parent.net,
+            "--netuid", f"{self.parent.net_id}",
             "--subtensor.network", "test",
             "--wallet.name", f"{self.parent.wallet_name}",
             "--wallet.hotkey", f"{self.parent.hotkey}",

@@ -4,7 +4,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QRadioButton, QVBoxLayout, \
     QLabel, QGroupBox, QMessageBox
 
-from config import SubnetType, MinerType
+from config import SubnetType, MinerType, SUBNET_MAPPER
 
 
 class MinerOptionsPage(QWidget):
@@ -80,6 +80,7 @@ class MinerOptionsPage(QWidget):
             return
         self.parent.miner_type = MinerType(checked_miner.lower())
         self.parent.net = SubnetType(checked_net.lower())
+        self.parent.net_id = SUBNET_MAPPER[self.parent.net.value]
         self.parent.show_machine_options_page()  # noqa
 
     def showSubnetNotImplemented(self):
