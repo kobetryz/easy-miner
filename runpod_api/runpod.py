@@ -4,23 +4,19 @@ import requests
 from dotenv import dotenv_values, load_dotenv
 
 
-class API(object):
+class API:
     def __init__(self):
         load_dotenv()  # Load environment variables from .env file
         self.API_KEY = os.getenv("RUNPOD_API_KEY")
 
     def _run_query(self, payload, auth_required=False):
         url = 'https://api.runpod.io/graphql'
-
         if auth_required:
             url += f'?api_key={self.API_KEY}'
-
-        response = requests.post(
+        return requests.post(
             url,
             json=payload
         )
-
-        return response
 
     # https://docs.runpod.io/docs/get-gpu-types
     def get_gpu_types(self):
@@ -416,7 +412,7 @@ class API(object):
     # https://docs.runpod.io/docs/create-pod
     def create_on_demand_pod(self, pod_config):
         return self._run_query({
-            "query": f"""
+            "query": """
                 mutation {{
                     podFindAndDeployOnDemand(input: {{ {pod_config} }}) {{
                         containerDiskInGb
