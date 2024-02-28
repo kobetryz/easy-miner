@@ -7,6 +7,8 @@ import os
 import sys
 
 from bittensor import subtensor
+
+from pages.dashboards import LocalDashboardPage, RunpodDashboardPage
 from utils import get_runpod_api_key, save_runpod_api_key
 from PyQt5.QtWidgets import QApplication, QMainWindow,QMessageBox, QStackedWidget, QInputDialog
 from PyQt5.QtGui import QFont
@@ -14,7 +16,6 @@ from PyQt5.QtGui import QFont
 from pages.minerOptions import MinerOptionsPage
 from pages.startpage import StartPage
 from pages.add_wallet import AddWalletPage
-from pages.dashboard import DashboardPage
 from pages.wallet import WalletDetailsTable
 from pages.machineOptions import MachineOptionPage
 from pages.runpodSetup import RunpodSetupPage
@@ -23,7 +24,6 @@ from pages.runpodSetup import RunpodSetupPage
 class MiningWizard(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.initialize_subtensor()
         self.setup_ui()
         self.initialize_pages()
 
@@ -36,7 +36,7 @@ class MiningWizard(QMainWindow):
     # methods to open pages
     def initialize_subtensor(self):
         self.subtensor = subtensor(network='test')
-        self.subnet = self.subtensor.metagraph(netuid=25)
+        self.subnet = self.subtensor.metagraph(netuid=self.net_id)
 
     def setup_ui(self):
         self.setWindowTitle("Easy Miner")
@@ -79,8 +79,13 @@ class MiningWizard(QMainWindow):
     def show_machine_options_page(self):
         self.show_page(MachineOptionPage)
     
-    def show_dashboard_page(self):
-        self.show_page(DashboardPage)
+    def show_local_dashboard_page(self):
+        # TODO: Remove this line and uncomment the next line after testing
+        self.show_page(RunpodDashboardPage)
+        # self.show_page(LocalDashboardPage)
+
+    def show_runpod_dashboard_page(self):
+        self.show_page(RunpodDashboardPage)
        
     def show_wallet_page(self):
         if self.wallet_name:
@@ -127,7 +132,6 @@ class MiningWizard(QMainWindow):
                 self.wallet_name = new_wallet_name  # Update the wallet name for the next iteration
                 self.wallet_path = os.path.join(path_wallets, self.wallet_name)
 
-       
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -1,7 +1,7 @@
-import sys
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QRadioButton, QLabel, QStackedWidget, QPushButton, QGroupBox,
-                             QHBoxLayout, QSpacerItem, QSizePolicy)
-# from PyQt5.QtGui import QFont,QDesktopServices, QTextOption, QTextCursor
+from functools import partial
+
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QRadioButton, QLabel, QStackedWidget, QPushButton, QGroupBox, \
+    QHBoxLayout, QLineEdit
 from PyQt5.QtCore import Qt
 
 
@@ -9,7 +9,9 @@ class MachineOptionPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
-        
+        self.wandbApiKey = None
+        self.mnemonicHotkey = None
+        self.mnemonicColdkey = None
         self.setupUI()
         
     def setupUI(self):
@@ -45,11 +47,24 @@ class MachineOptionPage(QWidget):
         # Stacked widget to hold different option sets
         self.optionsStack = QStackedWidget()
         # local option
-        self.localOptions = self.createOptionWidget("Options", self.showLocalOptions,
-                                                    [('Use my machine', self.parent.show_dashboard_page)])
+
+        local_inputs = [("Enter Wandb API Key:", 'wandbApiKey')]
+        self.localOptions = self.createOptionWidget(
+            "Options",
+            self.showLocalOptions,
+            [('Use my machine', self.parent.show_dashboard_page)],
+            local_inputs
+        )
         self.optionsStack.addWidget(self.localOptions)
 
-        self.cloudOptions = self.createOptionWidget("Options", self.showCloudOptions, [("RunPod", self.runPodAction), ("Vast.ai", self.vastAiAction)])
+        cloud_inputs = (local_inputs +
+                        [("Enter Hotkey mnemonic:", 'mnemonicHotkey'), ("Enter Coldkey mnemonic:", 'mnemonicColdkey')])
+
+        self.cloudOptions = self.createOptionWidget(
+            "Options",
+            self.showCloudOptions,
+            [("RunPod", self.runPodAction), ("Vast.ai", self.vastAiAction)],
+            cloud_inputs)
         self.optionsStack.addWidget(self.cloudOptions)
 
         self.layout.addWidget(self.optionsStack)
@@ -58,7 +73,11 @@ class MachineOptionPage(QWidget):
         self.localRadioButton.toggled.connect(lambda: self.optionsStack.setCurrentIndex(0))
         self.cloudRadioButton.toggled.connect(lambda: self.optionsStack.setCurrentIndex(1))
     
-    def createOptionWidget(self, title, default_action=None, additional_buttons=[]):
+    def createOptionWidget(self, title, default_action=None, additional_buttons=None, input_fields=None):
+        if additional_buttons is None:
+            additional_buttons = []
+        if input_fields is None:
+            input_fields = []
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setAlignment(Qt.AlignTop)
@@ -71,7 +90,17 @@ class MachineOptionPage(QWidget):
             button.clicked.connect(btn_action)
             widget.setLayout(layout)
 
+        for input_text, value_name in input_fields:
+            self.parent.addDetail(layout, QLabel(input_text), 16)
+            line_edit = QLineEdit(self)
+            self.parent.addDetail(layout, line_edit, 16)
+            widget.setLayout(layout)
+            line_edit.textChanged.connect(partial(self.updateInputAction, attribute_name=value_name))
+
         return widget
+
+    def updateInputAction(self, text, attribute_name):
+        setattr(self, attribute_name, text)
 
     def createFooter(self):
         h_layout = QHBoxLayout()
@@ -90,6 +119,8 @@ class MachineOptionPage(QWidget):
 
     def runPodAction(self):
         # Placeholder for RunPod action
+        # show input for getting the wandb api key
+
         self.parent.show_runpod_page()
 
     def vastAiAction(self):
