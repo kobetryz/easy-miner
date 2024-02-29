@@ -9,9 +9,9 @@ class MachineOptionPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
-        self.wandbApiKey = None
-        self.mnemonicHotkey = None
-        self.mnemonicColdkey = None
+        self.wandb_api_key = None
+        self.mnemonic_hotkey = None
+        self.mnemonic_coldkey = None
         self.setupUI()
         
     def setupUI(self):
@@ -48,17 +48,17 @@ class MachineOptionPage(QWidget):
         self.optionsStack = QStackedWidget()
         # local option
 
-        local_inputs = [("Enter Wandb API Key:", 'wandbApiKey')]
+        local_inputs = [("Enter Wandb API Key:", 'wandb_api_key')]
         self.localOptions = self.createOptionWidget(
             "Options",
             self.showLocalOptions,
-            [('Use my machine', self.parent.show_dashboard_page)],
+            [('Use my machine', self.parent.show_local_dashboard_page)],
             local_inputs
         )
         self.optionsStack.addWidget(self.localOptions)
 
         cloud_inputs = (local_inputs +
-                        [("Enter Hotkey mnemonic:", 'mnemonicHotkey'), ("Enter Coldkey mnemonic:", 'mnemonicColdkey')])
+                        [("Enter Hotkey mnemonic:", 'mnemonic_hotkey'), ("Enter Coldkey mnemonic:", 'mnemonic_coldkey')])
 
         self.cloudOptions = self.createOptionWidget(
             "Options",
@@ -100,7 +100,7 @@ class MachineOptionPage(QWidget):
         return widget
 
     def updateInputAction(self, text, attribute_name):
-        setattr(self, attribute_name, text)
+        setattr(self.parent, attribute_name, text)
 
     def createFooter(self):
         h_layout = QHBoxLayout()
@@ -120,8 +120,7 @@ class MachineOptionPage(QWidget):
     def runPodAction(self):
         # Placeholder for RunPod action
         # show input for getting the wandb api key
-
-        self.parent.show_runpod_page()
+        self.parent.show_runpod_dashboard_page()
 
     def vastAiAction(self):
         # Placeholder for Vast.ai action

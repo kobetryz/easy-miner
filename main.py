@@ -80,9 +80,7 @@ class MiningWizard(QMainWindow):
         self.show_page(MachineOptionPage)
     
     def show_local_dashboard_page(self):
-        # TODO: Remove this line and uncomment the next line after testing
-        self.show_page(RunpodDashboardPage)
-        # self.show_page(LocalDashboardPage)
+        self.show_page(LocalDashboardPage)
 
     def show_runpod_dashboard_page(self):
         self.show_page(RunpodDashboardPage)

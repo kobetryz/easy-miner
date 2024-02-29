@@ -18,7 +18,7 @@ class WebSocketThread(QThread):
 
     def get_websocket_address(self):
         # TODO: Get websocket address from server
-        return "ws://127.0.0.1:8000/ws"
+        return "ws://127.0.0.1:8001/ws"
 
     def connect_to_websocket(self):
         self.ws = websocket.WebSocketApp(
@@ -54,7 +54,7 @@ class RunpodDashboardPage(DashboardPageBase):
         self.websocket_thread.start()
 
         # Server
-        self.server_url = "http://127.0.0.1:8000"
+        self.server_url = "http://127.0.0.1:8001"
 
     def handle_received_data(self, data):
         self.output_area.insertPlainText(data)
@@ -72,6 +72,7 @@ class RunpodDashboardPage(DashboardPageBase):
         return IP_ADDRESS
 
     def start_mining(self):
+        self.wandb_login()
         response = requests.post(f"{self.server_url}/mine", json={
             "miner_type": "validator",
             "network": "test",
@@ -81,10 +82,10 @@ class RunpodDashboardPage(DashboardPageBase):
             "dht_announce_ip": self.get_dht_announce_ip(),
             "wallet_data": {
                 "cold_key_name": self.parent.wallet_name,
-                "cold_key_mnemonic": self.parent.mnemonicHotkey,
-                "hot_key_mnemonic": self.parent.mnemonicColdkey,
+                "cold_key_mnemonic": self.parent.mnemonic_hotkey,
+                "hot_key_mnemonic": self.parent.mnemonic_coldkey,
             },
-            "wandb_key": self.parent.wandbApiKey,
+            "wandb_key": self.parent.wandb_api_key,
         })
         if response.status_code != 200:
             QMessageBox.warning(self, "Error", f"{response.text}\nTry again", QMessageBox.Ok)

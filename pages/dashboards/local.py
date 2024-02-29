@@ -67,6 +67,7 @@ class LocalDashboardPage(DashboardPageBase):
         self.output_area.append(output)
 
     def run_mining_script(self):
+        self.wandb_login()
         self.mining_process = QProcess(self)
         self.mining_process.setProcessChannelMode(QProcess.MergedChannels)
         self.mining_process.readyReadStandardOutput.connect(self.handle_output)

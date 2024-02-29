@@ -31,7 +31,7 @@ class MinerService:
             await self.running_process.wait()
             return await self.running_process.communicate()
         except Exception as e:
-            await websocket_service.broadcast(f"Error while processing the process, you may have stopped mining. Error: {e}")
+            pass
 
     async def update_or_clone_miner(self):
         await websocket_service.broadcast(f"Updating or cloning miner")
@@ -71,7 +71,7 @@ class MinerService:
         await self.run_command(command)
 
     async def stop_mining(self):
-        if self.running_process:
+        if self.running_process and self.running_process.returncode is None:
             await websocket_service.broadcast(f"Terminating process {self.running_process}")
             os.killpg(self.running_process.pid, signal.SIGTERM)
             await self.running_process.wait()

@@ -9,7 +9,7 @@ import matplotlib.dates as mdates
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox, QMessageBox, QTextEdit, \
     QLineEdit
 from PyQt5.QtGui import QFont, QTextOption
-from PyQt5.QtCore import Qt, QTimer, QDateTime
+from PyQt5.QtCore import Qt, QTimer, QDateTime, QProcess
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 import pyqtgraph as pg
 
@@ -292,3 +292,13 @@ class DashboardPageBase(QWidget):
         raw_html += '</body></html>'
         self.webEngineView.setHtml(raw_html)
         # self.layout.addWidget(self.webEngineView)
+
+    def wandb_login(self):
+        self.wandb_login_process = QProcess(self)
+        self.wandb_login_process.setProcessChannelMode(QProcess.MergedChannels)
+        command = "wandb"
+        args = [
+            "login",
+            f"{self.parent.wandb_api_key}"
+        ]
+        self.wandb_login_process.start(command, args)
