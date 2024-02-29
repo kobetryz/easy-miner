@@ -11,7 +11,7 @@ MIN_DOWNLOAD = 70
 PORTS = '22/tcp,3000/http,3010/http,3020/http,6006/http,8000/http,8888/http'
 
 SUBNET_MAPPER = {
-    'compute': 25,
+    'distributed training': 25,
 }
 
 
@@ -21,9 +21,9 @@ class MinerType(Enum):
 
 
 class SubnetType(Enum):
+    DISTRIBUTED_TRAINING = 'distributed training'
     COMPUTE = 'compute'
     STORAGE = 'storage'
-    DISTRIBUTED_TRAINING = 'distributed training'
     FINE_TUNING = 'fine tuning'
     MAP_REDUCE = 'map reduce'
 

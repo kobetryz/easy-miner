@@ -50,7 +50,7 @@ class MinerOptionsPage(QWidget):
         for net in SubnetType:
             radioButton = QRadioButton(net.value.upper())
 
-            if net == SubnetType.COMPUTE:
+            if net == SubnetType.DISTRIBUTED_TRAINING:
                 radioButton.setChecked(True)
                 radioButton.toggled.connect(self.onNetRadioClicked)  # noqa
             else:
@@ -75,7 +75,7 @@ class MinerOptionsPage(QWidget):
     def nextClicked(self):
         checked_miner = self.find_checked_radiobutton(self.miner_option_group.findChildren(QtWidgets.QRadioButton))
         checked_net = self.find_checked_radiobutton(self.net_option_group.findChildren(QtWidgets.QRadioButton))
-        if checked_net.lower() != SubnetType.COMPUTE.value:
+        if checked_net.lower() != SubnetType.DISTRIBUTED_TRAINING.value:
             self.showSubnetNotImplemented()
             return
         self.parent.miner_type = MinerType(checked_miner.lower())
