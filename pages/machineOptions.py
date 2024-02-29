@@ -1,20 +1,20 @@
 from functools import partial
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QRadioButton, QLabel, QStackedWidget, QPushButton, QGroupBox, \
-    QHBoxLayout, QLineEdit
+    QHBoxLayout, QLineEdit, QMessageBox
 from PyQt5.QtCore import Qt
+
+from utils import get_value_from_env, save_value_to_env
 
 
 class MachineOptionPage(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
-        self.wandb_api_key = None
-        self.mnemonic_hotkey = None
-        self.mnemonic_coldkey = None
         self.setupUI()
         
     def setupUI(self):
+        self.parent.wandb_api_key = get_value_from_env("WANDB_API_KEY")
         self.layout = QVBoxLayout(self)
         self.layout.setSpacing(10)
         self.layout.setContentsMargins(10, 10, 10, 10)
@@ -48,17 +48,20 @@ class MachineOptionPage(QWidget):
         self.optionsStack = QStackedWidget()
         # local option
 
-        local_inputs = [("Enter Wandb API Key:", 'wandb_api_key')]
+        local_inputs = [
+            ("Enter Wandb API Key:", 'wandb_api_key', self.parent.wandb_api_key)
+        ]
         self.localOptions = self.createOptionWidget(
             "Options",
             self.showLocalOptions,
-            [('Use my machine', self.parent.show_local_dashboard_page)],
+            [('Use my machine', self.localAction)],
             local_inputs
         )
         self.optionsStack.addWidget(self.localOptions)
 
         cloud_inputs = (local_inputs +
-                        [("Enter Hotkey mnemonic:", 'mnemonic_hotkey'), ("Enter Coldkey mnemonic:", 'mnemonic_coldkey')])
+                        [("Enter Hotkey mnemonic:", 'mnemonic_hotkey', self.parent.mnemonic_hotkey),
+                         ("Enter Coldkey mnemonic:", 'mnemonic_coldkey', self.parent.mnemonic_coldkey)])
 
         self.cloudOptions = self.createOptionWidget(
             "Options",
@@ -90,9 +93,10 @@ class MachineOptionPage(QWidget):
             button.clicked.connect(btn_action)
             widget.setLayout(layout)
 
-        for input_text, value_name in input_fields:
+        for input_text, value_name, value in input_fields:
             self.parent.addDetail(layout, QLabel(input_text), 16)
             line_edit = QLineEdit(self)
+            line_edit.setText(value)
             self.parent.addDetail(layout, line_edit, 16)
             widget.setLayout(layout)
             line_edit.textChanged.connect(partial(self.updateInputAction, attribute_name=value_name))
@@ -120,10 +124,29 @@ class MachineOptionPage(QWidget):
     def runPodAction(self):
         # Placeholder for RunPod action
         # show input for getting the wandb api key
-        self.parent.show_runpod_dashboard_page()
+        if self.isAllFieldsFilled():
+            self.parent.show_runpod_page()
 
     def vastAiAction(self):
         # Placeholder for Vast.ai action
         print("Vast.ai selected")
 
+    def localAction(self):
+        if self.isAllFieldsFilled():
+            self.parent.show_local_dashboard_page()
 
+    def isAllFieldsFilled(self):
+        if field := self.findUnfilledField():
+            widgets = field.parent().children()
+            QMessageBox.warning(self, "Warning", f"Field '{widgets[widgets.index(field) - 1].text()}' unfilled")
+            return False
+        if not (get_value_from_env('WANDB_API_KEY')):
+            save_value_to_env('WANDB_API_KEY', self.parent.wandb_api_key)
+        return True
+
+    def findUnfilledField(self):
+        options = [self.localOptions, self.cloudOptions]
+        for option in options:
+            for child in option.children():
+                if isinstance(child, QLineEdit) and child.isVisible() and not child.text():
+                    return child

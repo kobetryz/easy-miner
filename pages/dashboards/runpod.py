@@ -110,3 +110,14 @@ class RunpodDashboardPage(DashboardPageBase):
 
     def is_running(self):
         return self.mining_process
+
+    def update_timer(self):
+        # This function is called every second to update the timer display
+        if self.is_running():
+            current_time = QDateTime.currentDateTime()
+            self.elapsed_time = self.start_time.secsTo(current_time)
+            hours = self.elapsed_time // 3600
+            minutes = (self.elapsed_time % 3600) // 60
+            seconds = self.elapsed_time % 60
+            self.timer_label.setText(f"{hours}h: {minutes}m: {seconds}s")
+            # print(self.timer_label.text())

@@ -105,12 +105,10 @@ def get_tao_price():
     taostats = json.loads(response.content)
     return float(taostats[0]['price'])
 
+def get_value_from_env(key):
+    load_dotenv()
+    return os.getenv(key)
 
-def get_runpod_api_key():
-    load_dotenv()  # Load environment variables from .env file
-    return os.getenv("RUNPOD_API_KEY")
-
-
-def save_runpod_api_key(api_key):
+def save_value_to_env(key, value):
     with open(".env", "a") as env_file:
-        env_file.write(f"RUNPOD_API_KEY=\"{api_key}\"\n")
+        env_file.write(f"{key}=\"{value}\"\n")

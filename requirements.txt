@@ -10,3 +10,5 @@ plotly
 httpx
 python-dotenv
 prettytable
+matplotlib
+gputil

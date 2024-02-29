@@ -61,7 +61,8 @@ class DashboardPageBase(QWidget):
         cpu_info_group = QGroupBox()
         cpu_info_layout = QVBoxLayout(cpu_info_group)
         cpu_info_layout.addWidget(QLabel("CPU Usage", font=QFont('Georgia', 10)))
-        cpu_info_layout.addWidget(QLabel("0.0%", font=QFont('Georgia', 20, QFont.Bold)))
+        self.cpu_usage_label = QLabel("0.0%", font=QFont('Georgia', 20, QFont.Bold))
+        cpu_info_layout.addWidget(self.cpu_usage_label)
         cpu_info_layout.addWidget(QLabel(" ", font=QFont('Georgia', 10)))
         summary_layout.addWidget(cpu_info_group)
 
@@ -69,7 +70,8 @@ class DashboardPageBase(QWidget):
         gpu_info_group = QGroupBox()
         gpu_info_layout = QVBoxLayout(gpu_info_group)
         gpu_info_layout.addWidget(QLabel("GPU Usage", font=QFont('Georgia', 10)))
-        gpu_info_layout.addWidget(QLabel("0.0%", font=QFont('Georgia', 20, QFont.Bold)))
+        self.gpu_usage_label = QLabel("0.0%", font=QFont('Georgia', 20, QFont.Bold))
+        gpu_info_layout.addWidget(self.gpu_usage_label)
         gpu_info_layout.addWidget(QLabel(" ", font=QFont('Georgia', 10)))
         summary_layout.addWidget(gpu_info_group)
 
@@ -239,16 +241,17 @@ class DashboardPageBase(QWidget):
     def is_running(self):
         pass
 
+    @abstractmethod
+    def update_cpu_usage(self):
+        pass
+
+    @abstractmethod
+    def update_gpu_usage(self):
+        pass
+
+    @abstractmethod
     def update_timer(self):
-        # This function is called every second to update the timer display
-        if self.is_running():
-            current_time = QDateTime.currentDateTime()
-            self.elapsed_time = self.start_time.secsTo(current_time)
-            hours = self.elapsed_time // 3600
-            minutes = (self.elapsed_time % 3600) // 60
-            seconds = self.elapsed_time % 60
-            self.timer_label.setText(f"{hours}h: {minutes}m: {seconds}s")
-            # print(self.timer_label.text())
+        pass
 
     def send_input(self):
         input_text = self.input_line.text() + '\n'

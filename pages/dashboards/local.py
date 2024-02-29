@@ -1,10 +1,12 @@
 import os
 import re
 
+import psutil
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QDateTime, QUrl
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QMessageBox
-from black import datetime
+from datetime import datetime
+import GPUtil
 
 from config import IP_ADDRESS, INITIAL_PEERS
 from .base import DashboardPageBase
@@ -155,3 +157,42 @@ class LocalDashboardPage(DashboardPageBase):
             self.data_logger.info(f' Activity - CPU Usage%: {cpu_usage}')
             # time_taken_cpu = float(time_taken_cpu_match.group(1))
         # print(self.parent.output)
+
+    def update_timer(self):
+        # This function is called every second to update the timer display, CPU usage and GPU usage
+        if self.is_running():
+            current_time = QDateTime.currentDateTime()
+            self.elapsed_time = self.start_time.secsTo(current_time)
+            hours = self.elapsed_time // 3600
+            minutes = (self.elapsed_time % 3600) // 60
+            seconds = self.elapsed_time % 60
+            self.timer_label.setText(f"{hours}h: {minutes}m: {seconds}s")
+            # print(self.timer_label.text())
+            self.cpu_usage_label.setText(self.get_cpu_usage())
+            self.gpu_usage_label.setText(self.get_gpu_usage())
+
+    @staticmethod
+    def get_cpu_usage():
+        """
+        Fetches the current CPU usage percentage.
+
+        Returns:
+            str: CPU usage percentage as a string with one decimal place.
+        """
+        cpu_usage = psutil.cpu_percent()  # interval=1 provides a 1-second average
+        return f"{cpu_usage:.1f}%"
+
+    @staticmethod
+    def get_gpu_usage():
+        """
+        Fetches the current GPU usage percentage for the first GPU found.
+
+        Returns:
+            str: GPU usage percentage as a string with one decimal place, or 'N/A' if no GPU is found.
+        """
+        gpus = GPUtil.getGPUs()
+        if gpus:
+            gpu = gpus[0]
+            return f"{gpu.load * 100:.1f}%"  # Convert load (0 to 1) to percentage
+        else:
+            return "0.0%"
