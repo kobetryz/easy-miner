@@ -2,7 +2,7 @@ import asyncio
 import os.path
 import signal
 
-import bittensor
+from bittensor_wallet import wallet
 from starlette.websockets import WebSocket
 
 from schemas import WalletData, MinerOptions
@@ -43,9 +43,9 @@ class MinerService:
             await websocket_service.broadcast(f"Wallet already exists")
             return
         await websocket_service.broadcast(f"Regenerating wallet")
-        wallet = bittensor.wallet(name=wallet_data.cold_key_name, path='~/.bittensor/wallets')
-        wallet.regen_coldkey(mnemonic=wallet_data.cold_key_mnemonic, use_password=False)
-        wallet.regen_hotkey(mnemonic=wallet_data.hot_key_mnemonic, use_password=False)
+        new_wallet = wallet(name=wallet_data.cold_key_name, path='~/.bittensor/wallets')
+        new_wallet.regen_coldkey(mnemonic=wallet_data.cold_key_mnemonic, use_password=False)
+        new_wallet.regen_hotkey(mnemonic=wallet_data.hot_key_mnemonic, use_password=False)
         await websocket_service.broadcast(f"Wallet regenerated")
 
     async def wandb_login(self, wandb_key: str):
@@ -54,10 +54,9 @@ class MinerService:
         await websocket_service.broadcast(f"Logged into wandb")
 
     async def start_mining(self, miner_options: MinerOptions):
-        await websocket_service.broadcast("Starting mining process")
+        await websocket_service.broadcast("Starting mining process\n")
         await self.update_or_clone_miner()
         await self.regenerate_wallet(miner_options.wallet_data)
-        await self.run_command('./update.sh')
         command = f"python -u DistributedTraining/neurons/{miner_options.miner_type.value}.py \
             --netuid {miner_options.net_id} \
             --subtensor.network {miner_options.network} \
