@@ -1,7 +1,9 @@
+import os
+import subprocess
 from functools import partial
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QRadioButton, QLabel, QStackedWidget, QPushButton, QGroupBox, \
-    QHBoxLayout, QLineEdit, QMessageBox
+    QHBoxLayout, QLineEdit, QMessageBox, QInputDialog
 from PyQt5.QtCore import Qt
 
 from utils import get_value_from_env, save_value_to_env
@@ -12,7 +14,7 @@ class MachineOptionPage(QWidget):
         super().__init__(parent)
         self.parent = parent
         self.setupUI()
-        
+
     def setupUI(self):
         self.parent.wandb_api_key = get_value_from_env("WANDB_API_KEY")
         self.layout = QVBoxLayout(self)
@@ -28,9 +30,9 @@ class MachineOptionPage(QWidget):
         header = QLabel("BitCurrent", self)
         header.setAlignment(Qt.AlignLeft)
         self.parent.addDetail(self.layout, header, 20, bold=True)
- 
+
     def createMachineOptions(self):
-        option_group = QGroupBox("Select Machine to Use", self) 
+        option_group = QGroupBox("Select Machine to Use", self)
         options_layout = QVBoxLayout(option_group)
         options_layout.setSpacing(15)
 
@@ -40,7 +42,7 @@ class MachineOptionPage(QWidget):
 
         self.cloudRadioButton = QRadioButton("Cloud Computer")
         self.parent.addDetail(options_layout, self.cloudRadioButton, 16)
-        
+
         self.parent.addDetail(self.layout, option_group, 20, bold=True)
 
     def createSelectionPool(self):
@@ -48,9 +50,7 @@ class MachineOptionPage(QWidget):
         self.optionsStack = QStackedWidget()
         # local option
 
-        local_inputs = [
-            ("Enter Wandb API Key:", 'wandb_api_key', self.parent.wandb_api_key)
-        ]
+        local_inputs = []
         self.localOptions = self.createOptionWidget(
             "Options",
             self.showLocalOptions,
@@ -59,9 +59,9 @@ class MachineOptionPage(QWidget):
         )
         self.optionsStack.addWidget(self.localOptions)
 
-        cloud_inputs = (local_inputs +
-                        [("Enter Hotkey mnemonic:", 'mnemonic_hotkey', self.parent.mnemonic_hotkey),
-                         ("Enter Coldkey mnemonic:", 'mnemonic_coldkey', self.parent.mnemonic_coldkey)])
+        cloud_inputs = [("Enter Wandb API Key:", 'wandb_api_key', self.parent.wandb_api_key),
+                        ("Enter Hotkey mnemonic:", 'mnemonic_hotkey', self.parent.mnemonic_hotkey),
+                        ("Enter Coldkey mnemonic:", 'mnemonic_coldkey', self.parent.mnemonic_coldkey)]
 
         self.cloudOptions = self.createOptionWidget(
             "Options",
@@ -75,7 +75,7 @@ class MachineOptionPage(QWidget):
         # Connect radio buttons to change the stacked widget index
         self.localRadioButton.toggled.connect(lambda: self.optionsStack.setCurrentIndex(0))
         self.cloudRadioButton.toggled.connect(lambda: self.optionsStack.setCurrentIndex(1))
-    
+
     def createOptionWidget(self, title, default_action=None, additional_buttons=None, input_fields=None):
         if additional_buttons is None:
             additional_buttons = []
@@ -84,8 +84,8 @@ class MachineOptionPage(QWidget):
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setAlignment(Qt.AlignTop)
-        self.parent.addDetail(layout,QLabel(title), 20, bold = True)
-        
+        self.parent.addDetail(layout, QLabel(title), 20, bold=True)
+
         # itertate through options to create button and actions
         for btn_text, btn_action in additional_buttons:
             button = QPushButton(btn_text)
@@ -122,9 +122,9 @@ class MachineOptionPage(QWidget):
         print("Cloud options selected")
 
     def runPodAction(self):
-        # Placeholder for RunPod action
+        # Placeholder for RunPod actionc
         # show input for getting the wandb api key
-        if self.isAllFieldsFilled():
+        if self.isAllFieldsFilled() and self.wandbLogin():
             self.parent.show_runpod_page()
 
     def vastAiAction(self):
@@ -132,8 +132,12 @@ class MachineOptionPage(QWidget):
         print("Vast.ai selected")
 
     def localAction(self):
-        if self.isAllFieldsFilled():
-            self.parent.show_local_dashboard_page()
+        self.parent.wandb_api_key = self.getLocalWandbApiKey()
+        if not self.parent.wandb_api_key:
+            self.parent.wandb_api_key, ok = QInputDialog.getText(self, "wandb API key", "Please confirm wandb API key:")
+        if not self.parent.wandb_api_key or not self.wandbLogin():
+            return
+        self.parent.show_local_dashboard_page()
 
     def isAllFieldsFilled(self):
         if field := self.findUnfilledField():
@@ -150,3 +154,23 @@ class MachineOptionPage(QWidget):
             for child in option.children():
                 if isinstance(child, QLineEdit) and child.isVisible() and not child.text():
                     return child
+
+    def getLocalWandbApiKey(self):
+        path = os.path.join(os.path.expanduser('~'), ".netrc")
+        if not os.path.exists(path):
+            return
+        with open(path) as f:
+            for line in f.readlines():
+                split_line = line.split()
+                if "password" in split_line:
+                    return split_line[1]
+
+    def wandbLogin(self):
+        try:
+            subprocess.check_output(["wandb", "login", self.parent.wandb_api_key], stderr=subprocess.PIPE)
+            return True
+        except subprocess.CalledProcessError:
+            self.parent.wandb_api_key, ok = QInputDialog.getText(self, "Wandb login", "Error login to Wandb, try again")
+            if not ok:
+                return False
+            return self.wandbLogin()
