@@ -28,6 +28,13 @@ class SubnetType(Enum):
     MAP_REDUCE = 'map reduce'
 
 
+DIRECTORY_MAPPER = {
+    25: 'DistributedTraining',
+    1: 'prompting',
+    13: 'data-universe',
+    20: 'bitagent_subnet',
+}
+
 INITIAL_PEERS = get_initial_num_pers()
 IP_ADDRESS = get_public_ip()
 tao_price = get_tao_price()

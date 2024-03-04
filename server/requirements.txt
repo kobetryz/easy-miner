@@ -1,3 +1,4 @@
-bittensor
+bittensor-wallet
+password_strength
 fastapi
 uvicorn[standard]

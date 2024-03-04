@@ -105,9 +105,11 @@ def get_tao_price():
     taostats = json.loads(response.content)
     return float(taostats[0]['price'])
 
+
 def get_value_from_env(key):
     load_dotenv()
     return os.getenv(key)
+
 
 def save_value_to_env(key, value):
     with open(".env", "a") as env_file:

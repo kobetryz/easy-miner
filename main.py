@@ -55,11 +55,11 @@ class MiningWizard(QMainWindow):
         with open("style.qss", "r") as file:
             self.setStyleSheet(file.read())
 
-    def show_page(self, page_class):
+    def show_page(self, page_class, *args, **kwargs):
         if hasattr(self, page_class.__name__.lower()):
             page = getattr(self, page_class.__name__.lower())
         else:
-            page = page_class(self)
+            page = page_class(self, *args, **kwargs)
             setattr(self, page_class.__name__.lower(), page)
             self.central_widget.addWidget(page)
         print(page_class.__name__)
@@ -172,6 +172,7 @@ class MiningWizard(QMainWindow):
         self.mnemonic_coldkey = cold_key
         self.wallet_name = wallet_name
         self.wallet_path = wallet_path
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

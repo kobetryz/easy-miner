@@ -18,7 +18,7 @@ class WalletData(BaseModel):
 class MinerOptions(BaseModel):
     miner_type: MinerType
     network: str
-    net_id: str
+    net_id: int
     axon_port: int
     dht_port: int
     dht_announce_ip: str

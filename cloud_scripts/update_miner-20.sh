@@ -1,10 +1,11 @@
 #!/bin/bash
 
-REPO_URL="https://github.com/bit-current/DistributedTraining.git"
-DIR="DistributedTraining"
+REPO_URL="https://github.com/RogueTensor/bitagent_subnet.git"
+DIR="bitagent_subnet"
 
 install_dependencies() {
-  pip install -e . && python post_install.py
+    pip install -r requirements.txt && pip install -e . && pip uninstall uvloop
+    echo "Dependencies installed."
 }
 
 strip_quotes() {

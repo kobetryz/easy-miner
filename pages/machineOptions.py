@@ -6,8 +6,6 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QRadioButton, QLabel, QStacked
     QHBoxLayout, QLineEdit, QMessageBox, QInputDialog
 from PyQt5.QtCore import Qt
 
-from utils import get_value_from_env, save_value_to_env
-
 
 class MachineOptionPage(QWidget):
     def __init__(self, parent):
@@ -16,7 +14,7 @@ class MachineOptionPage(QWidget):
         self.setupUI()
 
     def setupUI(self):
-        self.parent.wandb_api_key = get_value_from_env("WANDB_API_KEY")
+        self.parent.wandb_api_key = None
         self.layout = QVBoxLayout(self)
         self.layout.setSpacing(10)
         self.layout.setContentsMargins(10, 10, 10, 10)
@@ -124,7 +122,7 @@ class MachineOptionPage(QWidget):
     def runPodAction(self):
         # Placeholder for RunPod actionc
         # show input for getting the wandb api key
-        if self.isAllFieldsFilled() and self.wandbLogin():
+        if self.isAllFieldsFilled():
             self.parent.show_runpod_page()
 
     def vastAiAction(self):
@@ -144,8 +142,6 @@ class MachineOptionPage(QWidget):
             widgets = field.parent().children()
             QMessageBox.warning(self, "Warning", f"Field '{widgets[widgets.index(field) - 1].text()}' unfilled")
             return False
-        if not (get_value_from_env('WANDB_API_KEY')):
-            save_value_to_env('WANDB_API_KEY', self.parent.wandb_api_key)
         return True
 
     def findUnfilledField(self):

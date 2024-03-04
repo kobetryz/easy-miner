@@ -22,7 +22,6 @@ class RunpodSetupPage(QWidget):
         self.layout = QVBoxLayout()
         self.layout.setSpacing(5)
         self.layout.setContentsMargins(10, 10, 10, 10)
-        # self.layout.addSpacerItem(QSpacerItem(10, 20, QSizePolicy.Minimum, QSizePolicy.Expanding))
         self.create_header()
         self.create_gpu_options()
         self.layout.addStretch()  # Add a stretchable space that expands to fill any remaining space at the end of the layout
@@ -44,7 +43,7 @@ class RunpodSetupPage(QWidget):
         self.gpu_drop_down.addItems(GPU_LIST_TO_USE)
 
         # Set "RTX A4000" as the default GPU if it exists in the GPU_LIST_TO_USE
-        index = self.gpu_drop_down.findText("RTX A4000")
+        index = self.gpu_drop_down.findText("NVIDIA RTX A4000")
         if index >= 0:
             self.gpu_drop_down.setCurrentIndex(index)
 
@@ -114,7 +113,7 @@ class RunpodSetupPage(QWidget):
                gpuCount: 1,
                volumeInGb: {PERSISTENT_DISK_SIZE_GB},
                containerDiskInGb: {OS_DISK_SIZE_GB},
-               gpuTypeId: "{self.selected_gpu}",
+               gpuTypeId: "{GPU_DICT[self.selected_gpu]["id"]}",
                cloudType: {self.cloud_option.upper()},
                supportPublicIp: true,
                name: "subnet-{self.parent.net_id}"
@@ -150,30 +149,13 @@ class RunpodSetupPage(QWidget):
         template_id = self.get_template_id()
         if template_id:
             return template_id
-        mnemonic = get_secret_hotkey(self.parent.wallet_path)
         template_query = f"""
                     containerDiskInGb: {OS_DISK_SIZE_GB},
                     dockerArgs: "",
-                    env: [
-                      {{
-                        key: "WAND_API_KEY",
-                        value: "8ca0b4aabb043cc14ebd4aaed118bc5ce0277811"
-                      }},
-                      {{ key: "NET_UID", value: "25" }},
-                      {{ key: "NETWORK", value: "test" }},
-                      {{ key: "WALLET", value: "{self.parent.wallet_name}" }},
-                      {{ key: "HOTKEY", value: "hotkey" }},
-                      {{ key: "AXON_PORT", value: "21077" }},
-                      {{ key: "DHT_PORT", value: "21078" }},
-                      {{
-                        key: "MNEMONIC"
-                        value: "{mnemonic}"
-                      }},
-                      {{ key: "MINER_TYPE", value: "{self.parent.miner_type.value}" }}
-                    ],
-                    imageName: "squirre11/subnet-25:latest",
+                    env: [],
+                    imageName: "squirre11/miner-server:latest",
                     name: "Easy miner subnet 25",
-                    ports: "21077/tcp, 21078/tcp",
+                    ports: "21077/tcp, 21078/tcp, 8000/http",
                     readme: "## Its easy miner template, nothing special!",
                     volumeInGb: {PERSISTENT_DISK_SIZE_GB},
                     volumeMountPath: "/workspace"
@@ -188,4 +170,4 @@ class RunpodSetupPage(QWidget):
         pod_id = self.create_pod(template_id)
         if not pod_id:
             return
-        # self.parent.show_miner_options_page()
+        self.parent.show_runpod_dashboard_page(pod_id)

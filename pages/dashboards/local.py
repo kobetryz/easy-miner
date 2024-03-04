@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QMessageBox
 from datetime import datetime
 import GPUtil
 
+import config
 from config import IP_ADDRESS, INITIAL_PEERS
 from .base import DashboardPageBase
 import bittensor as bt
@@ -83,7 +84,7 @@ class LocalDashboardPage(DashboardPageBase):
         self.update_script_process = QProcess(self)
         self.update_script_process.setProcessChannelMode(QProcess.MergedChannels)
         self.update_script_process.readyReadStandardOutput.connect(self.handle_update_script_output)
-        self.update_script_process.start('sh', ['update_miner-25.sh'])
+        self.update_script_process.start('sh', [f'local_scripts/update_miner-{self.parent.net_id}.sh'])
         self.update_script_process.finished.connect(self.run_mining_script)
 
     def handle_update_script_output(self):
@@ -106,10 +107,11 @@ class LocalDashboardPage(DashboardPageBase):
 
         # Log balance and start of mining
         self.data_logger.info(f' Balance - Start: {self.wallet_bal_tao}')
-        command = "python"
+        miner_directory = config.DIRECTORY_MAPPER.get(self.parent.net_id)
+        command = f"{miner_directory}/venv/bin/python"
         args = [
             "-u",
-            f"DistributedTraining/neurons/{self.parent.miner_type.value}.py",
+            f"{miner_directory}/neurons/{self.parent.miner_type.value}.py",
             "--netuid", f"{self.parent.net_id}",
             "--subtensor.network", "test",
             "--wallet.name", f"{self.parent.wallet_name}",
