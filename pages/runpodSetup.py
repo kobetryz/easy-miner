@@ -141,8 +141,7 @@ class RunpodSetupPage(QWidget):
                         QMessageBox.warning(self, "Warning", error['message'])
                         print('ERROR: ' + error['message'])
                         return None
-            else:
-                print(json.dumps(resp_json, indent=4, default=str))
+            return resp_json["data"]["podFindAndDeployOnDemand"]["id"]
 
     def create_template(self):
         self.cloud_option = "Community" if self.community_cloud_radio.isChecked() else "Secure"
@@ -155,7 +154,7 @@ class RunpodSetupPage(QWidget):
                     env: [],
                     imageName: "squirre11/miner-server:latest",
                     name: "Easy miner subnet 25",
-                    ports: "21077/tcp, 21078/tcp, 8000/http",
+                    ports: "21077/tcp,21078/tcp,8000/http",
                     readme: "## Its easy miner template, nothing special!",
                     volumeInGb: {PERSISTENT_DISK_SIZE_GB},
                     volumeMountPath: "/workspace"

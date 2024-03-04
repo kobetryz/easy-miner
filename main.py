@@ -84,8 +84,8 @@ class MiningWizard(QMainWindow):
     def show_local_dashboard_page(self):
         self.show_page(LocalDashboardPage)
 
-    def show_runpod_dashboard_page(self):
-        self.show_page(RunpodDashboardPage)
+    def show_runpod_dashboard_page(self, pod_id=None):
+        self.show_page(RunpodDashboardPage, pod_id=pod_id)
        
     def show_wallet_page(self):
         if self.wallet_name:
