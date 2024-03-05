@@ -165,8 +165,16 @@ class MachineOptionPage(QWidget):
         try:
             subprocess.check_output(["wandb", "login", self.parent.wandb_api_key], stderr=subprocess.PIPE)
             return True
-        except subprocess.CalledProcessError:
-            self.parent.wandb_api_key, ok = QInputDialog.getText(self, "Wandb login", "Error login to Wandb, try again")
+        except subprocess.CalledProcessError as e:
+            error_lines = e.stderr.decode('utf-8').strip().split('\n')
+
+            error_msg = "Unknown error occurred"
+            for line in reversed(error_lines):
+                if line.strip():
+                    error_msg = line.strip()
+                    break
+            self.parent.wandb_api_key, ok = QInputDialog.getText(self, "Wandb login", f"Error login to Wandb: {error_msg}, try again")
             if not ok:
                 return False
             return self.wandbLogin()
+
