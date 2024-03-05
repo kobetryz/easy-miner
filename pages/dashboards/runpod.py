@@ -51,6 +51,28 @@ class WebSocketThread(QThread):
         self.connect_to_websocket()
 
 
+class MetricsThread(QThread):
+    cpu_util = pyqtSignal(float)
+    gpu_util = pyqtSignal(float)
+
+    update_signal = pyqtSignal()
+
+    def __init__(self, parent):
+        super().__init__()
+        self.parent = parent
+        self.update_signal.connect(self.update_metrics)
+
+    def update_metrics(self):
+        response = api.get_pod(self.parent.pod_id)
+        resp_json = response.json()
+        runtime_dict = resp_json["data"]["pod"]["runtime"]
+        self.gpu_util.emit(runtime_dict["gpus"][0]["gpuUtilPercent"])
+        self.cpu_util.emit(runtime_dict["container"]["cpuPercent"])
+
+    def run(self):
+        self.update_metrics()
+
+
 class RunpodDashboardPage(DashboardPageBase):
     def __init__(self, parent, pod_id=None):
         self.pod_dict = {}
@@ -65,6 +87,8 @@ class RunpodDashboardPage(DashboardPageBase):
         self.websocket_thread = WebSocketThread(self)
         self.websocket_thread.data_received.connect(self.handle_received_data)  # noqa
         self.websocket_thread.start()
+
+        self.metrics_thread = None
 
     def setupUI(self):
         super().setupUI()
@@ -101,8 +125,8 @@ class RunpodDashboardPage(DashboardPageBase):
             "dht_announce_ip": self.dht_announce_ip,
             "wallet_data": {
                 "cold_key_name": self.parent.wallet_name,
-                "cold_key_mnemonic": self.parent.mnemonic_hotkey,
-                "hot_key_mnemonic": self.parent.mnemonic_coldkey,
+                "cold_key_mnemonic": self.parent.mnemonic_coldkey,
+                "hot_key_mnemonic": self.parent.mnemonic_hotkey,
             },
             "wandb_key": self.parent.wandb_api_key,
         })
@@ -139,4 +163,17 @@ class RunpodDashboardPage(DashboardPageBase):
             minutes = (self.elapsed_time % 3600) // 60
             seconds = self.elapsed_time % 60
             self.timer_label.setText(f"{hours}h: {minutes}m: {seconds}s")
-            # print(self.timer_label.text())
+            self.update_metrics()
+
+    def update_metrics(self):
+        if self.metrics_thread is None or not self.metrics_thread.isRunning():
+            self.metrics_thread = MetricsThread(self)
+            self.metrics_thread.cpu_util.connect(self.update_cpu_usage)
+            self.metrics_thread.gpu_util.connect(self.update_gpu_usage)
+            self.metrics_thread.start()
+
+    def update_cpu_usage(self, cpu_util):
+        self.cpu_usage_label.setText(f"{cpu_util}%")
+
+    def update_gpu_usage(self, gpu_util):
+        self.gpu_usage_label.setText(f"{gpu_util}%")
