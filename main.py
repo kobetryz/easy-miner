@@ -103,10 +103,10 @@ class MiningWizard(QMainWindow):
         else:
             self.show_page(RunpodSetupPage)
 
-    def addDetail(self, temp_layout, widget, fontsize, bold = False):
-        fontWeight = QFont.Bold if bold else QFont.Normal 
+    def addDetail(self, temp_layout, widget, fontsize, bold=False, **kwargs):
+        fontWeight = QFont.Bold if bold else QFont.Normal
         widget.setFont(QFont("Georgia", fontsize, fontWeight))
-        temp_layout.addWidget(widget)
+        temp_layout.addWidget(widget, **kwargs)
 
     def print_attributes(self):
         for attr_name in dir(self):

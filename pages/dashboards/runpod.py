@@ -2,8 +2,9 @@ import time
 
 import requests
 import websocket
-from PyQt5.QtCore import pyqtSignal, QThread, QDateTime
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtCore import pyqtSignal, QThread, QDateTime, QTimer
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QMessageBox, QGroupBox, QHBoxLayout, QPushButton
 
 from runpod_api.runpod import api
 from .base import DashboardPageBase
@@ -93,6 +94,63 @@ class RunpodDashboardPage(DashboardPageBase):
     def setupUI(self):
         super().setupUI()
         self.set_pod_config()
+
+    def createHeader(self):
+        header_group = QGroupBox("BitCurrent", self)
+        header_group.setFont(QFont("Georgia", 20, QFont.Bold))
+        header_layout = QHBoxLayout(header_group)
+
+        home_button = QPushButton("Home")
+        self.parent.addDetail(header_layout, home_button, 14)
+        home_button.clicked.connect(self.parent.show_start_page)
+
+        wallet_button = QPushButton("Wallet")
+        self.parent.addDetail(header_layout, wallet_button, 14)
+        wallet_button.clicked.connect(self.parent.show_wallet_page)
+
+        self.mine_button = QPushButton("Start Mining")
+        self.parent.addDetail(header_layout, self.mine_button, 14)
+        self.mine_button.clicked.connect(self.toggle_mining)
+
+        stop_pod_button = QPushButton("Terminate Pod")
+        self.parent.addDetail(header_layout, stop_pod_button, 14)
+        stop_pod_button.clicked.connect(self.terminate_pod)
+
+        log_button = QPushButton("Log Out")
+        self.parent.addDetail(header_layout, log_button, 14)
+        log_button.clicked.connect(self.logout)
+
+        self.layout.addWidget(header_group)
+
+    def terminate_pod(self):
+        self.mine_button.setEnabled(False)
+        self.mining_process = False
+        if self.charts_group.isVisible():
+            self.toggle_view()
+        self.output_area.insertPlainText("\nTerminating pod...")
+        response = api.terminate_pod(self.pod_id)
+        if response.status_code != 200:
+            QMessageBox.warning(self, "Error", f"{response.text}\nTry again", QMessageBox.Ok)
+            return
+        self.pod_id = None
+        self.cleanup_threads()
+        self.output_area.insertPlainText(
+            "\nPod successfully terminated!\nYou will be redirected to the home page in 10 seconds")
+
+        QTimer.singleShot(10000, self.redirect_to_home)
+
+    def cleanup_threads(self):
+        if self.websocket_thread:
+            self.websocket_thread.terminate()
+            self.websocket_thread.wait()
+            self.websocket_thread = None
+        if self.metrics_thread:
+            self.metrics_thread.terminate()
+            self.metrics_thread.wait()
+            self.metrics_thread = None
+
+    def redirect_to_home(self):
+        self.parent.show_start_page()
 
     def handle_received_data(self, data):
         self.output_area.insertPlainText(data)

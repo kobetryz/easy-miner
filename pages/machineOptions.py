@@ -57,9 +57,7 @@ class MachineOptionPage(QWidget):
         )
         self.optionsStack.addWidget(self.localOptions)
 
-        cloud_inputs = [("Enter Wandb API Key:", 'wandb_api_key', self.parent.wandb_api_key),
-                        ("Enter Hotkey mnemonic:", 'mnemonic_hotkey', self.parent.mnemonic_hotkey),
-                        ("Enter Coldkey mnemonic:", 'mnemonic_coldkey', self.parent.mnemonic_coldkey)]
+        cloud_inputs = []
 
         self.cloudOptions = self.createOptionWidget(
             "Options",
@@ -122,8 +120,7 @@ class MachineOptionPage(QWidget):
     def runPodAction(self):
         # Placeholder for RunPod actionc
         # show input for getting the wandb api key
-        if self.isAllFieldsFilled():
-            self.parent.show_runpod_page()
+        self.parent.show_runpod_page()
 
     def vastAiAction(self):
         # Placeholder for Vast.ai action
