@@ -97,7 +97,6 @@ class PodCheckerThread(QThread):
 
     def run(self):
         while not self.isInterruptionRequested():
-            print(111)
             self.check_availability()
             time.sleep(1)
 
@@ -361,7 +360,6 @@ class RunpodSetupPage(QWidget):
 
     def on_pod_available(self):
         self.pod_checker_thread.requestInterruption()
-        self.pod_checker_thread.terminate()
         self.continue_button.setEnabled(True)
         self.output_area.append("Pod available, you can go to dashboard!")
 
