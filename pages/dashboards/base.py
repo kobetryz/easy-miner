@@ -1,6 +1,7 @@
 import os
 import json
 from abc import abstractmethod
+from functools import partial
 
 import plotly.io as pio
 import plotly.graph_objects as go
@@ -18,7 +19,7 @@ from utils import get_earnings_by_date_range, get_total_mining, configure_logger
 
 
 class DashboardPageBase(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
         self.parent = parent
         # self.addDetail = self.parent.addDetail
@@ -175,7 +176,7 @@ class DashboardPageBase(QWidget):
 
         home_button = QPushButton("Home")
         self.parent.addDetail(header_layout, home_button, 14)
-        home_button.clicked.connect(self.parent.show_start_page)
+        home_button.clicked.connect(partial(self.parent.show_start_page, page_to_delete=self))
 
         wallet_button = QPushButton("Wallet")
         self.parent.addDetail(header_layout, wallet_button, 14)
@@ -195,7 +196,7 @@ class DashboardPageBase(QWidget):
         """
         get users hotkey and checks if registered on subnet
         """
-        if not hasattr(self.parent, 'hotkey'):
+        if not hasattr(self.parent, 'hotkey') or self.parent.hotkey is None:
             hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path, 'hotkeys'))]
             hotkey_file = hotkey_files[-1]
             with open(f'{self.parent.wallet_path}/hotkeys/{hotkey_file}', 'r') as f:
@@ -266,7 +267,8 @@ class DashboardPageBase(QWidget):
         if reply == QMessageBox.Yes:
             self.parent.wallet_name = None
             self.parent.wallet_path = None
-            self.parent.show_start_page()
+            self.parent.hotkey = None
+            self.parent.show_start_page(page_to_delete=self)
 
     def plot_graph(self, x, y):
         # Create a QWebEngineView to display the Plotly chart

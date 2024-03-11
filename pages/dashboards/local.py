@@ -1,8 +1,9 @@
 import os
 import re
+from functools import partial
 
 import psutil
-from PyQt5.QtCore import QProcess, QProcessEnvironment, QDateTime, QUrl, QThread, pyqtSignal
+from PyQt5.QtCore import QProcess, QProcessEnvironment, QDateTime, QUrl, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QMessageBox
 from datetime import datetime
@@ -10,6 +11,7 @@ import GPUtil
 
 import config
 from config import IP_ADDRESS, INITIAL_PEERS
+from utils import get_minner_version
 from .base import DashboardPageBase
 import bittensor as bt
 
@@ -32,9 +34,12 @@ class CpuUsageThread(QThread):
 
 
 class LocalDashboardPage(DashboardPageBase):
-    def __init__(self, parent):
+    def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
         self.cpu_usage_thread = None
+        self.timer_check_update = QTimer(self)
+        self.timer_check_update.setInterval(config.CHECK_UPDATES_TIME)  # 12 hours
+        self.timer_check_update.timeout.connect(self.handle_repo_is_up_to_date)
 
     def handle_registration(self):
         self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You are not registered')
@@ -61,6 +66,7 @@ class LocalDashboardPage(DashboardPageBase):
             self.update_miner()
 
     def stop_mining(self):
+        self.timer_check_update.stop()
         if self.mining_process is not None and self.mining_process.state() == QProcess.Running:
             self.timer.stop()
             self.mining_process.terminate()
@@ -70,6 +76,7 @@ class LocalDashboardPage(DashboardPageBase):
 
     def on_mining_finished(self):
         self.timer.stop()
+        self.timer_check_update.stop()
         self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Stop Mining')
         self.mine_button.setText("Start Mining")
         self.mining_process = None
@@ -103,6 +110,7 @@ class LocalDashboardPage(DashboardPageBase):
 
         self.start_time = QDateTime.currentDateTime()
         self.timer.start(1000)  # Update timer every second
+        self.timer_check_update.start()
         self.timer.timeout.connect(self.update_timer)
 
         # Log balance and start of mining
@@ -146,7 +154,7 @@ class LocalDashboardPage(DashboardPageBase):
                 return None
         else:
             self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Registration in Progress!!')
-            success = self.parent.subtensor.burned_register(wallet=self.wallet, netuid=25)
+            success = self.parent.subtensor.burned_register(wallet=self.wallet, netuid=self.parent.net_id)
             if success:
                 self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Registration complete')
                 info_msg = f"Congratulations!\nRegistration Successful!!\nYou are ready to mine"
@@ -156,8 +164,13 @@ class LocalDashboardPage(DashboardPageBase):
     def handle_output(self):
         self.parent.output = self.mining_process.readAllStandardOutput().data().decode("utf-8")
         self.output_area.append(
-            self.parent.output.replace('|', ' ').replace('&', '&amp;').replace('<', '&lt;').replace('>',
-                                                                                                    '&gt;').strip())
+            self.parent.output
+            .replace('|', ' ')
+            .replace('&', '&amp;')
+            .replace('<', '&lt;')
+            .replace('>', '&gt;')
+            .strip()
+        )
         # Check for common prompt indicators
         if self.parent.output.strip().endswith(":") or "?" in self.parent.output:
             self.input_line.show()
@@ -180,6 +193,23 @@ class LocalDashboardPage(DashboardPageBase):
             self.data_logger.info(f' Activity - CPU Usage%: {cpu_usage}')
             # time_taken_cpu = float(time_taken_cpu_match.group(1))
         # print(self.parent.output)
+
+    def check_repo_is_up_to_date(self, prev_version):
+        if get_minner_version(self.parent.net_id) != prev_version:
+            self.stop_mining()
+            self.run_mining_script()
+        self.timer_check_update.start()
+
+    def handle_repo_is_up_to_date(self):
+        self.timer_check_update.stop()
+        prev_version = get_minner_version(self.parent.net_id)
+
+        self.update_script_process = QProcess(self)
+        self.update_script_process.setProcessChannelMode(QProcess.MergedChannels)
+        self.update_script_process.readyReadStandardOutput.connect(self.handle_update_script_output)
+        self.update_script_process.start('sh', [f'local_scripts/update_miner-{self.parent.net_id}.sh'])
+        self.update_script_process.finished.connect(partial(self.check_repo_is_up_to_date, prev_version))
+
 
     def update_timer(self):
         # This function is called every second to update the timer display, CPU usage and GPU usage

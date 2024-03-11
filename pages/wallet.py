@@ -1,14 +1,15 @@
 import json
 import os
-import bittensor as bt
-from PyQt5.QtWidgets import (QInputDialog, QPushButton, QTableWidget, QTableWidgetItem,
+from functools import partial
+
+from PyQt5.QtWidgets import (QPushButton, QTableWidget, QTableWidgetItem,
                              QVBoxLayout, QHBoxLayout, QWidget, QGroupBox, QLabel)
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
 
 class WalletDetailsTable(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
         self.parent = parent
 
@@ -76,7 +77,7 @@ class WalletDetailsTable(QWidget):
         h_layout = QHBoxLayout()
         previous_button = QPushButton("Back", self)
         previous_button.setFont(QFont("Georgia", 14))
-        previous_button.clicked.connect(parent.show_dashboard_page)
+        previous_button.clicked.connect(partial(parent.show_local_dashboard_page, page_to_delete=self))
         h_layout.addWidget(previous_button)
 
         # Spacer to push the Previous button to the left

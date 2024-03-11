@@ -3,6 +3,7 @@ import logging
 import os
 import re
 from datetime import datetime
+from netrc import netrc
 
 import pandas as pd
 from hivemind import DHT
@@ -14,7 +15,7 @@ def get_secret_coldkey(wallet_path: str):
     try:
         with open(wallet_path + "/coldkey") as f:
             return json.loads(f.read()).get("secretPhrase")
-    except FileNotFoundError:
+    except (FileNotFoundError, json.JSONDecodeError, IndexError) as e:
         return None
 
 
@@ -93,7 +94,7 @@ def configure_logger_data(log_file):
 
 
 def get_initial_num_pers():
-    open_port = 8000
+    open_port = 8001
     dht = DHT(host_maddrs=[f"/ip4/0.0.0.0/tcp/{open_port}"], start=True)
     return str(dht.get_visible_maddrs()[0])
 
@@ -114,3 +115,27 @@ def get_value_from_env(key):
 def save_value_to_env(key, value):
     with open(".env", "a") as env_file:
         env_file.write(f"{key}=\"{value}\"\n")
+
+
+def getLocalWandbApiKey():
+    path = os.path.join(os.path.expanduser('~'), ".netrc")
+    if not os.path.exists(path):
+        return
+    config = netrc(path)
+    wandb_config = config.hosts.get("api.wandb.ai")
+    if wandb_config:
+        return wandb_config[2]
+
+
+def get_minner_version(subnet_id):
+    match subnet_id:
+        case 25:
+            dest_path = "DistributedTraining/template/__init__.py"
+        case _:
+            return None
+    with open(dest_path, 'r') as file:
+        for line in file:
+            if line.startswith("__version__"):
+                # Extract the version string
+                return line.split('=')[-1].replace('"', '').strip()
+    return "Version not found."

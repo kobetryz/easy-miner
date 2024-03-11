@@ -28,6 +28,11 @@ class SubnetType(Enum):
     MAP_REDUCE = 'map reduce'
 
 
+class NetworkType(Enum):
+    FINNEY = "finney"
+    TEST = "test"
+
+
 DIRECTORY_MAPPER = {
     25: 'DistributedTraining',
     1: 'prompting',
@@ -38,3 +43,5 @@ DIRECTORY_MAPPER = {
 INITIAL_PEERS = get_initial_num_pers()
 IP_ADDRESS = get_public_ip()
 tao_price = get_tao_price()
+
+CHECK_UPDATES_TIME = 12*60*60*1000  # 12 hours in milliseconds

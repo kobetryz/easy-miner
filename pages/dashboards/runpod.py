@@ -75,7 +75,7 @@ class MetricsThread(QThread):
 
 
 class RunpodDashboardPage(DashboardPageBase):
-    def __init__(self, parent, pod_id=None):
+    def __init__(self, parent, pod_id=None, *args, **kwargs):
         self.pod_dict = {}
         self.pod_id = pod_id
         self.server_url = None
@@ -102,7 +102,7 @@ class RunpodDashboardPage(DashboardPageBase):
 
         home_button = QPushButton("Home")
         self.parent.addDetail(header_layout, home_button, 14)
-        home_button.clicked.connect(self.parent.show_start_page)
+        home_button.clicked.connect(self.redirect_to_home)
 
         wallet_button = QPushButton("Wallet")
         self.parent.addDetail(header_layout, wallet_button, 14)
@@ -150,7 +150,7 @@ class RunpodDashboardPage(DashboardPageBase):
             self.metrics_thread = None
 
     def redirect_to_home(self):
-        self.parent.show_start_page()
+        self.parent.show_start_page(page_to_delete=self)
 
     def handle_received_data(self, data):
         self.output_area.insertPlainText(data)
@@ -175,8 +175,8 @@ class RunpodDashboardPage(DashboardPageBase):
 
     def start_mining(self):
         response = requests.post(f"{self.server_url}/mine", json={
-            "miner_type": "validator",
-            "network": "test",
+            "miner_type": self.parent.miner_type.value,
+            "network": self.parent.network.value,
             "net_id": self.parent.net_id,
             "axon_port": self.axon_port,
             "dht_port": self.dht_port,

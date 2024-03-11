@@ -2,21 +2,22 @@ import os
 import json
 
 from datetime import datetime
+from functools import partial
+
 from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout, QWidget, QLineEdit,
                              QMessageBox, QHBoxLayout, QFileDialog, QGroupBox, QSpacerItem,
                              QTextEdit, QSizePolicy)
 from PyQt5.QtGui import QFont, QTextOption
-from PyQt5.QtCore import QProcess, QProcessEnvironment, QTimer, QDateTime
+from PyQt5.QtCore import QProcess, QProcessEnvironment
 
 
 class AddWalletPage(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
         self.parent = parent
         self.setupUI()
 
-        self.mining_process = None
-        self.timer = QTimer(self)  # Create timer
+        self.wallet_process = None
 
     def setupUI(self):
         self.layout = QVBoxLayout()
@@ -57,7 +58,7 @@ class AddWalletPage(QWidget):
         self.addDetail(details_layout, wallet_password_con_label, 14, bold=True)
 
         self.confirmed_password = QLineEdit(self)
-        self.confirmed_password.setEchoMode(QLineEdit.Password)  # Hides text entry for password  
+        self.confirmed_password.setEchoMode(QLineEdit.Password)  # Hides text entry for password
         self.addDetail(details_layout, self.confirmed_password, 14)
 
         self.layout.addWidget(details_box)
@@ -72,15 +73,13 @@ class AddWalletPage(QWidget):
     def createFooter(self):
         h_layout = QHBoxLayout()
         previous_button = QPushButton("Back to Main Menu", self)
-        previous_button.clicked.connect(self.parent.show_start_page)
+        previous_button.clicked.connect(partial(self.parent.show_start_page, page_to_delete=self))
         self.addDetail(h_layout, previous_button, 12)
 
-        # Save Button
         self.save_button = QPushButton("Save", self)
         self.addDetail(h_layout, self.save_button, 12)
         self.save_button.clicked.connect(self.save_wallet_details)
 
-        # Add more fields as needed...
         self.finish_button = QPushButton('Finish', self)
         self.addDetail(h_layout, self.finish_button, 12)
         self.finish_button.clicked.connect(self.parent.show_miner_options_page)
@@ -108,41 +107,42 @@ class AddWalletPage(QWidget):
             self.wallet_password_input.clear()  # Clear the password fields
             self.confirmed_password.clear()
             self.wallet_password_input.setFocus()
-            # return 
-        # self.output_area.show()   
+            # return
+        # self.output_area.show()
         self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Checking your password')
         self.wallet_name = self.wallet_name_input.text()
         self.wallet_path = os.path.join(os.path.expanduser('~'), '.bittensor/wallets')
-        # self.wallet_password = self.wallet_password_input.text()
+        self.wallet_password = self.wallet_password_input.text()
         # if self.output_area.isVisible():
         self.create_wallet()
 
     def create_wallet(self):
-        self.mining_process = QProcess(self)
-        self.mining_process.setProcessChannelMode(QProcess.MergedChannels)
-        self.mining_process.readyReadStandardOutput.connect(self.handle_output)
+        self.wallet_process = QProcess(self)
+        self.wallet_process.setProcessChannelMode(QProcess.MergedChannels)
+        self.wallet_process.readyReadStandardOutput.connect(self.handle_output)
         self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Creating Your wallet')
 
         # Set environment variables if needed
         env = QProcessEnvironment.systemEnvironment()
-        self.mining_process.setProcessEnvironment(env)
-
-        self.start_time = QDateTime.currentDateTime()
-        self.timer.start(1000)  # Update timer every second
-        self.timer.timeout.connect(self.update_timer)
+        self.wallet_process.setProcessEnvironment(env)
 
         command = "python"
-        args = ["-u", "create_wallet.py", f"--wallet_name={self.wallet_name}", f"--wallet_path={self.wallet_path}"]
+        args = [
+            "-u", "create_wallet.py",
+            f"--wallet_name={self.wallet_name}",
+            f"--wallet_path={self.wallet_path}",
+            f"--password={self.wallet_password}",
+        ]
 
         # Start the process
-        self.mining_process.start(command, args)
-        self.mining_process.finished.connect(self.on_process_finished)
+        self.wallet_process.start(command, args)
+        self.wallet_process.finished.connect(self.on_process_finished)
 
     def on_process_finished(self):
         if self.wallet_name and self.wallet_path:
             self.parent.wallet_name = self.wallet_name
             self.parent.wallet_path = os.path.join(self.wallet_path, self.wallet_name)
-            # new additions based on miner behaviour 
+            # new additions based on miner behaviour
             file_path = f'{self.parent.wallet_path}/hotkeys/default'
             self.edit_file_name(file_path)
 
@@ -168,20 +168,13 @@ class AddWalletPage(QWidget):
             self.save_button.setEnabled(False)
             self.finish_button.setEnabled(True)
 
-    def update_timer(self):
-        # This function is called every second to update the timer display
-        if self.mining_process is not None and self.mining_process.state() == QProcess.Running:
-            current_time = QDateTime.currentDateTime()
-            self.elapsed_time = self.start_time.secsTo(current_time)
-            # hours = self.elapsed_time // 3600
-            # minutes = (self.elapsed_time % 3600) // 60
-            # seconds = self.elapsed_time % 60
-            # self.timer_label.setText(f"{hours}h: {minutes}m: {seconds}s") 
-
     def handle_output(self):
-        self.parent.output = self.mining_process.readAllStandardOutput().data().decode("utf-8")
+        self.parent.output = self.wallet_process.readAllStandardOutput().data().decode("utf-8")
         self.output_area.append(self.parent.output)
-        # Check for common prompt indicators
-        if self.parent.output.lower().strip().endswith(":") or "password" in self.parent.output.lower():
-            input_text = self.confirmed_password.text + '\n'
-            self.process.write(input_text.text().encode())
+        if "overwrite? (y/n)" in self.parent.output.lower():
+            answer = QMessageBox.question(self, "Wallet", "Wallet already exist, overwrite?")
+            if answer == QMessageBox.Yes:
+                self.wallet_process.write(b"y\n")
+            else:
+                self.wallet_process.write(b"n\n")
+            return

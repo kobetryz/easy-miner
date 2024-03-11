@@ -6,6 +6,7 @@
 import os
 import sys
 
+from PyQt5 import sip
 from bittensor import subtensor, wallet
 
 from pages.dashboards import LocalDashboardPage, RunpodDashboardPage
@@ -32,12 +33,14 @@ class MiningWizard(QMainWindow):
         self.wallet_path = None
         self.miner_type = None
         self.net = None
+        self.network = None
         self.mnemonic_hotkey = None
         self.mnemonic_coldkey = None
 
     # methods to open pages
     def initialize_subtensor(self):
-        self.subtensor = subtensor(network='test')
+        print(f"Init subtensor..., {self.network.value}, {self.net_id}")
+        self.subtensor = subtensor(network=self.network.value)
         self.subnet = self.subtensor.metagraph(netuid=self.net_id)
 
     def setup_ui(self):
@@ -56,52 +59,58 @@ class MiningWizard(QMainWindow):
             self.setStyleSheet(file.read())
 
     def show_page(self, page_class, *args, **kwargs):
-        if hasattr(self, page_class.__name__.lower()):
-            page = getattr(self, page_class.__name__.lower())
-        else:
+        if previous_page := kwargs.get("page_to_delete"):
+            self.central_widget.removeWidget(previous_page)
+            previous_page.setParent(None)
+            sip.delete(previous_page)
+        page = None
+        for widget in self.central_widget.children():
+            if isinstance(widget, page_class):
+                page = widget
+        if not page:
             page = page_class(self, *args, **kwargs)
-            setattr(self, page_class.__name__.lower(), page)
             self.central_widget.addWidget(page)
+
         print(page_class.__name__)
         print(page)
         self.central_widget.setCurrentWidget(page)
-    
-    def show_start_page(self):
-        self.show_page(StartPage)
-    
-    def show_create_wallet_page(self):
-        self.show_page(AddWalletPage)
 
-    def show_miner_options_page(self):
+    def show_start_page(self, *args, **kwargs):
+        self.show_page(StartPage, *args, **kwargs)
+    
+    def show_create_wallet_page(self, *args, **kwargs):
+        self.show_page(AddWalletPage, *args, **kwargs)
+
+    def show_miner_options_page(self, *args, **kwargs):
         if not self.wallet_path:
             self.prompt_for_wallet()
         if self.wallet_path:
-            self.show_page(MinerOptionsPage)
+            self.show_page(MinerOptionsPage, *args, **kwargs)
 
-    def show_machine_options_page(self):
-        self.show_page(MachineOptionPage)
+    def show_machine_options_page(self, *args, **kwargs):
+        self.show_page(MachineOptionPage, *args, **kwargs)
     
-    def show_local_dashboard_page(self):
-        self.show_page(LocalDashboardPage)
+    def show_local_dashboard_page(self, *args, **kwargs):
+        self.show_page(LocalDashboardPage, *args, **kwargs)
 
-    def show_runpod_dashboard_page(self, pod_id=None):
-        self.show_page(RunpodDashboardPage, pod_id=pod_id)
+    def show_runpod_dashboard_page(self, pod_id=None, *args, **kwargs):
+        self.show_page(RunpodDashboardPage, pod_id=pod_id, *args, **kwargs)
        
-    def show_wallet_page(self):
+    def show_wallet_page(self, *args, **kwargs):
         if self.wallet_name:
-            self.show_page(WalletDetailsTable)
+            self.show_page(WalletDetailsTable, *args, **kwargs)
 
-    def show_runpod_page(self):
+    def show_runpod_page(self, *args, **kwargs):
         api_key = get_value_from_env("RUNPOD_API_KEY")
         if not api_key:
             api_key, ok = QInputDialog.getText(self, "RunPod API Key", "Enter your RunPod API Key:")
             if ok and api_key:
                 save_value_to_env("RUNPOD_API_KEY", api_key)
-                self.show_page(RunpodSetupPage)
+                self.show_page(RunpodSetupPage, *args, **kwargs)
             else:
                 QMessageBox.warning(self, "API Key Required", "RunPod API Key is required to proceed.")
         else:
-            self.show_page(RunpodSetupPage)
+            self.show_page(RunpodSetupPage, *args, **kwargs)
 
     def addDetail(self, temp_layout, widget, fontsize, bold=False, **kwargs):
         fontWeight = QFont.Bold if bold else QFont.Normal

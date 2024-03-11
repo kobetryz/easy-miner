@@ -1,6 +1,6 @@
 import json
-import os
 import time
+from functools import partial
 
 from config import COUNTRY_CODE, PERSISTENT_DISK_SIZE_GB, OS_DISK_SIZE_GB
 from runpod_api.runpod import GPU_DICT, GPU_LIST_TO_USE, api
@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QPushButton, QComboBox, QVBoxLayout, QHBoxLayout, QW
     QRadioButton, QSpinBox, QTextEdit, QSizePolicy, QLineEdit
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 
-from utils import get_secret_hotkey, get_secret_coldkey
+from utils import get_secret_hotkey, get_secret_coldkey, getLocalWandbApiKey
 
 
 class PodCreatorThread(QThread):
@@ -102,7 +102,7 @@ class PodCheckerThread(QThread):
 
 
 class RunpodSetupPage(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
         self.parent = parent
         self.setup_ui()
@@ -140,7 +140,7 @@ class RunpodSetupPage(QWidget):
     def createFooter(self):
         f_layout = QHBoxLayout()
         previous_button = QPushButton("Back to Main Menu", self)
-        previous_button.clicked.connect(self.parent.show_start_page)
+        previous_button.clicked.connect(partial(self.parent.show_start_page, page_to_delete=self))
         self.continue_button = QPushButton("Continue", self)
         self.continue_button.setEnabled(False)
         self.parent.addDetail(f_layout, previous_button, 12)
@@ -279,7 +279,7 @@ class RunpodSetupPage(QWidget):
             self.mnemonic_hotkey_field.setText(local_hotkey)
         if local_coldkey := get_secret_coldkey(self.parent.wallet_path):
             self.mnemonic_coldkey_field.setText(local_coldkey)
-        if local_wandb_api_key := self.getLocalWandbApiKey():
+        if local_wandb_api_key := getLocalWandbApiKey():
             self.wandb_api_key_field.setText(local_wandb_api_key)
 
     @staticmethod
@@ -310,17 +310,6 @@ class RunpodSetupPage(QWidget):
         resp = api.create_template(template_query).json()
         self.output_area.append("Template created!")
         return resp.get('data', {}).get('saveTemplate', {}).get('id', '')
-
-    @staticmethod
-    def getLocalWandbApiKey():
-        path = os.path.join(os.path.expanduser('~'), ".netrc")
-        if not os.path.exists(path):
-            return
-        with open(path) as f:
-            for line in f.readlines():
-                split_line = line.split()
-                if "password" in split_line:
-                    return split_line[1]
 
     def on_deploy_clicked(self):
         self.parent.wandb_api_key = self.wandb_api_key_field.text()
@@ -364,4 +353,4 @@ class RunpodSetupPage(QWidget):
         self.output_area.append("Pod available, you can go to dashboard!")
 
     def on_continue_clicked(self):
-        self.parent.show_runpod_dashboard_page(self.pod_id)
+        self.parent.show_runpod_dashboard_page(self.pod_id, page_to_delete=self)

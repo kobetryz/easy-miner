@@ -1,4 +1,3 @@
-import os
 import subprocess
 from functools import partial
 
@@ -6,9 +5,11 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QRadioButton, QLabel, QStacked
     QHBoxLayout, QLineEdit, QMessageBox, QInputDialog
 from PyQt5.QtCore import Qt
 
+from utils import getLocalWandbApiKey
+
 
 class MachineOptionPage(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
         self.parent = parent
         self.setupUI()
@@ -105,7 +106,7 @@ class MachineOptionPage(QWidget):
     def createFooter(self):
         h_layout = QHBoxLayout()
         previous_button = QPushButton("Back to Main Menu", self)
-        previous_button.clicked.connect(self.parent.show_start_page)
+        previous_button.clicked.connect(partial(self.parent.show_start_page, page_to_delete=self))
         self.parent.addDetail(h_layout, previous_button, 12)
         self.layout.addLayout(h_layout)
 
@@ -120,19 +121,19 @@ class MachineOptionPage(QWidget):
     def runPodAction(self):
         # Placeholder for RunPod actionc
         # show input for getting the wandb api key
-        self.parent.show_runpod_page()
+        self.parent.show_runpod_page(page_to_delete=self)
 
     def vastAiAction(self):
         # Placeholder for Vast.ai action
         print("Vast.ai selected")
 
     def localAction(self):
-        self.parent.wandb_api_key = self.getLocalWandbApiKey()
+        self.parent.wandb_api_key = getLocalWandbApiKey()
         if not self.parent.wandb_api_key:
             self.parent.wandb_api_key, ok = QInputDialog.getText(self, "wandb API key", "Please confirm wandb API key:")
         if not self.parent.wandb_api_key or not self.wandbLogin():
             return
-        self.parent.show_local_dashboard_page()
+        self.parent.show_local_dashboard_page(page_to_delete=self)
 
     def isAllFieldsFilled(self):
         if field := self.findUnfilledField():
@@ -147,16 +148,6 @@ class MachineOptionPage(QWidget):
             for child in option.children():
                 if isinstance(child, QLineEdit) and child.isVisible() and not child.text():
                     return child
-
-    def getLocalWandbApiKey(self):
-        path = os.path.join(os.path.expanduser('~'), ".netrc")
-        if not os.path.exists(path):
-            return
-        with open(path) as f:
-            for line in f.readlines():
-                split_line = line.split()
-                if "password" in split_line:
-                    return split_line[1]
 
     def wandbLogin(self):
         try:
