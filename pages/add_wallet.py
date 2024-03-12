@@ -1,7 +1,6 @@
 import os
 import json
 
-from datetime import datetime
 from functools import partial
 
 from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout, QWidget, QLineEdit,
@@ -9,6 +8,8 @@ from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout, QWidget, QLineEdi
                              QTextEdit, QSizePolicy)
 from PyQt5.QtGui import QFont, QTextOption
 from PyQt5.QtCore import QProcess, QProcessEnvironment
+
+from utils import logger_wrapper
 
 
 class AddWalletPage(QWidget):
@@ -66,7 +67,7 @@ class AddWalletPage(QWidget):
         self.output_area = QTextEdit(self)
         self.output_area.setWordWrapMode(QTextOption.NoWrap)
         self.output_area.setReadOnly(False)  # Make it read-only
-        self.output_area.append(f'New Terminal!!')
+        self.log = logger_wrapper(self.output_area.insertPlainText)
         # self.output_area.hide()  # Hide initially
         self.layout.addWidget(self.output_area)
 
@@ -82,7 +83,7 @@ class AddWalletPage(QWidget):
 
         self.finish_button = QPushButton('Finish', self)
         self.addDetail(h_layout, self.finish_button, 12)
-        self.finish_button.clicked.connect(self.parent.show_miner_options_page)
+        self.finish_button.clicked.connect(partial(self.parent.show_miner_options_page, page_to_delete=self))
         self.finish_button.setEnabled(False)
 
         self.layout.addLayout(h_layout)
@@ -109,7 +110,7 @@ class AddWalletPage(QWidget):
             self.wallet_password_input.setFocus()
             # return
         # self.output_area.show()
-        self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Checking your password')
+        self.log('Checking your password')
         self.wallet_name = self.wallet_name_input.text()
         self.wallet_path = os.path.join(os.path.expanduser('~'), '.bittensor/wallets')
         self.wallet_password = self.wallet_password_input.text()
@@ -120,7 +121,7 @@ class AddWalletPage(QWidget):
         self.wallet_process = QProcess(self)
         self.wallet_process.setProcessChannelMode(QProcess.MergedChannels)
         self.wallet_process.readyReadStandardOutput.connect(self.handle_output)
-        self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Creating Your wallet')
+        self.log('Creating Your wallet')
 
         # Set environment variables if needed
         env = QProcessEnvironment.systemEnvironment()
@@ -170,7 +171,7 @@ class AddWalletPage(QWidget):
 
     def handle_output(self):
         self.parent.output = self.wallet_process.readAllStandardOutput().data().decode("utf-8")
-        self.output_area.append(self.parent.output)
+        self.log(self.parent.output)
         if "overwrite? (y/n)" in self.parent.output.lower():
             answer = QMessageBox.question(self, "Wallet", "Wallet already exist, overwrite?")
             if answer == QMessageBox.Yes:

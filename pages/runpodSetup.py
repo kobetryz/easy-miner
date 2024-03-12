@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QPushButton, QComboBox, QVBoxLayout, QHBoxLayout, QW
     QRadioButton, QSpinBox, QTextEdit, QSizePolicy, QLineEdit
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 
-from utils import get_secret_hotkey, get_secret_coldkey, getLocalWandbApiKey
+from utils import get_secret_hotkey, get_secret_coldkey, getLocalWandbApiKey, logger_wrapper
 
 
 class PodCreatorThread(QThread):
@@ -131,6 +131,7 @@ class RunpodSetupPage(QWidget):
 
         self.output_area = QTextEdit(self)
         self.output_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.log = logger_wrapper(self.output_area.insertPlainText)
         self.layout.addWidget(self.output_area)
 
         self.createFooter()
@@ -293,9 +294,9 @@ class RunpodSetupPage(QWidget):
         self.cloud_option = "Community" if self.community_cloud_radio.isChecked() else "Secure"
         template_id = self.get_template_id()
         if template_id:
-            self.output_area.append("Template already exist, skipping...")
+            self.log("Template already exist, skipping...")
             return template_id
-        self.output_area.append("Template already not exist, creating...")
+        self.log("Template already not exist, creating...")
         template_query = f"""
                     containerDiskInGb: {OS_DISK_SIZE_GB},
                     dockerArgs: "",
@@ -308,7 +309,7 @@ class RunpodSetupPage(QWidget):
                     volumeMountPath: "/workspace"
                 """
         resp = api.create_template(template_query).json()
-        self.output_area.append("Template created!")
+        self.log("Template created!")
         return resp.get('data', {}).get('saveTemplate', {}).get('id', '')
 
     def on_deploy_clicked(self):
@@ -317,23 +318,23 @@ class RunpodSetupPage(QWidget):
         self.parent.mnemonic_coldkey = self.mnemonic_coldkey_field.text()
 
         if not self.parent.mnemonic_hotkey or not self.parent.mnemonic_coldkey:
-            self.output_area.append("Hotkey or coldkey are not filled, try again")
+            self.log("Hotkey or coldkey are not filled, try again")
             return
         if (length := len(self.parent.wandb_api_key)) != 40:
-            self.output_area.append(f"WandDb API key must have 40 chars, yours have {length}, try again")
+            self.log(f"WandDb API key must have 40 chars, yours have {length}, try again")
             return
         self.deploy.setEnabled(False)
         os_disk_size_gb = self.os_disk_field.value()
         persistent_disk_size_gb = self.persistent_disk_field.value()
         country_code = self.country_code_dropdown.currentText()
-        self.output_area.append("Started deploying the miner")
+        self.log("Started deploying the miner")
         template_id = self.create_template()
 
         self.pod_creator_thread = PodCreatorThread(
             template_id, os_disk_size_gb, persistent_disk_size_gb, country_code, self
         )
         self.pod_creator_thread.pod_created.connect(self.on_pod_created)
-        self.pod_creator_thread.creating_logs.connect(self.output_area.append)
+        self.pod_creator_thread.creating_logs.connect(self.log)
         self.pod_creator_thread.start()
 
     def on_pod_created(self, pod_id):
@@ -344,13 +345,13 @@ class RunpodSetupPage(QWidget):
 
         self.pod_checker_thread = PodCheckerThread(self, pod_id=self.pod_id)
         self.pod_checker_thread.start()
-        self.output_area.append("Waiting while pod will be available")
+        self.log("Waiting while pod will be available")
         self.pod_checker_thread.pod_available.connect(self.on_pod_available)
 
     def on_pod_available(self):
         self.pod_checker_thread.requestInterruption()
         self.continue_button.setEnabled(True)
-        self.output_area.append("Pod available, you can go to dashboard!")
+        self.log("Pod available, you can go to dashboard!")
 
     def on_continue_clicked(self):
         self.parent.show_runpod_dashboard_page(self.pod_id, page_to_delete=self)

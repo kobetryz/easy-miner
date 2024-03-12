@@ -6,7 +6,6 @@ from datetime import datetime
 from netrc import netrc
 
 import pandas as pd
-from hivemind import DHT
 from dotenv import load_dotenv
 import requests
 
@@ -15,7 +14,7 @@ def get_secret_coldkey(wallet_path: str):
     try:
         with open(wallet_path + "/coldkey") as f:
             return json.loads(f.read()).get("secretPhrase")
-    except (FileNotFoundError, json.JSONDecodeError, IndexError) as e:
+    except (FileNotFoundError, json.JSONDecodeError, IndexError, UnicodeDecodeError) as e:
         return None
 
 
@@ -27,7 +26,7 @@ def get_secret_hotkey(wallet_path: str):
             first_file = files[0]
             with open(os.path.join(hotkey_path, first_file)) as f:
                 return json.loads(f.read()).get("secretPhrase")
-    except (FileNotFoundError, json.JSONDecodeError, IndexError) as e:
+    except (FileNotFoundError, json.JSONDecodeError, IndexError, UnicodeDecodeError) as e:
         print("No hotkey found: ", e)
         return None
 
@@ -93,12 +92,6 @@ def configure_logger_data(log_file):
     return logger
 
 
-def get_initial_num_pers():
-    open_port = 8001
-    dht = DHT(host_maddrs=[f"/ip4/0.0.0.0/tcp/{open_port}"], start=True)
-    return str(dht.get_visible_maddrs()[0])
-
-
 def get_tao_price():
     # Connect to taostats
     url = "https://taostats.io/data.json"
@@ -139,3 +132,11 @@ def get_minner_version(subnet_id):
                 # Extract the version string
                 return line.split('=')[-1].replace('"', '').strip()
     return "Version not found."
+
+
+def logger_wrapper(target):
+    def log(text):
+        for splitted_text in text.split("\n"):
+            if splitted_text:
+                target(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {splitted_text}\n')
+    return log

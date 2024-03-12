@@ -1,7 +1,7 @@
 # import bittensor as bt
 from enum import Enum
 
-from utils import get_public_ip, get_initial_num_pers, get_tao_price
+from utils import get_public_ip, get_tao_price
 
 GPU_TYPE_ID = 'NVIDIA RTX A4000'
 OS_DISK_SIZE_GB = 20
@@ -40,7 +40,6 @@ DIRECTORY_MAPPER = {
     20: 'bitagent_subnet',
 }
 
-INITIAL_PEERS = get_initial_num_pers()
 IP_ADDRESS = get_public_ip()
 tao_price = get_tao_price()
 

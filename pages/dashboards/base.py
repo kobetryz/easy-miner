@@ -15,7 +15,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 import pyqtgraph as pg
 
 from config import tao_price
-from utils import get_earnings_by_date_range, get_total_mining, configure_logger_data
+from utils import get_earnings_by_date_range, get_total_mining, configure_logger_data, logger_wrapper
 
 
 class DashboardPageBase(QWidget):
@@ -145,6 +145,8 @@ class DashboardPageBase(QWidget):
         self.input_button.clicked.connect(self.send_input)
         self.input_button.hide()
         self.layout.addWidget(self.input_button)  # Place the button below the QTextEdit
+
+        self.log = logger_wrapper(self.output_area.insertPlainText)
 
         # Charts Section
         self.charts_group = QGroupBox()

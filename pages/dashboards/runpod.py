@@ -127,15 +127,15 @@ class RunpodDashboardPage(DashboardPageBase):
         self.mining_process = False
         if self.charts_group.isVisible():
             self.toggle_view()
-        self.output_area.insertPlainText("\nTerminating pod...")
+        self.log("Terminating pod...")
         response = api.terminate_pod(self.pod_id)
         if response.status_code != 200:
             QMessageBox.warning(self, "Error", f"{response.text}\nTry again", QMessageBox.Ok)
             return
         self.pod_id = None
         self.cleanup_threads()
-        self.output_area.insertPlainText(
-            "\nPod successfully terminated!\nYou will be redirected to the home page in 10 seconds")
+        self.log("Pod successfully terminated!")
+        self.log("You will be redirected to the home page in 10 seconds")
 
         QTimer.singleShot(10000, self.redirect_to_home)
 
@@ -153,7 +153,7 @@ class RunpodDashboardPage(DashboardPageBase):
         self.parent.show_start_page(page_to_delete=self)
 
     def handle_received_data(self, data):
-        self.output_area.insertPlainText(data)
+        self.log(data)
 
     def set_pod_config(self):
         while not self.pod_dict.get("runtime"):

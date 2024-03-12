@@ -6,11 +6,10 @@ import psutil
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QDateTime, QUrl, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QMessageBox
-from datetime import datetime
 import GPUtil
 
 import config
-from config import IP_ADDRESS, INITIAL_PEERS
+from config import IP_ADDRESS
 from utils import get_minner_version
 from .base import DashboardPageBase
 import bittensor as bt
@@ -42,7 +41,7 @@ class LocalDashboardPage(DashboardPageBase):
         self.timer_check_update.timeout.connect(self.handle_repo_is_up_to_date)
 
     def handle_registration(self):
-        self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You are not registered')
+        self.log('You are not registered')
         self.registration_cost = self.parent.subtensor.recycle(netuid=self.parent.net_id)
         warning_msg = f"You are not registered to mine on Bitcurrent!\nRegistration cost for Bitcurrent is {self.registration_cost}\n Do you want to register?\nNote this amount will be deducted from your wallet."
         reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
@@ -55,14 +54,13 @@ class LocalDashboardPage(DashboardPageBase):
                 self.registered = False
 
     def start_mining(self):
-        self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Checking for registration')
+        self.log('Checking for registration')
         while not self.registered:
             response = self.handle_registration()
             if response == None:
                 break
         if self.registered:
-            self.output_area.append(
-                f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You are registered and ready to mine')
+            self.log('You are registered and ready to mine')
             self.update_miner()
 
     def stop_mining(self):
@@ -77,7 +75,7 @@ class LocalDashboardPage(DashboardPageBase):
     def on_mining_finished(self):
         self.timer.stop()
         self.timer_check_update.stop()
-        self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Stop Mining')
+        self.log('Stop Mining')
         self.mine_button.setText("Start Mining")
         self.mining_process = None
 
@@ -96,7 +94,7 @@ class LocalDashboardPage(DashboardPageBase):
 
     def handle_update_script_output(self):
         output = self.update_script_process.readAllStandardOutput().data().decode('utf-8')
-        self.output_area.append(output)
+        self.log(output)
 
     def run_mining_script(self):
         self.mining_process = QProcess(self)
@@ -127,8 +125,7 @@ class LocalDashboardPage(DashboardPageBase):
             "--logging.debug",
             "--axon.port", "8000",
             "--dht.port", "8001",
-            "--dht.announce_ip", f"{IP_ADDRESS}",
-            "--neuron.initial_peers", f"{INITIAL_PEERS}"
+            "--dht.announce_ip", f"{IP_ADDRESS}"
         ]
 
         self.mining_process.start(command, args)
@@ -142,8 +139,7 @@ class LocalDashboardPage(DashboardPageBase):
         wallet_bal = self.parent.subtensor.get_balance(address=self.parent.hotkey)
         # check wallet balance
         if wallet_bal < self.registration_cost:
-            self.output_area.append(
-                f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - You don\'t have sufficient funds')
+            self.log('You don\'t have sufficient funds')
             warning_msg = f"You don't have sufficient funds in your account\nWould you like to add funds to you account?"
             reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
 
@@ -153,17 +149,17 @@ class LocalDashboardPage(DashboardPageBase):
             else:
                 return None
         else:
-            self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Registration in Progress!!')
+            self.log('Registration in Progress!!')
             success = self.parent.subtensor.burned_register(wallet=self.wallet, netuid=self.parent.net_id)
             if success:
-                self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Registration complete')
+                self.log('Registration complete')
                 info_msg = f"Congratulations!\nRegistration Successful!!\nYou are ready to mine"
                 final_reply = QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
                 return final_reply
 
     def handle_output(self):
         self.parent.output = self.mining_process.readAllStandardOutput().data().decode("utf-8")
-        self.output_area.append(
+        self.log(
             self.parent.output
             .replace('|', ' ')
             .replace('&', '&amp;')
