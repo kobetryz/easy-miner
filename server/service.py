@@ -11,6 +11,7 @@ from schemas import WalletData, MinerOptions
 class MinerService:
     def __init__(self):
         self.running_process = None
+        self.miner_options: dict | MinerOptions = {}
 
     async def run_command(self, command):
         try:
@@ -54,6 +55,7 @@ class MinerService:
         await websocket_service.broadcast(f"Logged into wandb")
 
     async def start_mining(self, miner_options: MinerOptions):
+        self.miner_options = miner_options
         await websocket_service.broadcast("Starting mining process\n")
         await self.update_or_clone_miner(miner_options.net_id)
         await self.regenerate_wallet(miner_options.wallet_data)

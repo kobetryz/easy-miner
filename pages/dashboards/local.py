@@ -1,6 +1,7 @@
 import os
 import re
 from functools import partial
+from pathlib import Path
 
 import psutil
 from PyQt5.QtCore import QProcess, QProcessEnvironment, QDateTime, QUrl, QThread, pyqtSignal, QTimer
@@ -89,7 +90,10 @@ class LocalDashboardPage(DashboardPageBase):
         self.update_script_process = QProcess(self)
         self.update_script_process.setProcessChannelMode(QProcess.MergedChannels)
         self.update_script_process.readyReadStandardOutput.connect(self.handle_update_script_output)
-        self.update_script_process.start('sh', [f'local_scripts/update_miner-{self.parent.net_id}.sh'])
+        path_to_scripts = Path(__file__).resolve().parent.parent.parent / "local_scripts"
+        self.update_script_process.start(
+            'bash', [os.path.abspath(os.path.join(path_to_scripts, f'update_miner-{self.parent.net_id}.sh'))]
+        )
         self.update_script_process.finished.connect(self.run_mining_script)
 
     def handle_update_script_output(self):
@@ -203,7 +207,11 @@ class LocalDashboardPage(DashboardPageBase):
         self.update_script_process = QProcess(self)
         self.update_script_process.setProcessChannelMode(QProcess.MergedChannels)
         self.update_script_process.readyReadStandardOutput.connect(self.handle_update_script_output)
-        self.update_script_process.start('sh', [f'local_scripts/update_miner-{self.parent.net_id}.sh'])
+
+        path_to_scripts = Path(__file__).resolve().parent.parent.parent / "local_scripts"
+        self.update_script_process.start(
+            'bash', [os.path.abspath(os.path.join(path_to_scripts, f'update_miner-{self.parent.net_id}.sh'))]
+        )
         self.update_script_process.finished.connect(partial(self.check_repo_is_up_to_date, prev_version))
 
 

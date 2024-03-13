@@ -25,6 +25,11 @@ async def stop_mine():
     return {"message": "Mining process stopped."}
 
 
+@router.get("/miner-options")
+async def get_miner_options():
+    return miner_service.miner_options
+
+
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket_service.connect(websocket)
