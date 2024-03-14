@@ -9,10 +9,11 @@ import matplotlib.dates as mdates
 
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox, QMessageBox, QTextEdit, \
     QLineEdit
-from PyQt5.QtGui import QFont, QTextOption
-from PyQt5.QtCore import Qt, QTimer, QDateTime, QProcess
+from PyQt5.QtGui import QFont, QTextOption, QDesktopServices
+from PyQt5.QtCore import Qt, QTimer, QDateTime, QProcess, QUrl
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 import pyqtgraph as pg
+import bittensor as bt
 
 from config import tao_price
 from utils import get_earnings_by_date_range, get_total_mining, configure_logger_data, logger_wrapper
@@ -180,9 +181,8 @@ class DashboardPageBase(QWidget):
         self.parent.addDetail(header_layout, home_button, 14)
         home_button.clicked.connect(partial(self.parent.show_start_page, page_to_delete=self))
 
-        wallet_button = QPushButton("Wallet")
-        self.parent.addDetail(header_layout, wallet_button, 14)
-        wallet_button.clicked.connect(self.parent.show_wallet_page)
+        self.wallet_button = QPushButton("Wallet")
+        self.parent.addDetail(header_layout, self.wallet_button, 14)
 
         self.mine_button = QPushButton("Start Mining")
         self.parent.addDetail(header_layout, self.mine_button, 14)
@@ -231,6 +231,42 @@ class DashboardPageBase(QWidget):
             self.output_area.hide()
             self.charts_group.show()
             self.toggle_button.setText("Show Logs")
+
+    def handle_registration(self):
+        self.log('You are not registered')
+        self.registration_cost = self.parent.subtensor.recycle(netuid=self.parent.net_id)
+        warning_msg = f"You are not registered to mine on Bitcurrent!\nRegistration cost for Bitcurrent is {self.registration_cost}\n Do you want to register?\nNote this amount will be deducted from your wallet."
+        reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            response = self.register_on_subnet()
+            if response == QMessageBox.Ok:
+                self.registered = True
+            else:
+                self.registered = False
+
+    def register_on_subnet(self):
+        self.wallet = bt.wallet(name=self.parent.wallet_name, path=os.path.dirname(self.parent.wallet_path))
+        wallet_bal = self.parent.subtensor.get_balance(address=self.parent.hotkey)
+        # check wallet balance
+        if wallet_bal < self.registration_cost:
+            self.log('You don\'t have sufficient funds')
+            warning_msg = f"You don't have sufficient funds in your account\nWould you like to add funds to you account?"
+            reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
+
+            if reply == QMessageBox.Yes:
+                QDesktopServices.openUrl(QUrl("https://bittensor.com/wallet"))
+                return None
+            else:
+                return None
+        else:
+            self.log('Registration in Progress!!')
+            success = self.parent.subtensor.burned_register(wallet=self.wallet, netuid=self.parent.net_id)
+            if success:
+                self.log('Registration complete')
+                info_msg = f"Congratulations!\nRegistration Successful!!\nYou are ready to mine"
+                final_reply = QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
+                return final_reply
 
     @abstractmethod
     def stop_mining(self):

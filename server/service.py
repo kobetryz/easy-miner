@@ -6,7 +6,7 @@ from datetime import datetime
 from bittensor_wallet import wallet
 from starlette.websockets import WebSocket
 
-from schemas import WalletData, MinerOptions
+from schemas import WalletData, MinerOptions, MinerType
 
 
 class MinerService:
@@ -57,20 +57,44 @@ class MinerService:
 
     async def start_mining(self, miner_options: MinerOptions):
         self.miner_options = miner_options
+        await self.wandb_login(miner_options.wandb_key)
         await websocket_service.broadcast("Starting mining process")
         await self.update_or_clone_miner(miner_options.net_id)
         await self.regenerate_wallet(miner_options.wallet_data)
-        command = f"python -u DistributedTraining/neurons/{miner_options.miner_type.value}.py \
-            --netuid {miner_options.net_id} \
-            --subtensor.network {miner_options.network} \
-            --wallet.name {miner_options.wallet_data.cold_key_name} \
-            --wallet.hotkey {miner_options.wallet_data.hot_key_name} \
-            --logging.debug \
-            --axon.port {miner_options.axon_port} \
-            --dht.port {miner_options.dht_port} \
-            --dht.announce_ip {miner_options.dht_announce_ip} \
-        "
+        command = self.get_running_args(miner_options)
         await self.run_command(command)
+
+    @staticmethod
+    def get_running_args(minner_options: MinerOptions):
+        base_command = "python -u {script_path} --wallet.name {wallet_name} --wallet.hotkey {hotkey}"
+
+        script_paths = {
+            25: f"DistributedTraining/neurons/{minner_options.miner_type.value}.py",
+            1: f"prompting/neurons/{minner_options.miner_type.value}.py",
+            13: f"data-universe/neurons/{minner_options.miner_type.value}.py",
+            20: f"bitagent_subnet/neurons/{minner_options.miner_type.value}.py",
+        }
+
+        extra_args = {
+            25: f"--netuid {minner_options.net_id} --subtensor.network {minner_options.network} --logging.debug"
+                f" --axon.port {minner_options.axon_port} --dht.port {minner_options.dht_port}"
+                f" --dht.announce_ip {minner_options.dht_announce_ip}",
+            1: f"--netuid {minner_options.net_id} --subtensor.network {minner_options.network} --logging.debug" + (
+                " --neuron.device cuda" if minner_options.miner_type != MinerType.MINER else ""),
+            20: f"--netuid {minner_options.net_id} --subtensor.network {minner_options.network} --axon.port {minner_options.axon_port}"
+        }
+
+        if minner_options.net_id not in script_paths:
+            return None
+
+        command = base_command.format(script_path=script_paths[minner_options.net_id],
+                                      wallet_name=minner_options.wallet_data.cold_key_name,
+                                      hotkey=minner_options.wallet_data.hot_key_name)
+
+        if minner_options.net_id in extra_args:
+            command += " " + extra_args[minner_options.net_id]
+
+        return command
 
     async def stop_mining(self):
         if self.is_running():
@@ -128,7 +152,7 @@ class WebSocketService:
         self, websocket: WebSocket
     ) -> None:
         for line in self.logs.get_list():
-            await self.send_personal_message(line+"\n", websocket)
+            await self.send_personal_message(line, websocket)
 
 
 class MaxSizeList:

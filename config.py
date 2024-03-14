@@ -9,9 +9,13 @@ PERSISTENT_DISK_SIZE_GB = 20
 COUNTRY_CODE = 'SK,SE,BE,BG,CA,CZ,NL'
 MIN_DOWNLOAD = 70
 PORTS = '22/tcp,3000/http,3010/http,3020/http,6006/http,8000/http,8888/http'
+MAX_INSTANCE_FOR_SUBNET = 2
 
 SUBNET_MAPPER = {
     'distributed training': 25,
+    'prompting': 1,
+    'data universe': 13,
+    'bitagent_subnet': 20
 }
 
 
@@ -22,10 +26,9 @@ class MinerType(Enum):
 
 class SubnetType(Enum):
     DISTRIBUTED_TRAINING = 'distributed training'
-    COMPUTE = 'compute'
-    STORAGE = 'storage'
-    FINE_TUNING = 'fine tuning'
-    MAP_REDUCE = 'map reduce'
+    PROMPTING = 'prompting'
+    DATA_UNIVERSE = 'data universe'
+    BIT_AGENT = 'fine tuning'
 
 
 class NetworkType(Enum):

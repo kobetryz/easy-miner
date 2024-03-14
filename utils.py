@@ -9,6 +9,8 @@ import pandas as pd
 from dotenv import load_dotenv
 import requests
 
+import config
+
 
 def get_secret_coldkey(wallet_path: str):
     try:
@@ -140,3 +142,25 @@ def logger_wrapper(target):
             if splitted_text:
                 target(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {splitted_text}\n')
     return log
+
+
+def get_running_args(sub_id, network, miner_type, wallet_name, hotkey, ip):
+    base_args = ["-u", f"{miner_type.value}.py", "--wallet.name", f"{wallet_name}", "--wallet.hotkey", f"{hotkey}"]
+    paths = {
+        25: "DistributedTraining/neurons",
+        1: "prompting/neurons",
+        13: "data-universe/neurons",
+        20: "bitagent_subnet/neurons"
+    }
+    extras = {
+        25: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--logging.debug", "--axon.port", "8090", "--dht.port", "8800", "--dht.announce_ip", f"{ip}"],
+        1: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--logging.debug"] + (["--neuron.device", "cuda"] if miner_type != config.MinerType.MINER else []),
+        20: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--axon.port", "8090"]
+    }
+
+    if sub_id in paths:
+        base_args[1] = f"{paths[sub_id]}/{base_args[1]}"
+        if sub_id in extras:
+            return base_args + extras[sub_id]
+        return base_args
+    return None

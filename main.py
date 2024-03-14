@@ -10,6 +10,7 @@ from PyQt5 import sip
 from bittensor import subtensor, wallet
 
 from pages.dashboards import LocalDashboardPage, RunpodDashboardPage
+from pages.runpodManager import RunpodManagerPage
 from utils import get_value_from_env, save_value_to_env
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QStackedWidget, QInputDialog, QLineEdit
 from PyQt5.QtGui import QFont
@@ -112,6 +113,9 @@ class MiningWizard(QMainWindow):
         else:
             self.show_page(RunpodSetupPage, *args, **kwargs)
 
+    def show_runpod_manager_page(self, *args, **kwargs):
+        self.show_page(RunpodManagerPage, *args, **kwargs)
+
     def addDetail(self, temp_layout, widget, fontsize, bold=False, **kwargs):
         fontWeight = QFont.Bold if bold else QFont.Normal
         widget.setFont(QFont("Georgia", fontsize, fontWeight))
@@ -148,7 +152,7 @@ class MiningWizard(QMainWindow):
             self.prompt_for_wallet_name()  # Prompt again
 
     def prompt_for_mnemonic(self):
-        cold_key, ok = QInputDialog.getText(self, "Enter ColdKey Mnemonic", "Please enter your clodkey mnemonic:", QLineEdit.Normal, "")
+        cold_key, ok = QInputDialog.getText(self, "Enter ColdKey Mnemonic", "Please enter your coldkey mnemonic:", QLineEdit.Normal, "")
         if not ok or not cold_key.strip():
             return  # User cancelled or entered an empty mnemonic
         # Assuming you have a method to regenerate wallet using mnemonic

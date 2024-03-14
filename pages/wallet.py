@@ -77,7 +77,7 @@ class WalletDetailsTable(QWidget):
         h_layout = QHBoxLayout()
         previous_button = QPushButton("Back", self)
         previous_button.setFont(QFont("Georgia", 14))
-        previous_button.clicked.connect(partial(parent.show_local_dashboard_page, page_to_delete=self))
+        previous_button.clicked.connect(partial(kwargs["show_dashboard"]))
         h_layout.addWidget(previous_button)
 
         # Spacer to push the Previous button to the left

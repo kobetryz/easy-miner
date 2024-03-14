@@ -119,8 +119,7 @@ class MachineOptionPage(QWidget):
         print("Cloud options selected")
 
     def runPodAction(self):
-        # Placeholder for RunPod actionc
-        # show input for getting the wandb api key
+        # Placeholder for RunPod
         self.parent.show_runpod_page(page_to_delete=self)
 
     def vastAiAction(self):

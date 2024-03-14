@@ -61,6 +61,10 @@ class StartPage(QWidget):
         miner_option_button.clicked.connect(self.parent.show_miner_options_page)
         options_layout.addWidget(miner_option_button)
 
+        miner_option_button = QPushButton("Runpod", self)
+        miner_option_button.clicked.connect(self.parent.show_runpod_manager_page)
+        options_layout.addWidget(miner_option_button)
+
         layout.addWidget(options_group)
         
         # footer group

@@ -4,16 +4,14 @@ from functools import partial
 from pathlib import Path
 
 import psutil
-from PyQt5.QtCore import QProcess, QProcessEnvironment, QDateTime, QUrl, QThread, pyqtSignal, QTimer
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtCore import QProcess, QProcessEnvironment, QDateTime, QThread, pyqtSignal, QTimer
 import GPUtil
+from PyQt5.QtWidgets import QMessageBox
 
 import config
 from config import IP_ADDRESS
-from utils import get_minner_version
+from utils import get_minner_version, get_running_args
 from .base import DashboardPageBase
-import bittensor as bt
 
 
 class CpuUsageThread(QThread):
@@ -41,18 +39,9 @@ class LocalDashboardPage(DashboardPageBase):
         self.timer_check_update.setInterval(config.CHECK_UPDATES_TIME)  # 12 hours
         self.timer_check_update.timeout.connect(self.handle_repo_is_up_to_date)
 
-    def handle_registration(self):
-        self.log('You are not registered')
-        self.registration_cost = self.parent.subtensor.recycle(netuid=self.parent.net_id)
-        warning_msg = f"You are not registered to mine on Bitcurrent!\nRegistration cost for Bitcurrent is {self.registration_cost}\n Do you want to register?\nNote this amount will be deducted from your wallet."
-        reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
-
-        if reply == QMessageBox.Yes:
-            response = self.register_on_subnet()
-            if response == QMessageBox.Ok:
-                self.registered = True
-            else:
-                self.registered = False
+        self.wallet_button.clicked.connect(
+            partial(self.parent.show_wallet_page, show_dashboard=self.parent.show_local_dashboard_page)
+        )
 
     def start_mining(self):
         self.log('Checking for registration')
@@ -119,47 +108,22 @@ class LocalDashboardPage(DashboardPageBase):
         self.data_logger.info(f' Balance - Start: {self.wallet_bal_tao}')
         miner_directory = config.DIRECTORY_MAPPER.get(self.parent.net_id)
         command = f"{miner_directory}/venv/bin/python"
-        args = [
-            "-u",
-            f"{miner_directory}/neurons/{self.parent.miner_type.value}.py",
-            "--netuid", f"{self.parent.net_id}",
-            "--subtensor.network", "test",
-            "--wallet.name", f"{self.parent.wallet_name}",
-            "--wallet.hotkey", f"{self.parent.hotkey}",
-            "--logging.debug",
-            "--axon.port", "8000",
-            "--dht.port", "8001",
-            "--dht.announce_ip", f"{IP_ADDRESS}"
-        ]
-
+        args = get_running_args(
+            self.parent.net_id,
+            self.parent.network.value,
+            self.parent.miner_type,
+            self.parent.wallet_name,
+            self.parent.hotkey,
+            IP_ADDRESS
+        )
+        if not args:
+            QMessageBox.warning(self, "Warning", "Somthing went wrong please contact to admin!", QMessageBox.Ok)
+            return
         self.mining_process.start(command, args)
         if self.charts_group.isVisible():
             self.toggle_view()
         self.mining_process.finished.connect(self.on_mining_finished)
         self.mine_button.setText("Stop Mining")
-
-    def register_on_subnet(self):
-        self.wallet = bt.wallet(name=self.parent.wallet_name, path=os.path.dirname(self.parent.wallet_path))
-        wallet_bal = self.parent.subtensor.get_balance(address=self.parent.hotkey)
-        # check wallet balance
-        if wallet_bal < self.registration_cost:
-            self.log('You don\'t have sufficient funds')
-            warning_msg = f"You don't have sufficient funds in your account\nWould you like to add funds to you account?"
-            reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
-
-            if reply == QMessageBox.Yes:
-                QDesktopServices.openUrl(QUrl("https://bittensor.com/wallet"))
-                return None
-            else:
-                return None
-        else:
-            self.log('Registration in Progress!!')
-            success = self.parent.subtensor.burned_register(wallet=self.wallet, netuid=self.parent.net_id)
-            if success:
-                self.log('Registration complete')
-                info_msg = f"Congratulations!\nRegistration Successful!!\nYou are ready to mine"
-                final_reply = QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
-                return final_reply
 
     def handle_output(self):
         self.parent.output = self.mining_process.readAllStandardOutput().data().decode("utf-8")

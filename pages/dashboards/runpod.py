@@ -1,4 +1,5 @@
 import time
+from functools import partial
 
 import requests
 import websocket
@@ -12,6 +13,7 @@ from .base import DashboardPageBase
 
 class WebSocketThread(QThread):
     data_received = pyqtSignal(str)
+    connection_open = pyqtSignal()
 
     def __init__(self, parent):
         super().__init__()
@@ -31,7 +33,7 @@ class WebSocketThread(QThread):
         self.ws.run_forever()
 
     def on_open(self, ws):
-        self.parent.mine_button.setEnabled(True)
+        self.connection_open.emit()  # noqa
 
     def on_message(self, ws, messages):
         self.data_received.emit(messages)  # noqa
@@ -86,7 +88,8 @@ class RunpodDashboardPage(DashboardPageBase):
 
         # Websocket
         self.websocket_thread = WebSocketThread(self)
-        self.websocket_thread.data_received.connect(self.handle_received_data)  # noqa
+        self.websocket_thread.data_received.connect(self.output_area.insertPlainText)  # noqa
+        self.websocket_thread.connection_open.connect(self.handle_websocket_open)  # noqa
         self.websocket_thread.start()
 
         self.metrics_thread = None
@@ -104,9 +107,11 @@ class RunpodDashboardPage(DashboardPageBase):
         self.parent.addDetail(header_layout, home_button, 14)
         home_button.clicked.connect(self.redirect_to_home)
 
-        wallet_button = QPushButton("Wallet")
-        self.parent.addDetail(header_layout, wallet_button, 14)
-        wallet_button.clicked.connect(self.parent.show_wallet_page)
+        self.wallet_button = QPushButton("Wallet")
+        self.parent.addDetail(header_layout, self.wallet_button, 14)
+        self.wallet_button.clicked.connect(
+            partial(self.parent.show_wallet_page, show_dashboard=self.parent.show_runpod_dashboard_page)
+        )
 
         self.mine_button = QPushButton("Start Mining")
         self.parent.addDetail(header_layout, self.mine_button, 14)
@@ -174,6 +179,14 @@ class RunpodDashboardPage(DashboardPageBase):
         print("finished setting pod config")
 
     def start_mining(self):
+        self.log('Checking for registration')
+        while not self.registered:
+            response = self.handle_registration()
+            if response == None:
+                break
+        if not self.registered:
+            return
+        self.log('You are registered and ready to mine')
         response = requests.post(f"{self.server_url}/mine", json={
             "miner_type": self.parent.miner_type.value,
             "network": self.parent.network.value,
@@ -210,7 +223,10 @@ class RunpodDashboardPage(DashboardPageBase):
         self.mining_process = False
 
     def is_running(self):
-        return self.mining_process
+        try:
+            return requests.get(f"{self.server_url}/miner-is-running").json()
+        except:
+            pass
 
     def update_timer(self):
         # This function is called every second to update the timer display
@@ -222,6 +238,9 @@ class RunpodDashboardPage(DashboardPageBase):
             seconds = self.elapsed_time % 60
             self.timer_label.setText(f"{hours}h: {minutes}m: {seconds}s")
             self.update_metrics()
+            self.mine_button.setText("Stop Mining")
+        else:
+            self.mine_button.setText("Start Mining")
 
     def update_metrics(self):
         if self.metrics_thread is None or not self.metrics_thread.isRunning():
@@ -235,3 +254,10 @@ class RunpodDashboardPage(DashboardPageBase):
 
     def update_gpu_usage(self, gpu_util):
         self.gpu_usage_label.setText(f"{gpu_util}%")
+
+    def handle_websocket_open(self):
+        self.toggle_view()
+
+        if self.is_running():
+            self.mine_button.setText("Stop Mining")
+        self.mine_button.setEnabled(True)

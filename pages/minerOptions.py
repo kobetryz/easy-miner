@@ -15,6 +15,8 @@ class MinerOptionsPage(QWidget):
         self.miner_type = MinerType.MINER.value
         self.subnet = SubnetType.DISTRIBUTED_TRAINING.value
 
+        self.show_next_page = kwargs.get("instead_machine_options", self.parent.show_machine_options_page)
+
         self.setupUI()
 
     def setupUI(self):
@@ -79,10 +81,6 @@ class MinerOptionsPage(QWidget):
         if sender.isChecked():
             self.subnet = sender.text().lower()
             self.changeRequirements(self.subnet, self.miner_type)
-            if self.subnet != SubnetType.DISTRIBUTED_TRAINING.value:
-                self.showSubnetNotImplemented()
-                self.next_button.setEnabled(False)
-                return
             self.next_button.setEnabled(True)
 
     def createRequirements(self):
@@ -151,7 +149,7 @@ class MinerOptionsPage(QWidget):
         self.parent.net = SubnetType(self.subnet)
         self.parent.net_id = SUBNET_MAPPER[self.parent.net.value]
         self.parent.network = NetworkType(self.network)
-        self.parent.show_machine_options_page(page_to_delete=self)
+        self.show_next_page(page_to_delete=self, instead_machine_options=self.show_next_page)
 
     def showSubnetNotImplemented(self):
         QMessageBox.warning(self, "Warning", "Current subnet is not implemented")

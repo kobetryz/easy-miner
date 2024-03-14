@@ -2,10 +2,10 @@ import json
 import time
 from functools import partial
 
-from config import COUNTRY_CODE, PERSISTENT_DISK_SIZE_GB, OS_DISK_SIZE_GB
+from config import COUNTRY_CODE, PERSISTENT_DISK_SIZE_GB, OS_DISK_SIZE_GB, MAX_INSTANCE_FOR_SUBNET
 from runpod_api.runpod import GPU_DICT, GPU_LIST_TO_USE, api
 from PyQt5.QtWidgets import QPushButton, QComboBox, QVBoxLayout, QHBoxLayout, QWidget, QGroupBox, QLabel, \
-    QRadioButton, QSpinBox, QTextEdit, QSizePolicy, QLineEdit
+    QRadioButton, QSpinBox, QTextEdit, QSizePolicy, QLineEdit, QMessageBox
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 
 from utils import get_secret_hotkey, get_secret_coldkey, getLocalWandbApiKey, logger_wrapper
@@ -49,8 +49,8 @@ class PodCreatorThread(QThread):
         if response.status_code == 200:
             if 'errors' in resp_json:
                 for error in resp_json['errors']:
-                    if error[
-                        'message'] == 'There are no longer any instances available with the requested specifications. Please refresh and try again.':
+                    if error['message'] == ('There are no longer any instances available with the requested '
+                                            'specifications. Please refresh and try again.'):
                         error_message = 'No resources currently available.'
                         self.creating_logs.emit(error_message)
                         time.sleep(5)
@@ -107,6 +107,7 @@ class RunpodSetupPage(QWidget):
         self.parent = parent
         self.setup_ui()
         self.setLayout(self.layout)
+        self.instead_machine_options = kwargs.get("instead_machine_options", self.parent.show_machine_options_page)
 
     def setup_ui(self):
         self.layout = QVBoxLayout()
@@ -286,6 +287,7 @@ class RunpodSetupPage(QWidget):
     @staticmethod
     def get_template_id():
         myself = json.loads(api.get_myself().text)
+        print(myself)
         for pod in myself["data"]["myself"]["podTemplates"]:
             if pod["name"] == "Easy miner subnet 25":
                 return pod["id"]
@@ -313,6 +315,12 @@ class RunpodSetupPage(QWidget):
         return resp.get('data', {}).get('saveTemplate', {}).get('id', '')
 
     def on_deploy_clicked(self):
+        if self.is_limit_per_subnet_achived():
+            result = QMessageBox.question(self, "Warning", "Limit for max instances per subnet have achieved\n"
+                                                           "Do you want to return to miner options to change subnet?")
+            if result == QMessageBox.Yes:
+                self.parent.show_miner_options_page(instead_machine_options=self.instead_machine_options)
+            return
         self.parent.wandb_api_key = self.wandb_api_key_field.text()
         self.parent.mnemonic_hotkey = self.mnemonic_hotkey_field.text()
         self.parent.mnemonic_coldkey = self.mnemonic_coldkey_field.text()
@@ -355,3 +363,13 @@ class RunpodSetupPage(QWidget):
 
     def on_continue_clicked(self):
         self.parent.show_runpod_dashboard_page(self.pod_id, page_to_delete=self)
+
+    def is_limit_per_subnet_achived(self):
+        pod_name = f"subnet-{self.parent.net_id}"
+
+        pods = api.get_pods().json().get("data", {}).get("myself", {}).get("pods", [])
+        count = 0
+        for pod in pods:
+            if pod["name"] == pod_name:
+                count += 1
+        return count >= MAX_INSTANCE_FOR_SUBNET
