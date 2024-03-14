@@ -30,6 +30,11 @@ async def get_miner_options():
     return miner_service.miner_options
 
 
+@router.get("/miner-is-running")
+async def get_miner_is_running():
+    return miner_service.is_running()
+
+
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket_service.connect(websocket)

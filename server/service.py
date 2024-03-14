@@ -1,6 +1,7 @@
 import asyncio
 import os.path
 import signal
+from datetime import datetime
 
 from bittensor_wallet import wallet
 from starlette.websockets import WebSocket
@@ -27,7 +28,7 @@ class MinerService:
                 if not output_chunk:
                     break
                 output_line = output_chunk.decode("utf-8", errors="replace")
-                await websocket_service.broadcast(output_line)
+                await websocket_service.broadcast(output_line, end="")
 
             await self.running_process.wait()
             return await self.running_process.communicate()
@@ -56,7 +57,7 @@ class MinerService:
 
     async def start_mining(self, miner_options: MinerOptions):
         self.miner_options = miner_options
-        await websocket_service.broadcast("Starting mining process\n")
+        await websocket_service.broadcast("Starting mining process")
         await self.update_or_clone_miner(miner_options.net_id)
         await self.regenerate_wallet(miner_options.wallet_data)
         command = f"python -u DistributedTraining/neurons/{miner_options.miner_type.value}.py \
@@ -72,7 +73,7 @@ class MinerService:
         await self.run_command(command)
 
     async def stop_mining(self):
-        if self.running_process and self.running_process.returncode is None:
+        if self.is_running():
             await websocket_service.broadcast(f"Terminating process {self.running_process}")
             os.killpg(self.running_process.pid, signal.SIGTERM)
             await self.running_process.wait()
@@ -81,10 +82,14 @@ class MinerService:
         else:
             await websocket_service.broadcast("No process to terminate")
 
+    def is_running(self):
+        return self.running_process and self.running_process.returncode is None
+
 
 class WebSocketService:
     def __init__(self):
         self.active_connections: list[WebSocket] = []
+        self.logs = MaxSizeList(100)
 
     async def connect(self, websocket: WebSocket) -> None:
         await websocket.accept()
@@ -109,14 +114,35 @@ class WebSocketService:
                     message, websocket, attempt + 1
                 )
 
-    async def broadcast(self, message) -> None:
+    async def broadcast(self, message, end="\n") -> None:
+        line = message + end
+        index = line.rfind('|')
+        if index != -1:
+            line = line[index + 2:]
+        line = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | {line}"
         for connection in self.active_connections:
-            await self.send_personal_message(message, connection)
+            await self.send_personal_message(line, connection)
+        self.logs.append(line)
 
     async def send_initial_msg(
         self, websocket: WebSocket
     ) -> None:
-        await self.send_personal_message("It Works", websocket)
+        for line in self.logs.get_list():
+            await self.send_personal_message(line+"\n", websocket)
+
+
+class MaxSizeList:
+    def __init__(self, max_size):
+        self.max_size = max_size
+        self.list = [f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | It works!\n"]
+
+    def append(self, item):
+        self.list.append(item)
+        if len(self.list) > self.max_size:
+            self.list.pop(0)
+
+    def get_list(self):
+        return self.list
 
 
 websocket_service = WebSocketService()
