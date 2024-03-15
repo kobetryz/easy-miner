@@ -126,6 +126,12 @@ def get_minner_version(subnet_id):
     match subnet_id:
         case 25:
             dest_path = "DistributedTraining/template/__init__.py"
+        case 1:
+            dest_path = "prompting/prompting/__init__.py"
+        case 13:
+            dest_path = "data-universe/neurons/__init__.py"
+        case 20:
+            dest_path = "bitagent_subnet/bitagent/validator/__init__.py"
         case _:
             return None
     with open(dest_path, 'r') as file:
@@ -148,7 +154,7 @@ def get_running_args(sub_id, network, miner_type, wallet_name, hotkey, ip):
     base_args = ["-u", f"{miner_type.value}.py", "--wallet.name", f"{wallet_name}", "--wallet.hotkey", f"{hotkey}"]
     paths = {
         25: "DistributedTraining/neurons",
-        1: "prompting/neurons",
+        1: ("prompting/neurons/miners/zephyr" if miner_type == config.MinerType.MINER else "prompting/neurons"),
         13: "data-universe/neurons",
         20: "bitagent_subnet/neurons"
     }

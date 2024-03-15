@@ -11,7 +11,7 @@ install_dependencies() {
     fi
     echo "Activating virtual environment and installing dependencies..."
     source "$VENV_DIR/bin/activate"
-    pip install -r requirements.txt && pip install -e . && pip uninstall uvloop
+    pip install -r requirements.txt && pip install -e . && pip uninstall uvloop -y
     deactivate
 }
 
@@ -27,7 +27,7 @@ strip_quotes() {
 
 get_version() {
   # Extract the version while removing possible carriage returns/spaces
-  version=$(awk -F '"' '/__version__/ {print $2}' template/__init__.py | tr -d ' ')
+  version=$(awk -F '"' '/__version__/ {print $2}' bitagent/validator/__init__.py | tr -d ' ')
   strip_quotes $version
 }
 
@@ -41,7 +41,7 @@ if [ -d "$DIR" ]; then
         # Get local version
         local_version=$(get_version)
         # Get remote version without changing the working directory, trimming invisible characters
-        remote_version=$(git show origin/main:template/__init__.py | awk -F '"' '/__version__/ {print $2}' | tr -d ' ')
+        remote_version=$(git show origin/main:bitagent/validator/__init__.py | awk -F '"' '/__version__/ {print $2}' | tr -d ' ')
         remote_version_cleared="$(strip_quotes $remote_version)"
         if [ "$local_version" != "$remote_version_cleared" ]; then
             echo "Version mismatch detected. Local version: $local_version, Remote version: $remote_version_cleared. Updating now..."

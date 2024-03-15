@@ -10,7 +10,8 @@ from PyQt5 import sip
 from bittensor import subtensor, wallet
 
 from pages.dashboards import LocalDashboardPage, RunpodDashboardPage
-from pages.runpodManager import RunpodManagerPage
+from pages.runpod.runpodManager import RunpodManagerPage
+from runpod_api.runpod import api
 from utils import get_value_from_env, save_value_to_env
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QStackedWidget, QInputDialog, QLineEdit
 from PyQt5.QtGui import QFont
@@ -20,7 +21,7 @@ from pages.startpage import StartPage
 from pages.add_wallet import AddWalletPage
 from pages.wallet import WalletDetailsTable
 from pages.machineOptions import MachineOptionPage
-from pages.runpodSetup import RunpodSetupPage
+from pages.runpod.runpodSetup import RunpodSetupPage
 
 
 class MiningWizard(QMainWindow):
@@ -29,7 +30,7 @@ class MiningWizard(QMainWindow):
         self.setup_ui()
         self.initialize_pages()
 
-        #initialise vars
+        # initialise vars
         self.wallet_name = None
         self.wallet_path = None
         self.miner_type = None
@@ -101,19 +102,22 @@ class MiningWizard(QMainWindow):
         if self.wallet_name:
             self.show_page(WalletDetailsTable, *args, **kwargs)
 
-    def show_runpod_page(self, *args, **kwargs):
+    def check_runpod_api_key(self):
         api_key = get_value_from_env("RUNPOD_API_KEY")
         if not api_key:
             api_key, ok = QInputDialog.getText(self, "RunPod API Key", "Enter your RunPod API Key:")
             if ok and api_key:
                 save_value_to_env("RUNPOD_API_KEY", api_key)
-                self.show_page(RunpodSetupPage, *args, **kwargs)
+                api.API_KEY = api_key
             else:
                 QMessageBox.warning(self, "API Key Required", "RunPod API Key is required to proceed.")
-        else:
-            self.show_page(RunpodSetupPage, *args, **kwargs)
+
+    def show_runpod_page(self, *args, **kwargs):
+        self.check_runpod_api_key()
+        self.show_page(RunpodSetupPage, *args, **kwargs)
 
     def show_runpod_manager_page(self, *args, **kwargs):
+        self.check_runpod_api_key()
         self.show_page(RunpodManagerPage, *args, **kwargs)
 
     def addDetail(self, temp_layout, widget, fontsize, bold=False, **kwargs):

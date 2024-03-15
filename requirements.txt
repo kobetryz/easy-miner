@@ -12,6 +12,4 @@ python-dotenv
 prettytable
 matplotlib
 gputil
-matplotlib
-gputil
 psutil

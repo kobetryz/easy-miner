@@ -546,6 +546,16 @@ class API:
             """.format(template=template)
         }, True)
 
+    @staticmethod
+    def get_miner_options(pod_id):
+        server_url = f"https://{pod_id}-8000.proxy.runpod.net"
+        try:
+            response = requests.get(f"{server_url}/miner-options")
+        except:
+            return None
+
+        return response.json()
+
 
 class Serverless(object):
     def __init__(self):

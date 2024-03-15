@@ -6,7 +6,6 @@ from functools import partial
 import plotly.io as pio
 import plotly.graph_objects as go
 import matplotlib.dates as mdates
-
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox, QMessageBox, QTextEdit, \
     QLineEdit
 from PyQt5.QtGui import QFont, QTextOption, QDesktopServices
@@ -246,7 +245,11 @@ class DashboardPageBase(QWidget):
                 self.registered = False
 
     def register_on_subnet(self):
-        self.wallet = bt.wallet(name=self.parent.wallet_name, path=os.path.dirname(self.parent.wallet_path))
+        self.wallet = bt.wallet(
+            name=self.parent.wallet_name,
+            path=os.path.dirname(self.parent.wallet_path),
+            hotkey=self.parent.hotkey
+        )
         wallet_bal = self.parent.subtensor.get_balance(address=self.parent.hotkey)
         # check wallet balance
         if wallet_bal < self.registration_cost:

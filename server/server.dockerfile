@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y git
 
 WORKDIR /app
 
-COPY /server /app
+COPY . /app
 
 COPY /cloud_scripts /app
 

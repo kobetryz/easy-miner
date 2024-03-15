@@ -287,7 +287,6 @@ class RunpodSetupPage(QWidget):
     @staticmethod
     def get_template_id():
         myself = json.loads(api.get_myself().text)
-        print(myself)
         for pod in myself["data"]["myself"]["podTemplates"]:
             if pod["name"] == "Easy miner subnet 25":
                 return pod["id"]

@@ -1,23 +1,11 @@
 import os
 from functools import partial
 
-import requests
 from PyQt5.QtWidgets import QWidget, QTableWidget, QTableWidgetItem, QVBoxLayout, QHBoxLayout, QPushButton, \
     QMessageBox, QAbstractItemView
 
 from config import MinerType, NetworkType
 from runpod_api.runpod import api
-
-
-def get_miner_options(pod_id):
-    # server_url = f"https://{pod_id}-8000.proxy.runpod.net"
-    server_url = "http://127.0.0.1:8001"
-    try:
-        response = requests.get(f"{server_url}/miner-options")
-    except:
-        return None
-
-    return response.json()
 
 
 class PodsTable(QTableWidget):
@@ -41,7 +29,7 @@ class PodsTable(QTableWidget):
             self.data["pod status"].append(pod["desiredStatus"])
             self.data["memory"].append(pod["memoryInGb"])
             self.data["volume"].append(pod["volumeInGb"])
-            if pod["desiredStatus"] == "RUNNING" and (miner_options := get_miner_options(pod["id"])):
+            if pod["desiredStatus"] == "RUNNING" and (miner_options := api.get_miner_options(pod["id"])):
                 self.data["wallet name"].append(miner_options["wallet_data"]["cold_key_name"])
                 self.data["miner type"].append(miner_options["miner_type"])
 
@@ -127,7 +115,7 @@ class RunpodManagerPage(QWidget):
         if pod_status != "RUNNING":
             QMessageBox.warning(self, "Error", "Error: Pod is not running")
             return
-        miner_options = get_miner_options(pod_id)
+        miner_options = api.get_miner_options(pod_id)
         if not miner_options:
             QMessageBox.warning(self, "Error", "Miner options not available, you may try to recreate pod")
             return

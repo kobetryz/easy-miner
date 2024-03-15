@@ -15,7 +15,7 @@ SUBNET_MAPPER = {
     'distributed training': 25,
     'prompting': 1,
     'data universe': 13,
-    'bitagent_subnet': 20
+    'bitagent subnet': 20
 }
 
 
@@ -28,7 +28,7 @@ class SubnetType(Enum):
     DISTRIBUTED_TRAINING = 'distributed training'
     PROMPTING = 'prompting'
     DATA_UNIVERSE = 'data universe'
-    BIT_AGENT = 'fine tuning'
+    BIT_AGENT = 'bitagent subnet'
 
 
 class NetworkType(Enum):
