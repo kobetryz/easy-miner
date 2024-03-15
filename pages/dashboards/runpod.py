@@ -84,6 +84,7 @@ class RunpodDashboardPage(DashboardPageBase):
         self.dht_announce_ip = None
         self.axon_port = None
         self.dht_port = None
+        self.miner_options = {}
         super().__init__(parent)
 
         # Websocket
@@ -176,18 +177,7 @@ class RunpodDashboardPage(DashboardPageBase):
                 else:
                     break
         self.server_url = f"https://{self.pod_id}-8000.proxy.runpod.net"
-        print("finished setting pod config")
-
-    def start_mining(self):
-        self.log('Checking for registration')
-        while not self.registered:
-            response = self.handle_registration()
-            if response == None:
-                break
-        if not self.registered:
-            return
-        self.log('You are registered and ready to mine')
-        response = requests.post(f"{self.server_url}/mine", json={
+        self.miner_options = {
             "miner_type": self.parent.miner_type.value,
             "network": self.parent.network.value,
             "net_id": self.parent.net_id,
@@ -200,7 +190,18 @@ class RunpodDashboardPage(DashboardPageBase):
                 "hot_key_mnemonic": self.parent.mnemonic_hotkey,
             },
             "wandb_key": self.parent.wandb_api_key,
-        })
+        }
+
+    def start_mining(self):
+        self.log('Checking for registration')
+        while not self.registered:
+            response = self.handle_registration()
+            if response == None:
+                break
+        if not self.registered:
+            return
+        self.log('You are registered and ready to mine')
+        response = requests.post(f"{self.server_url}/mine", json=self.miner_options)
         if response.status_code != 200:
             QMessageBox.warning(self, "Error", f"{response.text}\nTry again", QMessageBox.Ok)
             return
@@ -257,7 +258,7 @@ class RunpodDashboardPage(DashboardPageBase):
 
     def handle_websocket_open(self):
         self.toggle_view()
-
+        requests.post(f"{self.server_url}/miner-options", json=self.miner_options)
         if self.is_running():
             self.mine_button.setText("Stop Mining")
         self.mine_button.setEnabled(True)
