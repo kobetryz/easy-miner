@@ -1,8 +1,15 @@
+from functools import partial
+
 from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout, QWidget,
                              QMessageBox, QHBoxLayout, QGroupBox)
 
 from PyQt5.QtGui import QFont,QDesktopServices
 from PyQt5.QtCore import QUrl
+
+import requests
+from bs4 import BeautifulSoup
+
+from config import VERSION_URL, VERSION, OS_CORE
 
 
 class StartPage(QWidget):
@@ -90,6 +97,13 @@ class StartPage(QWidget):
         terms_button.setFont(QFont("Georgia", 12))
         terms_button.clicked.connect(self.open_terms_url)
         footer_layout.addWidget(terms_button)
+
+        # Check updates
+        updates_button = QPushButton("Check updates")
+        updates_button.setFont(QFont("Georgia", 12))
+        updates_button.clicked.connect(partial(self.check_updates, success_msg=True, error_msg=True))
+        footer_layout.addWidget(updates_button)
+
         footer_group.resize(800,10)
         layout.addWidget(footer_group)
 
@@ -100,6 +114,7 @@ class StartPage(QWidget):
         warning_label.setFixedSize(800, 50)     
         layout.addWidget(warning_label)
         self.setLayout(layout)
+        self.check_updates(success_msg=False, error_msg=False)
 
     def create_new_wallet(self):
         QMessageBox.information(self, "New Wallet", "The new wallet creation functionality is not implemented yet.")
@@ -115,3 +130,32 @@ class StartPage(QWidget):
 
     def open_terms_url(self):
         QDesktopServices.openUrl(QUrl("https://bitcurrent.net/"))
+
+    def check_updates(self, success_msg=True, error_msg=True):
+        response = requests.get(VERSION_URL)
+        if not response.status_code == 200:
+            if error_msg:
+                QMessageBox.warning(self, "Error", "Unable to get version, try again")
+            return
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        files = soup.find_all("div", {"class": "KL4NAf"})
+
+        remote_version = None
+        for file in files:
+            split_filename = file.text.split("_")
+            if split_filename[0] == OS_CORE:
+                remote_version = split_filename[1]
+
+        if not remote_version and error_msg:
+            QMessageBox.warning(self, "Error", "Target file on remote server not found, you may try again later")
+            return
+
+        if remote_version > VERSION:
+            answer = QMessageBox.question(
+                self, "Update found", "Update available, do you want to go to Google Drive to download an updated app?"
+            )
+            if answer == QMessageBox.Yes:
+                QDesktopServices.openUrl(QUrl(VERSION_URL))
+        elif success_msg:
+            QMessageBox.information(self, "Info", "Updates not found, your app are up to date")

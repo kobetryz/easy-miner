@@ -13,3 +13,5 @@ prettytable
 matplotlib
 gputil
 psutil
+beautifulsoup4
+requests
