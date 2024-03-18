@@ -187,15 +187,24 @@ class RunpodSetupPage(QWidget):
         return input_group
 
     def create_header(self):
-        header = QLabel("BitCurrent", self)
-        header.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        self.parent.addDetail(self.layout, header, 20, bold=True)
+        header_layout = QHBoxLayout()
+
+        title = QLabel("BitCurrent", self)
+        title.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.parent.addDetail(header_layout, title, 20, bold=True)
+
+        runpod_button = QPushButton("Managing pods", self)
+        runpod_button.clicked.connect(self.parent.show_runpod_manager_page)
+        self.parent.addDetail(header_layout, runpod_button, 12)
+
+        self.layout.addLayout(header_layout)
 
     def create_gpu_options(self):
         option_group = QGroupBox("Select GPU", self)
         options_layout = QVBoxLayout(option_group)
         options_layout.setAlignment(Qt.AlignTop)
         options_layout.setSpacing(10)
+        option_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         self.gpu_drop_down = QComboBox()
         self.gpu_drop_down.setMaximumWidth(300)
@@ -248,8 +257,8 @@ class RunpodSetupPage(QWidget):
         self.community_cloud_radio = QRadioButton("Community Cloud", self)
         self.secure_cloud_radio = QRadioButton("Secure Cloud", self)
 
-        self.parent.addDetail(cloud_layout, self.community_cloud_radio, 16)
-        self.parent.addDetail(cloud_layout, self.secure_cloud_radio, 16)
+        self.parent.addDetail(cloud_layout, self.community_cloud_radio, 14)
+        self.parent.addDetail(cloud_layout, self.secure_cloud_radio, 14)
 
         parent.addLayout(cloud_layout)  # Add this layout to the main layout
         # Set Community Cloud as the default selected option
@@ -287,9 +296,9 @@ class RunpodSetupPage(QWidget):
     @staticmethod
     def get_template_id():
         myself = json.loads(api.get_myself().text)
-        for pod in myself["data"]["myself"]["podTemplates"]:
-            if pod["name"] == "Easy miner subnet 25":
-                return pod["id"]
+        for template in myself["data"]["myself"]["podTemplates"]:
+            if template["name"] == "Easy miner":
+                return template["id"]
 
     def create_template(self):
         self.cloud_option = "Community" if self.community_cloud_radio.isChecked() else "Secure"
@@ -303,7 +312,7 @@ class RunpodSetupPage(QWidget):
                     dockerArgs: "",
                     env: [],
                     imageName: "squirre11/miner-server:latest",
-                    name: "Easy miner subnet 25",
+                    name: "Easy miner",
                     ports: "21077/tcp,21078/tcp,8000/http",
                     readme: "## Its easy miner template, nothing special!",
                     volumeInGb: {PERSISTENT_DISK_SIZE_GB},
