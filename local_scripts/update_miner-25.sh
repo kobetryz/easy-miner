@@ -11,7 +11,7 @@ install_dependencies() {
     fi
     echo "Activating virtual environment and installing dependencies..."
     source "$VENV_DIR/bin/activate"
-    pip install -e . && python post_install.py
+    pip install -e .
     deactivate
     echo "Dependencies installed."
 }
