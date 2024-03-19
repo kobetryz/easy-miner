@@ -89,7 +89,7 @@ class RunpodDashboardPage(DashboardPageBase):
 
         # Websocket
         self.websocket_thread = WebSocketThread(self)
-        self.websocket_thread.data_received.connect(self.output_area.insertPlainText)  # noqa
+        self.websocket_thread.data_received.connect(self.log)  # noqa
         self.websocket_thread.connection_open.connect(self.handle_websocket_open)  # noqa
         self.websocket_thread.start()
 

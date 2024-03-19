@@ -132,7 +132,7 @@ class RunpodSetupPage(QWidget):
 
         self.output_area = QTextEdit(self)
         self.output_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.log = logger_wrapper(self.output_area.insertPlainText)
+        self.log = logger_wrapper(self.output_area.append, end="")
         self.layout.addWidget(self.output_area)
 
         self.createFooter()

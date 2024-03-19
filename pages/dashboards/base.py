@@ -146,7 +146,7 @@ class DashboardPageBase(QWidget):
         self.input_button.hide()
         self.layout.addWidget(self.input_button)  # Place the button below the QTextEdit
 
-        self.log = logger_wrapper(self.output_area.insertPlainText)
+        self.log = logger_wrapper(self.output_area.append, end="")
 
         # Charts Section
         self.charts_group = QGroupBox()

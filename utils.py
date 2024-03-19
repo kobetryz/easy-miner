@@ -142,11 +142,16 @@ def get_minner_version(subnet_id):
     return "Version not found."
 
 
-def logger_wrapper(target):
+def logger_wrapper(target, end="\n", limits=['[0m ', '| ']):
     def log(text):
-        for splitted_text in text.split("\n"):
-            if splitted_text:
-                target(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {splitted_text}\n')
+        for line in text.split("\n"):
+            line = line + end
+            for limit in limits:
+                index = line.rfind(limit)
+                if index != -1:
+                    line = line[index + len(limit):]
+            if line:
+                target(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | {line}')
     return log
 
 
