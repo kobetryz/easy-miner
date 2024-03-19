@@ -2,3 +2,4 @@ bittensor-wallet
 password_strength
 fastapi
 uvicorn[standard]
+wandb
