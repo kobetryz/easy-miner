@@ -31,9 +31,13 @@ class MinerService:
                 await websocket_service.broadcast(output_line, end="")
 
             await self.running_process.wait()
-            return await self.running_process.communicate()
+            stdout, stderr = await self.running_process.communicate()
+            if stdout:
+                await websocket_service.broadcast(stdout.decode("utf-8", errors="replace"), end="")
+            if stderr:
+                await websocket_service.broadcast(stderr.decode("utf-8", errors="replace"), end="")
         except Exception as e:
-            pass
+            await websocket_service.broadcast(str(e))
 
     async def update_or_clone_miner(self, net_id: int):
         await websocket_service.broadcast(f"Updating or cloning miner")

@@ -4,7 +4,7 @@ REPO_URL="https://github.com/bit-current/DistributedTraining.git"
 DIR="DistributedTraining"
 
 install_dependencies() {
-    pip install -e . && python post_install.py
+    pip install -e .
     echo "Dependencies installed."
 }
 

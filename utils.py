@@ -123,17 +123,17 @@ def getLocalWandbApiKey():
 
 
 def get_minner_version(subnet_id):
-    match subnet_id:
-        case 25:
-            dest_path = "DistributedTraining/template/__init__.py"
-        case 1:
-            dest_path = "prompting/prompting/__init__.py"
-        case 13:
-            dest_path = "data-universe/neurons/__init__.py"
-        case 20:
-            dest_path = "bitagent_subnet/bitagent/validator/__init__.py"
-        case _:
-            return None
+    if subnet_id == 25:
+        dest_path = "DistributedTraining/template/__init__.py"
+    elif subnet_id == 1:
+        dest_path = "prompting/prompting/__init__.py"
+    elif subnet_id == 13:
+        dest_path = "data-universe/neurons/__init__.py"
+    elif subnet_id == 20:
+        dest_path = "bitagent_subnet/bitagent/validator/__init__.py"
+    else:
+        return None
+
     with open(dest_path, 'r') as file:
         for line in file:
             if line.startswith("__version__"):
