@@ -159,7 +159,9 @@ def get_running_args(sub_id, network, miner_type, wallet_name, hotkey, ip):
         20: "bitagent_subnet/neurons"
     }
     extras = {
-        25: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--logging.debug", "--axon.port", "8090", "--dht.port", "8800", "--dht.announce_ip", f"{ip}"],
+        25: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--logging.debug",
+             "--axon.external_ip", f"{ip}", "--axon.port", "8090", "--axon.ip", f"{ip}", "--axon.external_port", "8090",
+             "--flask.host_port", "8800", "--flask.host_address", f"0.0.0.0"],
         1: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--logging.debug"] + (["--neuron.device", "cuda"] if miner_type != config.MinerType.MINER else []),
         20: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--axon.port", "8090"]
     }

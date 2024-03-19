@@ -81,8 +81,8 @@ class MinerService:
 
         extra_args = {
             25: f"--netuid {minner_options.net_id} --subtensor.network {minner_options.network} --logging.debug"
-                f" --axon.port {minner_options.axon_port} --dht.port {minner_options.dht_port}"
-                f" --dht.announce_ip {minner_options.dht_announce_ip}",
+                f" --axon.port {minner_options.axon_port} --axon.ip {minner_options.dht_announce_ip} "
+                f"--axon.external_port {minner_options.axon_port} --flask.host_address 127.0.0.1 --flask.host_port 8001",
             1: f"--netuid {minner_options.net_id} --subtensor.network {minner_options.network} --logging.debug" + (
                 " --neuron.device cuda" if minner_options.miner_type != MinerType.MINER else ""),
             20: f"--netuid {minner_options.net_id} --subtensor.network {minner_options.network} --axon.port {minner_options.axon_port}"

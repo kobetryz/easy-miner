@@ -313,7 +313,7 @@ class RunpodSetupPage(QWidget):
                     env: [],
                     imageName: "squirre11/miner-server:latest",
                     name: "Easy miner",
-                    ports: "21077/tcp,21078/tcp,8000/http",
+                    ports: "21077/tcp,21078/tcp,8000/http,8001/http",
                     readme: "## Its easy miner template, nothing special!",
                     volumeInGb: {PERSISTENT_DISK_SIZE_GB},
                     volumeMountPath: "/workspace"
