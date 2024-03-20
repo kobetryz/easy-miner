@@ -1,14 +1,17 @@
 import os
 import json
+import sys
 
 from functools import partial
 
+from PyQt5 import QtGui
 from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout, QWidget, QLineEdit,
                              QMessageBox, QHBoxLayout, QFileDialog, QGroupBox, QSpacerItem,
                              QTextEdit, QSizePolicy)
 from PyQt5.QtGui import QFont, QTextOption
 from PyQt5.QtCore import QProcess, QProcessEnvironment
 
+from create_wallet import create_wallet_with_password
 from utils import logger_wrapper
 
 
@@ -127,17 +130,24 @@ class AddWalletPage(QWidget):
         env = QProcessEnvironment.systemEnvironment()
         self.wallet_process.setProcessEnvironment(env)
 
-        command = "python"
-        args = [
-            "-u", "create_wallet.py",
-            f"--wallet_name={self.wallet_name}",
-            f"--wallet_path={self.wallet_path}",
-            f"--password={self.wallet_password}",
-        ]
+        class QTextEditRedirect:
+            def __init__(self, parent):
+                self.parent = parent
+            def write(self, text):
+                self.parent.output_area.moveCursor(QtGui.QTextCursor.End)
+                self.parent.output_area.insertPlainText(text)
 
-        # Start the process
-        self.wallet_process.start(command, args)
-        self.wallet_process.finished.connect(self.on_process_finished)
+        sys.stdout = QTextEditRedirect(self)
+        sys.stderr = QTextEditRedirect(self)
+
+        create_wallet_with_password(
+            wallet_name=self.wallet_name, wallet_path=self.wallet_path, password=self.wallet_password
+        )
+
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
+
+        self.on_process_finished()
 
     def on_process_finished(self):
         if self.wallet_name and self.wallet_path:

@@ -7,7 +7,7 @@ VENV_DIR="venv"
 install_dependencies() {
     if [ ! -d "$VENV_DIR" ]; then
       echo "Creating virtual environment..."
-      python -m venv "$VENV_DIR"
+      python3 -m venv "$VENV_DIR"
     fi
     echo "Activating virtual environment and installing dependencies..."
     source "$VENV_DIR/bin/activate"
