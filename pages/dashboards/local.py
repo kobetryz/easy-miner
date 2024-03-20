@@ -178,7 +178,6 @@ class LocalDashboardPage(DashboardPageBase):
         )
         self.update_script_process.finished.connect(partial(self.check_repo_is_up_to_date, prev_version))
 
-
     def update_timer(self):
         # This function is called every second to update the timer display, CPU usage and GPU usage
         if self.is_running():

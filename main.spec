@@ -10,7 +10,7 @@ a = Analysis(
         ('venv/lib/python3.10/site-packages/scalecodec/type_registry', 'scalecodec/type_registry'),
         ('local_scripts', 'local_scripts')
     ],
-    hiddenimports=[],
+    hiddenimports=['wandb'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -25,7 +25,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='main',
+    name='linux_1.0.0',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

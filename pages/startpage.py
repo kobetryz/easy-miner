@@ -147,8 +147,9 @@ class StartPage(QWidget):
             if split_filename[0] == OS_CORE:
                 remote_version = split_filename[1]
 
-        if not remote_version and error_msg:
-            QMessageBox.warning(self, "Error", "Target file on remote server not found, you may try again later")
+        if not remote_version:
+            if error_msg:
+                QMessageBox.warning(self, "Error", "Target file on remote server not found, you may try again later")
             return
 
         if remote_version > VERSION:

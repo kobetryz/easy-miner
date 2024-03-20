@@ -11,7 +11,7 @@ MIN_DOWNLOAD = 70
 PORTS = '22/tcp,3000/http,3010/http,3020/http,6006/http,8000/http,8888/http'
 MAX_INSTANCE_FOR_SUBNET = 2
 VERSION = "1.0.0"
-VERSION_URL = "https://drive.google.com/drive/folders/1968k6rrEAU0M_IbdJy6mb4SErPqpxt4B"
+VERSION_URL = "https://drive.google.com/drive/u/5/folders/12bglImLBlEvk0YyIspeASeXe2yBjRlN7"
 OS_CORE = "mac" if (name := platform.system()) == "Darwin" else name.lower()
 SUBNET_MAPPER = {
     'distributed training': 25,
