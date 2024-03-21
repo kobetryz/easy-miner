@@ -1,18 +1,51 @@
 import os
 import json
-import sys
 
 from functools import partial
 
-from PyQt5 import QtGui
+import bittensor as bt
 from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout, QWidget, QLineEdit,
-                             QMessageBox, QHBoxLayout, QFileDialog, QGroupBox, QSpacerItem,
+                             QMessageBox, QHBoxLayout, QGroupBox, QSpacerItem,
                              QTextEdit, QSizePolicy)
 from PyQt5.QtGui import QFont, QTextOption
-from PyQt5.QtCore import QProcess, QProcessEnvironment
+from PyQt5.QtCore import pyqtSignal, QThread
+from substrateinterface import Keypair
 
-from create_wallet import create_wallet_with_password
 from utils import logger_wrapper
+
+
+class WalletCreationThread(QThread):
+    # Define a signal to emit logs
+    log_signal = pyqtSignal(str)
+
+    def __init__(self, wallet_name, wallet_path, wallet_password):
+        super().__init__()
+        self.wallet_name = wallet_name
+        self.wallet_path = wallet_path
+        self.wallet_password = wallet_password
+
+    def show_mnemonic(self, keypair, key_type):
+        self.log_signal.emit(
+                "\nIMPORTANT: Store this mnemonic in a secure (preferable offline place), as anyone "
+                "who has possession of this mnemonic can use it to regenerate the key and access your tokens. \n"
+        )
+        self.log_signal.emit("The mnemonic to the new {} is:\n\n{}\n".format(key_type, keypair.mnemonic.upper()))
+        self.log_signal.emit(
+            "You can use the mnemonic to recreate the key in case it gets lost. The command to use to regenerate the key using this mnemonic is:"
+        )
+        self.log_signal.emit("btcli w regen_{} --mnemonic {}".format(key_type, keypair.mnemonic))
+        self.log_signal.emit("")
+
+    def run(self):
+        wallet = bt.wallet(name=self.wallet_name, path=self.wallet_path)
+        wallet.create_new_hotkey(use_password=False, overwrite=True)
+        self.show_mnemonic(wallet.hotkey, "hotkey")
+        ck_mnemonic = Keypair.generate_mnemonic()
+        ck_keypair = Keypair.create_from_mnemonic(ck_mnemonic)
+        wallet._coldkey = ck_keypair
+        wallet.coldkey_file.set_keypair(ck_keypair, encrypt=True, password=self.wallet_password, overwrite=True)
+        wallet.set_coldkeypub(ck_keypair, overwrite=True)
+        self.show_mnemonic(ck_keypair, "coldkey")
 
 
 class AddWalletPage(QWidget):
@@ -97,21 +130,16 @@ class AddWalletPage(QWidget):
         widget.setFont(QFont("Georgia", fontsize, fontWeight))
         temp_layout.addWidget(widget)
 
-    def browse_wallet_path(self):
-        # Open a QFileDialog to select the path
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        self.wallet_path = QFileDialog.getExistingDirectory(self, "Select Wallet Path", options=options)
-        if self.wallet_path:
-            self.wallet_path_input.setText(self.wallet_path)
+    def cleare_password_fields(self):
+        self.wallet_password_input.clear()  # Clear the password fields
+        self.confirmed_password.clear()
+        self.wallet_password_input.setFocus()
 
     def save_wallet_details(self):
         if self.wallet_password_input.text() != self.confirmed_password.text():
             QMessageBox.warning(self, "Warning", "Passwords do not match! Please re-enter your password.")
-            self.wallet_password_input.clear()  # Clear the password fields
-            self.confirmed_password.clear()
-            self.wallet_password_input.setFocus()
-            # return
+            self.cleare_password_fields()
+            return
         # self.output_area.show()
         self.log('Checking your password')
         self.wallet_name = self.wallet_name_input.text()
@@ -120,34 +148,22 @@ class AddWalletPage(QWidget):
         # if self.output_area.isVisible():
         self.create_wallet()
 
+    def check_wallet_exists(self):
+        if os.path.exists(f'{self.wallet_path}/{self.wallet_name}'):
+            return True
+        return False
+
     def create_wallet(self):
-        self.wallet_process = QProcess(self)
-        self.wallet_process.setProcessChannelMode(QProcess.MergedChannels)
-        self.wallet_process.readyReadStandardOutput.connect(self.handle_output)
-        self.log('Creating Your wallet')
-
-        # Set environment variables if needed
-        env = QProcessEnvironment.systemEnvironment()
-        self.wallet_process.setProcessEnvironment(env)
-
-        class QTextEditRedirect:
-            def __init__(self, parent):
-                self.parent = parent
-            def write(self, text):
-                self.parent.output_area.moveCursor(QtGui.QTextCursor.End)
-                self.parent.output_area.insertPlainText(text)
-
-        sys.stdout = QTextEditRedirect(self)
-        sys.stderr = QTextEditRedirect(self)
-
-        create_wallet_with_password(
-            wallet_name=self.wallet_name, wallet_path=self.wallet_path, password=self.wallet_password
-        )
-
-        sys.stdout = sys.__stdout__
-        sys.stderr = sys.__stderr__
-
-        self.on_process_finished()
+        if self.check_wallet_exists():
+            answer = QMessageBox.question(self, "Wallet", "Wallet already exist, overwrite?")
+            if answer == QMessageBox.No:
+                self.cleare_password_fields()
+                return
+        self.walletThread = WalletCreationThread(self.wallet_name, self.wallet_path, self.wallet_password)
+        self.walletThread.log_signal.connect(self.handle_output)
+        self.walletThread.finished.connect(self.on_process_finished)
+        self.walletThread.start()
+        self.cleare_password_fields()
 
     def on_process_finished(self):
         if self.wallet_name and self.wallet_path:
@@ -179,13 +195,5 @@ class AddWalletPage(QWidget):
             self.save_button.setEnabled(False)
             self.finish_button.setEnabled(True)
 
-    def handle_output(self):
-        self.parent.output = self.wallet_process.readAllStandardOutput().data().decode("utf-8")
-        self.log(self.parent.output)
-        if "overwrite? (y/n)" in self.parent.output.lower():
-            answer = QMessageBox.question(self, "Wallet", "Wallet already exist, overwrite?")
-            if answer == QMessageBox.Yes:
-                self.wallet_process.write(b"y\n")
-            else:
-                self.wallet_process.write(b"n\n")
-            return
+    def handle_output(self, text):
+        self.log(text)
