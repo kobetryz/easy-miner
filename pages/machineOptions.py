@@ -1,5 +1,8 @@
 import subprocess
+import sys
 from functools import partial
+
+import pkg_resources
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QRadioButton, QLabel, QStackedWidget, QPushButton, QGroupBox, \
     QHBoxLayout, QLineEdit, QMessageBox, QInputDialog
@@ -164,4 +167,6 @@ class MachineOptionPage(QWidget):
             if not ok:
                 return False
             return self.wandbLogin()
-
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Please install wandb using 'pip install wandb' and try again.")
+            return False
