@@ -18,7 +18,6 @@ class StartPage(QWidget):
         self.parent = parent
         layout = QVBoxLayout()
 
-        # Add a cyberpunk style
         self.setStyleSheet("""
              QPushButton {
                 font-family: 'Georgia'; 
@@ -36,8 +35,8 @@ class StartPage(QWidget):
         """)
 
         # Header block
-        header_group = QGroupBox("BitCurrent", self)
-        header_group.setFont(QFont("Georgia", 20, QFont.Bold))
+        header_group = QGroupBox("EasyMiner", self)
+        header_group.setFont(QFont("Georgia", 20, QFont.Bold, italic = True))
         
         header_group.setStyleSheet("font-family: 'Georgia'; \
                                    font-weight: bold;\
@@ -48,15 +47,15 @@ class StartPage(QWidget):
                                    margin-top: 22px; margin-bottom: 20px;")
        
         header_layout = QHBoxLayout(header_group)
-        welcome_message = QLabel("Easy Miner")
-        welcome_message.setFont(QFont("Georgia", 42, QFont.Bold, italic=True))
+        welcome_message = QLabel("Join the revolution: Mine the Easy Way")
+        welcome_message.setFont(QFont("Georgia", 34, QFont.Bold))
         header_layout.addWidget(welcome_message)
 
         layout.addWidget(header_group)
 
         # Mining options
         options_group = QGroupBox(self)
-        options_group.setFont(QFont("Georgia", 16, QFont.Bold))
+        options_group.setFont(QFont("Georgia", 24, QFont.Bold))
         options_layout = QVBoxLayout(options_group)
         
         # Use new wallet

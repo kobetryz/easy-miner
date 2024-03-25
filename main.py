@@ -1,4 +1,4 @@
-# Plug and Play miner
+# Easy miner app
 # Kofi Osei - Bonsu 
 # 30/12/2023 
 
@@ -56,10 +56,6 @@ class MiningWizard(QMainWindow):
         self.start_page = StartPage(self)
         self.central_widget.addWidget(self.start_page)
     
-    def loadStyleSheet(self):
-        with open("style.qss", "r") as file:
-            self.setStyleSheet(file.read())
-
     def show_page(self, page_class, *args, **kwargs):
         if previous_page := kwargs.get("page_to_delete"):
             self.central_widget.removeWidget(previous_page)
@@ -73,8 +69,6 @@ class MiningWizard(QMainWindow):
             page = page_class(self, *args, **kwargs)
             self.central_widget.addWidget(page)
 
-        print(page_class.__name__)
-        print(page)
         self.central_widget.setCurrentWidget(page)
 
     def show_start_page(self, *args, **kwargs):

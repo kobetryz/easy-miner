@@ -26,10 +26,10 @@ class WalletCreationThread(QThread):
 
     def show_mnemonic(self, keypair, key_type):
         self.log_signal.emit(
-                "\nIMPORTANT: Store this mnemonic in a secure (preferable offline place), as anyone "
-                "who has possession of this mnemonic can use it to regenerate the key and access your tokens. \n"
+                "\nIMPORTANT: Store this mnemonic in a secure (preferable offline place), if someone has your mnemonic, "
+                "they have your tao!!. \n"
         )
-        self.log_signal.emit("The mnemonic to the new {} is:\n\n{}\n".format(key_type, keypair.mnemonic.upper()))
+        self.log_signal.emit("The mnemonic to the new {} is:\n\n{}\n".format(key_type, keypair.mnemonic))
         self.log_signal.emit(
             "You can use the mnemonic to recreate the key in case it gets lost. The command to use to regenerate the key using this mnemonic is:"
         )
@@ -40,6 +40,7 @@ class WalletCreationThread(QThread):
         wallet = bt.wallet(name=self.wallet_name, path=self.wallet_path)
         wallet.create_new_hotkey(use_password=False, overwrite=True)
         self.show_mnemonic(wallet.hotkey, "hotkey")
+        self.log_signal.emit('Generating coldkey')
         ck_mnemonic = Keypair.generate_mnemonic()
         ck_keypair = Keypair.create_from_mnemonic(ck_mnemonic)
         wallet._coldkey = ck_keypair
@@ -60,14 +61,20 @@ class AddWalletPage(QWidget):
         self.layout = QVBoxLayout()
         self.layout.setSpacing(5)
         self.layout.setContentsMargins(10, 10, 10, 10)
-        self.layout.addSpacerItem(QSpacerItem(10, 20, QSizePolicy.Minimum, QSizePolicy.Expanding))
+
+        # top_spacer = QSpacerItem(1,1, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        # self.layout.addItem(top_spacer)
+        
         self.createHeader()
         self.createWalletDetails()
         self.createFooter()
+        
+        # bottom_spacer = QSpacerItem(10, 5, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        # self.layout.addItem(bottom_spacer)
 
     def createHeader(self):
-        header_group = QGroupBox("BitCurrent", self)
-        header_group.setFont(QFont("Georgia", 20, QFont.Bold))
+        header_group = QGroupBox("EasyMiner", self)
+        header_group.setFont(QFont("Georgia", 20, QFont.Bold, italic=True))
         header_layout = QHBoxLayout()
         header_group.setLayout(header_layout)
         header_group.setFixedHeight(30)
@@ -102,7 +109,7 @@ class AddWalletPage(QWidget):
 
         self.output_area = QTextEdit(self)
         self.output_area.setWordWrapMode(QTextOption.NoWrap)
-        self.output_area.setReadOnly(False)  # Make it read-only
+        self.output_area.setReadOnly(True)  # Make it read-only
         self.log = logger_wrapper(self.output_area.insertPlainText)
         # self.output_area.hide()  # Hide initially
         self.layout.addWidget(self.output_area)
@@ -113,7 +120,7 @@ class AddWalletPage(QWidget):
         previous_button.clicked.connect(partial(self.parent.show_start_page, page_to_delete=self))
         self.addDetail(h_layout, previous_button, 12)
 
-        self.save_button = QPushButton("Save", self)
+        self.save_button = QPushButton("Create", self)
         self.addDetail(h_layout, self.save_button, 12)
         self.save_button.clicked.connect(self.save_wallet_details)
 
@@ -130,7 +137,7 @@ class AddWalletPage(QWidget):
         widget.setFont(QFont("Georgia", fontsize, fontWeight))
         temp_layout.addWidget(widget)
 
-    def cleare_password_fields(self):
+    def clear_password_fields(self):
         self.wallet_password_input.clear()  # Clear the password fields
         self.confirmed_password.clear()
         self.wallet_password_input.setFocus()
@@ -138,12 +145,15 @@ class AddWalletPage(QWidget):
     def save_wallet_details(self):
         if self.wallet_password_input.text() != self.confirmed_password.text():
             QMessageBox.warning(self, "Warning", "Passwords do not match! Please re-enter your password.")
-            self.cleare_password_fields()
+            self.clear_password_fields()
             return
         # self.output_area.show()
         self.log('Checking your password')
         self.wallet_name = self.wallet_name_input.text()
-        self.wallet_path = os.path.join(os.path.expanduser('~'), '.bittensor/wallets')
+        # self.wallet_path = os.path.join(os.path.expanduser('~'), '.bittensor/wallets')
+        self.wallet_path = os.getcwd()
+
+
         self.wallet_password = self.wallet_password_input.text()
         # if self.output_area.isVisible():
         self.create_wallet()
@@ -155,15 +165,15 @@ class AddWalletPage(QWidget):
 
     def create_wallet(self):
         if self.check_wallet_exists():
-            answer = QMessageBox.question(self, "Wallet", "Wallet already exist, overwrite?")
+            answer = QMessageBox.question(self, "Wallet", "Wallet already exists, Do you want to overwrite?")
             if answer == QMessageBox.No:
-                self.cleare_password_fields()
+                self.clear_password_fields()
                 return
         self.walletThread = WalletCreationThread(self.wallet_name, self.wallet_path, self.wallet_password)
         self.walletThread.log_signal.connect(self.handle_output)
         self.walletThread.finished.connect(self.on_process_finished)
         self.walletThread.start()
-        self.cleare_password_fields()
+        self.clear_password_fields()
 
     def on_process_finished(self):
         if self.wallet_name and self.wallet_path:
@@ -188,7 +198,7 @@ class AddWalletPage(QWidget):
             ok = QMessageBox.information(
                 self,
                 "Copy Nnenomic",
-                "Please copy nnemonic in the terminal to a safe place! \n This is higher priority."
+                "Please copy nnemonic in the terminal to a safe place! \n This is more important than your password."
             )
 
         if ok:
