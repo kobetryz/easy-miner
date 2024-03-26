@@ -143,6 +143,17 @@ def get_minner_version(subnet_id):
 
 
 def logger_wrapper(target, end="\n", limits=['[0m ', '| ']):
+    """
+    Wraps a logging function to add timestamp and custom formatting.
+
+    Parameters:
+    - target: A function that takes a single string argument. This function will be called with the formatted log message.
+    - end: A string that will be appended to the end of each log message. Defaults to a newline character.
+    - limits: A list of strings that act as delimiters for filtering out parts of the log message. Everything before the last occurrence of each delimiter in a line will be removed.
+
+    Returns:
+    A function that takes a single string argument (the log message), formats it, and passes it to the target function.
+     """
     def log(text):
         for line in text.split("\n"):
             line = line + end

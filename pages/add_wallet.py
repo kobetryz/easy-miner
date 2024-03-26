@@ -40,7 +40,7 @@ class WalletCreationThread(QThread):
         wallet = bt.wallet(name=self.wallet_name, path=self.wallet_path)
         wallet.create_new_hotkey(use_password=False, overwrite=True)
         self.show_mnemonic(wallet.hotkey, "hotkey")
-        self.log_signal.emit('Generating coldkey')
+        self.log_signal.emit('Generating coldkey!')
         ck_mnemonic = Keypair.generate_mnemonic()
         ck_keypair = Keypair.create_from_mnemonic(ck_mnemonic)
         wallet._coldkey = ck_keypair
@@ -150,8 +150,7 @@ class AddWalletPage(QWidget):
         # self.output_area.show()
         self.log('Checking your password')
         self.wallet_name = self.wallet_name_input.text()
-        # self.wallet_path = os.path.join(os.path.expanduser('~'), '.bittensor/wallets')
-        self.wallet_path = os.getcwd()
+        self.wallet_path = os.path.join(os.path.expanduser('~'), '.bittensor/wallets')
 
 
         self.wallet_password = self.wallet_password_input.text()
