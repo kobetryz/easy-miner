@@ -102,19 +102,19 @@ class MinerOptionsPage(QWidget):
 
     def changeRequirements(self, subnet: str, miner_type: str):
         requirements = {
-            "distributed training": {
+            SubnetType.DISTRIBUTED_TRAINING.value: {
                 "miner": {"GPU": "16GB VRAM e.g. RTX A4000"},
                 "validator": {"GPU": "16GB VRAM e.g. RTX A4000"}
             },
-            "prompting": {
+            SubnetType.PROMPTING.value: {
                 "miner": {"GPU": "18GB of VRAM"},
                 "validator": {"GPU": "24GB of VRAM"}
             },
-            "data universe": {
+            SubnetType.DATA_UNIVERSE.value: {
                 "miner": {"GPU": "Not require a GPU", "CPU": "We recommend a decent CPU (4+ cores)"},
                 "validator": {"GPU": "Not require a GPU", "RAM": "32 GB"}
             },
-            "bitagent subnet": {
+            SubnetType.BIT_AGENT.value: {
                 "miner": {"GPU": "15GB of VRAM"},
                 "validator": {"GPU": "15GB of VRAM"}
             }
