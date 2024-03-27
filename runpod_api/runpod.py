@@ -1,5 +1,7 @@
 import os
 import json
+from pprint import pprint
+
 import requests
 from dotenv import dotenv_values, load_dotenv
 
@@ -716,6 +718,6 @@ def get_runpod_api_key():
 api = API()
 response = api.get_gpu_types()
 GPU_DICT = response.json()['data']['gpuTypes']
-GPU_DICT = {gpu['displayName']: gpu for gpu in GPU_DICT}
+GPU_DICT = {gpu['displayName']: gpu for gpu in GPU_DICT if gpu['displayName'] != 'unknown'}
 
 GPU_LIST_TO_USE = ['RTX 3090', 'RTX A4000', 'RTX 4090', 'RTX A4500', 'RTX A5000']

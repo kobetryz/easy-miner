@@ -175,6 +175,7 @@ class RunpodSetupPage(QWidget):
 
         wandb_api_key_layout = QHBoxLayout()
         self.wandb_api_key_field = QLineEdit(self)
+        self.wandb_api_key_field.setEchoMode(QLineEdit.Password)
 
         wandb_api_key_layout.addWidget(QLabel("WANDB API KEY:", self))
         wandb_api_key_layout.addWidget(self.wandb_api_key_field)
@@ -209,7 +210,7 @@ class RunpodSetupPage(QWidget):
         self.gpu_drop_down = QComboBox()
         self.gpu_drop_down.setMaximumWidth(300)
         self.parent.addDetail(options_layout, self.gpu_drop_down, 18)
-        self.gpu_drop_down.addItems(GPU_LIST_TO_USE)
+        self.gpu_drop_down.addItems(GPU_DICT.keys())
 
         # Set "RTX A4000" as the default GPU if it exists in the GPU_LIST_TO_USE
         index = self.gpu_drop_down.findText("RTX A4000")
@@ -270,12 +271,14 @@ class RunpodSetupPage(QWidget):
 
         mnemonic_hotkey_layout = QHBoxLayout()
         self.mnemonic_hotkey_field = QLineEdit()
+        self.mnemonic_hotkey_field.setEchoMode(QLineEdit.Password)
 
         mnemonic_hotkey_layout.addWidget(QLabel("MNEMONIC HOTKEY:", self))
         mnemonic_hotkey_layout.addWidget(self.mnemonic_hotkey_field)
 
         mnemonic_coldkey_layout = QHBoxLayout()
         self.mnemonic_coldkey_field = QLineEdit()
+        self.mnemonic_coldkey_field.setEchoMode(QLineEdit.Password)
 
         mnemonic_coldkey_layout.addWidget(QLabel("MNEMONIC COLDKEY:", self))
         mnemonic_coldkey_layout.addWidget(self.mnemonic_coldkey_field)

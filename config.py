@@ -14,10 +14,10 @@ VERSION = "1.0.0"
 VERSION_URL = "https://drive.google.com/drive/u/5/folders/12bglImLBlEvk0YyIspeASeXe2yBjRlN7"
 OS_CORE = "mac" if (name := platform.system()) == "Darwin" else name.lower()
 SUBNET_MAPPER = {
-    'distributed training': 25,
-    'prompting': 1,
-    'data universe': 13,
-    'bitagent subnet': 20
+    'distributed training 25': 25,
+    'prompting 1': 1,
+    'data universe 13': 13,
+    'bitagent subnet 20': 20
 }
 
 
@@ -27,10 +27,10 @@ class MinerType(Enum):
 
 
 class SubnetType(Enum):
-    DISTRIBUTED_TRAINING = 'distributed training'
-    PROMPTING = 'prompting'
-    DATA_UNIVERSE = 'data universe'
-    BIT_AGENT = 'bitagent subnet'
+    DISTRIBUTED_TRAINING = 'distributed training 25'
+    PROMPTING = 'prompting 1'
+    DATA_UNIVERSE = 'data universe 13'
+    BIT_AGENT = 'bitagent subnet 20'
 
 
 class NetworkType(Enum):
