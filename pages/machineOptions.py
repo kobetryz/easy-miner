@@ -7,6 +7,7 @@ import pkg_resources
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QRadioButton, QLabel, QStackedWidget, QPushButton, QGroupBox, \
     QHBoxLayout, QLineEdit, QMessageBox, QInputDialog
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 
 from utils import getLocalWandbApiKey
 
@@ -29,9 +30,12 @@ class MachineOptionPage(QWidget):
         self.setLayout(self.layout)
 
     def createHeader(self):
-        header = QLabel("BitCurrent", self)
-        header.setAlignment(Qt.AlignLeft)
-        self.parent.addDetail(self.layout, header, 20, bold=True)
+        header_group = QGroupBox("EasyMiner", self)
+        header_group.setFont(QFont("Georgia", 20, QFont.Bold, italic=True))
+        header_layout = QHBoxLayout()
+        header_group.setLayout(header_layout)
+        header_group.setFixedHeight(30)
+        self.layout.addWidget(header_group)
 
     def createMachineOptions(self):
         option_group = QGroupBox("Select Machine to Use", self)
@@ -108,8 +112,8 @@ class MachineOptionPage(QWidget):
 
     def createFooter(self):
         h_layout = QHBoxLayout()
-        previous_button = QPushButton("Back to Main Menu", self)
-        previous_button.clicked.connect(partial(self.parent.show_start_page, page_to_delete=self))
+        previous_button = QPushButton("Previous", self)
+        previous_button.clicked.connect(partial(self.parent.show_miner_options_page, page_to_delete=self))
         self.parent.addDetail(h_layout, previous_button, 12)
         self.layout.addLayout(h_layout)
 

@@ -1,4 +1,5 @@
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QRadioButton, QVBoxLayout, \
     QLabel, QGroupBox, QMessageBox, QGridLayout
 
@@ -32,9 +33,12 @@ class MinerOptionsPage(QWidget):
         self.setLayout(self.layout)
 
     def createHeader(self):
-        header = QLabel("BitCurrent", self)
-        header.setAlignment(Qt.AlignTop)
-        self.parent.addDetail(self.layout, header, 20, bold=True)
+        header_group = QGroupBox("EasyMiner", self)
+        header_group.setFont(QFont("Georgia", 20, QFont.Bold, italic=True))
+        header_layout = QHBoxLayout()
+        header_group.setLayout(header_layout)
+        header_group.setFixedHeight(30)
+        self.layout.addWidget(header_group)
 
     def createMinerOptions(self):
         self.miner_option_group = QGroupBox("Run as")
