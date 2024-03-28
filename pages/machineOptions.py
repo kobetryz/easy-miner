@@ -70,7 +70,7 @@ class MachineOptionPage(QWidget):
         self.cloudOptions = self.createOptionWidget(
             "Options",
             self.showCloudOptions,
-            [("RunPod", self.runPodAction), ("Vast.ai", self.vastAiAction)],
+            [("RunPod", self.runPodAction), ("Vast.ai (Coming soon)", self.vastAiAction)],
             cloud_inputs)
         self.optionsStack.addWidget(self.cloudOptions)
 
@@ -96,6 +96,8 @@ class MachineOptionPage(QWidget):
             self.parent.addDetail(layout, button, 16)
             button.clicked.connect(btn_action)
             widget.setLayout(layout)
+            if button.text() == "Vast.ai (Coming soon)":
+                button.setEnabled(False)
 
         for input_text, value_name, value in input_fields:
             self.parent.addDetail(layout, QLabel(input_text), 16)
