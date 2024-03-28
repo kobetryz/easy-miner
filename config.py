@@ -13,24 +13,26 @@ MAX_INSTANCE_FOR_SUBNET = 2
 VERSION = "1.0.0"
 VERSION_URL = "https://drive.google.com/drive/u/5/folders/12bglImLBlEvk0YyIspeASeXe2yBjRlN7"
 OS_CORE = "mac" if (name := platform.system()) == "Darwin" else name.lower()
+
+
+class SubnetType(Enum):
+    DISTRIBUTED_TRAINING = 'distributed training 25'
+    PROMPTING = 'text prompting 1'
+    DATA_UNIVERSE = 'dataverse 13'
+    BIT_AGENT = 'bitagent subnet 20'
+
+
 SUBNET_MAPPER = {
-    'distributed training 25': 25,
-    'prompting 1': 1,
-    'data universe 13': 13,
-    'bitagent subnet 20': 20
+    SubnetType.DISTRIBUTED_TRAINING.value: 25,
+    SubnetType.PROMPTING.value: 1,
+    SubnetType.DATA_UNIVERSE.value: 13,
+    SubnetType.BIT_AGENT.value: 20
 }
 
 
 class MinerType(Enum):
     MINER = 'miner'
     VALIDATOR = 'validator'
-
-
-class SubnetType(Enum):
-    DISTRIBUTED_TRAINING = 'distributed training 25'
-    PROMPTING = 'prompting 1'
-    DATA_UNIVERSE = 'data universe 13'
-    BIT_AGENT = 'bitagent subnet 20'
 
 
 class NetworkType(Enum):

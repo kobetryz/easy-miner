@@ -118,9 +118,9 @@ class RunpodDashboardPage(DashboardPageBase):
         self.parent.addDetail(header_layout, self.mine_button, 14)
         self.mine_button.clicked.connect(self.toggle_mining)
 
-        stop_pod_button = QPushButton("Terminate Pod")
-        self.parent.addDetail(header_layout, stop_pod_button, 14)
-        stop_pod_button.clicked.connect(self.terminate_pod)
+        manage_pods = QPushButton("Managing pods")
+        self.parent.addDetail(header_layout, manage_pods, 14)
+        manage_pods.clicked.connect(self.parent.show_runpod_manager_page)
 
         log_button = QPushButton("Log Out")
         self.parent.addDetail(header_layout, log_button, 14)
