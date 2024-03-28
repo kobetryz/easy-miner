@@ -20,13 +20,15 @@ class SubnetType(Enum):
     PROMPTING = 'text prompting 1'
     DATA_UNIVERSE = 'dataverse 13'
     BIT_AGENT = 'bitagent subnet 20'
+    COMPUTE = 'compute  27'
 
 
 SUBNET_MAPPER = {
     SubnetType.DISTRIBUTED_TRAINING.value: 25,
     SubnetType.PROMPTING.value: 1,
     SubnetType.DATA_UNIVERSE.value: 13,
-    SubnetType.BIT_AGENT.value: 20
+    SubnetType.BIT_AGENT.value: 20,
+    SubnetType.COMPUTE.value: 27,
 }
 
 
@@ -45,6 +47,7 @@ DIRECTORY_MAPPER = {
     1: 'prompting',
     13: 'data-universe',
     20: 'bitagent_subnet',
+    27: 'compute-subnet'
 }
 
 IP_ADDRESS = get_public_ip()

@@ -131,6 +131,8 @@ def get_minner_version(subnet_id):
         dest_path = "data-universe/neurons/__init__.py"
     elif subnet_id == 20:
         dest_path = "bitagent_subnet/bitagent/validator/__init__.py"
+    elif subnet_id == 27:
+        dest_path = "compute-subnet/compute/__init__.py"
     else:
         return None
 
@@ -172,14 +174,16 @@ def get_running_args(sub_id, network, miner_type, wallet_name, hotkey, ip):
         25: "DistributedTraining/neurons",
         1: ("prompting/neurons/miners/zephyr" if miner_type == config.MinerType.MINER else "prompting/neurons"),
         13: "data-universe/neurons",
-        20: "bitagent_subnet/neurons"
+        20: "bitagent_subnet/neurons",
+        27: "compute-subnet/neurons"
     }
     extras = {
         25: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--logging.debug",
              "--axon.external_ip", f"{ip}", "--axon.port", "8090", "--axon.ip", f"{ip}", "--axon.external_port", "8090",
              "--flask.host_port", "8800", "--flask.host_address", f"0.0.0.0"],
         1: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--logging.debug"] + (["--neuron.device", "cuda"] if miner_type != config.MinerType.MINER else []),
-        20: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--axon.port", "8090"]
+        20: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--axon.port", "8090"],
+        27: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--logging.debug"]
     }
 
     if sub_id in paths:

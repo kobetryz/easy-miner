@@ -93,14 +93,17 @@ class MinerOptionsPage(QWidget):
         requirements.addWidget(QLabel("GPU"), 0, 0)
         requirements.addWidget(QLabel("CPU"), 1, 0)
         requirements.addWidget(QLabel("RAM"), 2, 0)
+        requirements.addWidget(QLabel("Storage"), 3, 0)
 
         self.cpu_required = QLabel("-")
         self.gpu_required = QLabel("-")
         self.ram_required = QLabel("-")
+        self.storage_required = QLabel("-")
 
         requirements.addWidget(self.gpu_required, 0, 1)
         requirements.addWidget(self.cpu_required, 1, 1)
         requirements.addWidget(self.ram_required, 2, 1)
+        requirements.addWidget(self.storage_required, 3, 1)
 
         self.parent.addDetail(self.net_option_layout, requirements_group, 14)
 
@@ -121,6 +124,10 @@ class MinerOptionsPage(QWidget):
             SubnetType.BIT_AGENT.value: {
                 "miner": {"GPU": "15GB of VRAM"},
                 "validator": {"GPU": "15GB of VRAM"}
+            },
+            SubnetType.COMPUTE.value: {
+                "miner": {"GPU": "40 GB", "CPU": "We recommend a decent CPU (4+ cores)", "STORAGE": "100 GB"},
+                "validator": {"GPU": "40 GB", "CPU": "We recommend a decent CPU (4+ cores)", "STORAGE": "100 GB"},
             }
         }
         selected_requirements = requirements.get(subnet.lower(), {}).get(miner_type, {})
@@ -128,6 +135,7 @@ class MinerOptionsPage(QWidget):
         self.cpu_required.setText(selected_requirements.get("CPU", "-"))
         self.gpu_required.setText(selected_requirements.get("GPU", "-"))
         self.ram_required.setText(selected_requirements.get("RAM", "-"))
+        self.storage_required.setText(selected_requirements.get("STORAGE", "-"))
 
     def createNetworkOptions(self):
         self.network_group = QGroupBox("Select network")
