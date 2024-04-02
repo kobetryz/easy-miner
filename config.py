@@ -13,7 +13,7 @@ MAX_INSTANCE_FOR_SUBNET = 2
 VERSION = "1.0.0"
 VERSION_URL = "https://drive.google.com/drive/u/5/folders/12bglImLBlEvk0YyIspeASeXe2yBjRlN7"
 OS_CORE = "mac" if (name := platform.system()) == "Darwin" else name.lower()
-
+IMAGE_NAME = "squirre11/miner-server:latest"
 
 class SubnetType(Enum):
     DISTRIBUTED_TRAINING = 'distributed training 25'

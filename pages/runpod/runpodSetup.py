@@ -2,6 +2,7 @@ import json
 import time
 from functools import partial
 
+import config
 from config import COUNTRY_CODE, PERSISTENT_DISK_SIZE_GB, OS_DISK_SIZE_GB, MAX_INSTANCE_FOR_SUBNET
 from runpod_api.runpod import GPU_DICT, GPU_LIST_TO_USE, api
 from PyQt5.QtWidgets import QPushButton, QComboBox, QVBoxLayout, QHBoxLayout, QWidget, QGroupBox, QLabel, \
@@ -314,7 +315,7 @@ class RunpodSetupPage(QWidget):
                     containerDiskInGb: {OS_DISK_SIZE_GB},
                     dockerArgs: "",
                     env: [],
-                    imageName: "squirre11/miner-server:latest",
+                    imageName: {config.IMAGE_NAME},
                     name: "Easy miner",
                     ports: "21077/tcp,21078/tcp,8000/http,8001/http",
                     readme: "## Its easy miner template, nothing special!",
