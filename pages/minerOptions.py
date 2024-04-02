@@ -88,22 +88,26 @@ class MinerOptionsPage(QWidget):
             self.next_button.setEnabled(True)
 
     def createRequirements(self):
-        requirements_group = QGroupBox("Minimal requirements")
+        requirements_group = QGroupBox("Minimum requirements")
         requirements = QGridLayout(requirements_group)
         requirements.addWidget(QLabel("GPU"), 0, 0)
         requirements.addWidget(QLabel("CPU"), 1, 0)
         requirements.addWidget(QLabel("RAM"), 2, 0)
         requirements.addWidget(QLabel("Storage"), 3, 0)
+        requirements.addWidget(QLabel("Other"), 4, 0)
+
 
         self.cpu_required = QLabel("-")
         self.gpu_required = QLabel("-")
         self.ram_required = QLabel("-")
         self.storage_required = QLabel("-")
+        self.other_required = QLabel("-")
 
         requirements.addWidget(self.gpu_required, 0, 1)
         requirements.addWidget(self.cpu_required, 1, 1)
         requirements.addWidget(self.ram_required, 2, 1)
         requirements.addWidget(self.storage_required, 3, 1)
+        requirements.addWidget(self.other_required, 4, 1)
 
         self.parent.addDetail(self.net_option_layout, requirements_group, 14)
 
@@ -118,16 +122,16 @@ class MinerOptionsPage(QWidget):
                 "validator": {"GPU": "24GB of VRAM"}
             },
             SubnetType.DATA_UNIVERSE.value: {
-                "miner": {"GPU": "Not require a GPU", "CPU": "We recommend a decent CPU (4+ cores)"},
-                "validator": {"GPU": "Not require a GPU", "RAM": "32 GB"}
+                "miner": {"GPU": "Not require a GPU", "CPU": "4+ cores",'OTHER':'NO TESTNET FOR THIS SUBNET'},
+                "validator": {"GPU": "Not require a GPU", "RAM": "32 GB",'OTHER':'NO TESTNET FOR THIS SUBNET'}
             },
             SubnetType.BIT_AGENT.value: {
                 "miner": {"GPU": "15GB of VRAM"},
                 "validator": {"GPU": "15GB of VRAM"}
             },
             SubnetType.COMPUTE.value: {
-                "miner": {"GPU": "40 GB", "CPU": "We recommend a decent CPU (4+ cores)", "STORAGE": "100 GB"},
-                "validator": {"GPU": "40 GB", "CPU": "We recommend a decent CPU (4+ cores)", "STORAGE": "100 GB"},
+                "miner": {"GPU": "40 GB", "CPU": "4+ cores", "STORAGE": "100 GB"},
+                "validator": {"GPU": "40 GB", "CPU": "4+ cores", "STORAGE": "100 GB"},
             }
         }
         selected_requirements = requirements.get(subnet.lower(), {}).get(miner_type, {})
@@ -136,6 +140,7 @@ class MinerOptionsPage(QWidget):
         self.gpu_required.setText(selected_requirements.get("GPU", "-"))
         self.ram_required.setText(selected_requirements.get("RAM", "-"))
         self.storage_required.setText(selected_requirements.get("STORAGE", "-"))
+        self.other_required.setText(selected_requirements.get("OTHER", "-"))
 
     def createNetworkOptions(self):
         self.network_group = QGroupBox("Select network")
@@ -155,7 +160,7 @@ class MinerOptionsPage(QWidget):
         sender = self.sender()
         self.network = sender.text().lower()
 
-    def createFooter(self):
+    def createFooter(self): 
         h_layout = QHBoxLayout(self)
         h_layout.setAlignment(Qt.AlignBottom)
         previous_button = QPushButton("Back to Main Menu")
@@ -171,8 +176,11 @@ class MinerOptionsPage(QWidget):
     def nextClicked(self):
         self.parent.miner_type = MinerType(self.miner_type)
         self.parent.net = SubnetType(self.subnet)
-        self.parent.net_id = SUBNET_MAPPER[self.parent.net.value]
         self.parent.network = NetworkType(self.network)
+        net_uid_index = 0 if self.parent.network == NetworkType.FINNEY else 1
+        print(net_uid_index, self.parent.network)
+        self.parent.net_id = SUBNET_MAPPER[self.parent.net.value][net_uid_index]
+        print(self.parent.net_id)
         self.show_next_page(page_to_delete=self, instead_machine_options=self.show_next_page)
 
     def showSubnetNotImplemented(self):

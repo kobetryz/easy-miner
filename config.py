@@ -19,17 +19,19 @@ class SubnetType(Enum):
     DISTRIBUTED_TRAINING = 'distributed training 25'
     PROMPTING = 'text prompting 1'
     DATA_UNIVERSE = 'dataverse 13'
-    BIT_AGENT = 'bitagent subnet 20'
+    BIT_AGENT = 'bitagent 20'
     COMPUTE = 'compute  27'
 
 
 SUBNET_MAPPER = {
-    SubnetType.DISTRIBUTED_TRAINING.value: 25,
-    SubnetType.PROMPTING.value: 1,
-    SubnetType.DATA_UNIVERSE.value: 13,
-    SubnetType.BIT_AGENT.value: 20,
-    SubnetType.COMPUTE.value: 27,
+    # if no test net replace with 0
+    SubnetType.DISTRIBUTED_TRAINING.value: [25,100],
+    SubnetType.PROMPTING.value: [1,13],
+    SubnetType.DATA_UNIVERSE.value: [13,0],
+    SubnetType.BIT_AGENT.value: [20,76],
+    SubnetType.COMPUTE.value: [27,15],
 }
+
 
 
 class MinerType(Enum):
