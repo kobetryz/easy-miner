@@ -77,6 +77,7 @@ class LocalDashboardPage(DashboardPageBase):
             self.toggle_view()
 
         self.update_script_process = QProcess(self)
+        self.parent.processes.append(self.update_script_process)
         self.update_script_process.setProcessChannelMode(QProcess.MergedChannels)
         self.update_script_process.readyReadStandardOutput.connect(self.handle_update_script_output)
         path_to_scripts = Path(__file__).resolve().parent.parent.parent / "local_scripts"
@@ -91,6 +92,8 @@ class LocalDashboardPage(DashboardPageBase):
 
     def run_mining_script(self):
         self.mining_process = QProcess(self)
+        self.parent.processes.append(self.mining_process)
+
         self.mining_process.setProcessChannelMode(QProcess.MergedChannels)
         self.mining_process.readyReadStandardOutput.connect(self.handle_output)
         self.data_logger.info('Activity: Start Mining')
@@ -169,6 +172,8 @@ class LocalDashboardPage(DashboardPageBase):
         prev_version = get_minner_version(self.parent.net_id)
 
         self.update_script_process = QProcess(self)
+        self.parent.processes.append(self.update_script_process)
+
         self.update_script_process.setProcessChannelMode(QProcess.MergedChannels)
         self.update_script_process.readyReadStandardOutput.connect(self.handle_update_script_output)
 

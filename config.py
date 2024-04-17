@@ -15,6 +15,7 @@ VERSION_URL = "https://drive.google.com/drive/u/5/folders/12bglImLBlEvk0YyIspeAS
 OS_CORE = "mac" if (name := platform.system()) == "Darwin" else name.lower()
 IMAGE_NAME = "squirre11/miner-server:latest"
 
+
 class SubnetType(Enum):
     DISTRIBUTED_TRAINING = 'distributed training 25'
     PROMPTING = 'text prompting 1'
@@ -31,7 +32,6 @@ SUBNET_MAPPER = {
     SubnetType.BIT_AGENT.value: [20,76],
     SubnetType.COMPUTE.value: [27,15],
 }
-
 
 
 class MinerType(Enum):

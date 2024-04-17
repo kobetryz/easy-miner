@@ -341,6 +341,8 @@ class DashboardPageBase(QWidget):
 
     def wandb_login(self):
         self.wandb_login_process = QProcess(self)
+        self.parent.process.append(self.wandb_login_process)
+
         self.wandb_login_process.setProcessChannelMode(QProcess.MergedChannels)
         command = "wandb"
         args = [

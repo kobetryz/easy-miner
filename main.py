@@ -5,8 +5,10 @@
 
 import os
 import sys
+from multiprocessing import freeze_support
 
 from PyQt5 import sip
+from PyQt5.QtCore import QProcess
 from bittensor import subtensor, wallet
 
 from pages.dashboards import LocalDashboardPage, RunpodDashboardPage
@@ -14,7 +16,7 @@ from pages.runpod.runpodManager import RunpodManagerPage
 from runpod_api.runpod import api
 from utils import get_value_from_env, save_value_to_env
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QStackedWidget, QInputDialog, QLineEdit
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QCloseEvent
 
 from pages.minerOptions import MinerOptionsPage
 from pages.startpage import StartPage
@@ -38,6 +40,7 @@ class MiningWizard(QMainWindow):
         self.network = None
         self.mnemonic_hotkey = None
         self.mnemonic_coldkey = None
+        self.processes: list[QProcess] = []
 
     # methods to open pages
     def initialize_subtensor(self):
@@ -184,9 +187,31 @@ class MiningWizard(QMainWindow):
         self.wallet_name = wallet_name
         self.wallet_path = wallet_path
 
+    def terminate_processes(self):
+        for process in self.processes:
+            if process.state() != QProcess.NotRunning:
+                print(f"Terminating process {process.program()}")
+                process.terminate()
+                if not process.waitForFinished(3000):
+                    print(f"Forcing termination of {process.program()}")
+                    process.kill()
+                process.waitForFinished()
+
+    def closeEvent(self, event: QCloseEvent):
+        reply = QMessageBox.question(self, 'Message',
+                                     "Are you sure to quit?", QMessageBox.Yes |
+                                     QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.terminate_processes()
+            print("Quitting...")
+            event.accept()
+        else:
+            event.ignore()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    freeze_support()
     window = MiningWizard()
     window.show()
     sys.exit(app.exec_())
