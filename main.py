@@ -210,8 +210,8 @@ class MiningWizard(QMainWindow):
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
     freeze_support()
+    app = QApplication(sys.argv)
     window = MiningWizard()
     window.show()
     sys.exit(app.exec_())
