@@ -214,4 +214,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MiningWizard()
     window.show()
-    sys.exit(app.exec_())
+    os._exit(app.exec_())
