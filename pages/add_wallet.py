@@ -129,10 +129,12 @@ class AddWalletPage(QWidget):
             self.confirmed_password.clear()
             self.wallet_password_input.setFocus()  
             # return 
-        # self.output_area.show()   
+        # self.output_area.show()  
+        
         self.output_area.append(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} - Checking your password')
         self.wallet_name = self.wallet_name_input.text()
         self.wallet_path = self.wallet_path_input.text()
+        
         # self.wallet_password = self.wallet_password_input.text()
         # if self.output_area.isVisible():
         self.create_wallet()    
@@ -205,7 +207,8 @@ class AddWalletPage(QWidget):
 
     def handle_output(self):
         self.parent.output = self.mining_process.readAllStandardOutput().data().decode("utf-8")
-        self.output_area.append(self.parent.output)   
+        self.output_area.append(self.parent.output)  
+        
          # Check for common prompt indicators
         if self.parent.output.lower().strip().endswith(":") or "password" in self.parent.output.lower():
             input_text =   self.confirmed_password.text + '\n'
