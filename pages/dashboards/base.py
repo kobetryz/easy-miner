@@ -170,7 +170,7 @@ class DashboardPageBase(QWidget):
         self.createHeader()
 
     def createHeader(self):
-        header_group = QGroupBox("BitCurrent", self)
+        header_group = QGroupBox("EasyMiner", self)
         header_group.setFont(QFont("Georgia", 20, QFont.Bold))
         header_layout = QHBoxLayout(header_group)
         # header_group.setLayout(header_layout)
