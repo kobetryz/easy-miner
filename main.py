@@ -99,8 +99,10 @@ class MiningWizard(QMainWindow):
         if self.wallet_name:
             self.show_page(WalletDetailsTable, *args, **kwargs)
 
-    def check_runpod_api_key(self):
-        api_key = get_value_from_env("RUNPOD_API_KEY")
+    def check_runpod_api_key(self, check_env=True):
+        api_key = None
+        if check_env:
+            api_key = get_value_from_env("RUNPOD_API_KEY")
         if not api_key:
             api_key, ok = QInputDialog.getText(self, "RunPod API Key", "Enter your RunPod API Key:")
             if not ok or not api_key:
@@ -111,6 +113,7 @@ class MiningWizard(QMainWindow):
         response = api.get_myself()
         if response.ok:
             save_value_to_env("RUNPOD_API_KEY", api_key)
+            return
         elif response.status_code == 401:
             QMessageBox.warning(
                 self, "API key auth failed", "Check if you entered the key correctly and try again."
@@ -123,16 +126,14 @@ class MiningWizard(QMainWindow):
                 f"{response.status_code} {response.reason} {response.text} "
                 f"\nPlease contact support"
             )
-        return response.ok
+        self.check_runpod_api_key(check_env=False)
 
     def show_runpod_page(self, *args, **kwargs):
-        if not self.check_runpod_api_key():
-            return
+        self.check_runpod_api_key()
         self.show_page(RunpodSetupPage, *args, **kwargs)
 
     def show_runpod_manager_page(self, *args, **kwargs):
-        if not self.check_runpod_api_key():
-            return
+        self.check_runpod_api_key()
         self.show_page(RunpodManagerPage, *args, **kwargs)
 
     def addDetail(self, temp_layout, widget, fontsize, bold=False, **kwargs):
