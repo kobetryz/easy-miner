@@ -97,8 +97,8 @@ class RunpodManagerPage(QWidget):
 
     def createFooter(self):
         f_layout = QHBoxLayout()
-        previous_button = QPushButton("Back to Main Menu", self)
-        previous_button.clicked.connect(partial(self.parent.show_start_page, page_to_delete=self))  # noqa
+        previous_button = QPushButton("Back", self)
+        previous_button.clicked.connect(partial(self.parent.show_runpod_setup_page, page_to_delete=self))  # noqa
         self.parent.addDetail(f_layout, previous_button, 12)  # noqa
         f_layout.addStretch()
         self.layout.addLayout(f_layout)

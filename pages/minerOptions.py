@@ -163,8 +163,8 @@ class MinerOptionsPage(QWidget):
     def createFooter(self): 
         h_layout = QHBoxLayout(self)
         h_layout.setAlignment(Qt.AlignBottom)
-        previous_button = QPushButton("Back to Main Menu")
-        previous_button.clicked.connect(partial(self.parent.show_start_page, page_to_delete=self))  # noqa
+        previous_button = QPushButton("Back")
+        previous_button.clicked.connect(partial(self.parent.show_machine_options_page, page_to_delete=self))  # noqa
         self.parent.addDetail(h_layout, previous_button, 12)
 
         self.next_button = QPushButton('Next')
@@ -184,7 +184,7 @@ class MinerOptionsPage(QWidget):
         self.show_next_page(page_to_delete=self, instead_machine_options=self.show_next_page)
 
     def showSubnetNotImplemented(self):
-        QMessageBox.warning(self, "Warning", "Current subnet is not implemented")
+        QMessageBox.warning(self, "Warning", "Subnet not currently available")
 
     @staticmethod
     def find_checked_radiobutton(radiobuttons):

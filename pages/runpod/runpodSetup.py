@@ -50,7 +50,7 @@ class PodCreatorThread(QThread):
         if response.status_code == 200:
             if 'errors' in resp_json:
                 for error in resp_json['errors']:
-                    if error['message'] == ('There are no longer any instances available with the requested '
+                    if error['message'] == ('No instances available'
                                             'specifications. Please refresh and try again.'):
                         error_message = 'No resources currently available.'
                         self.creating_logs.emit(error_message)
@@ -62,7 +62,7 @@ class PodCreatorThread(QThread):
                             os_disk_size_gb=os_disk_size_gb,
                             country_code=country_code
                         )
-                    elif error['message'] == 'There are no longer any instances available with enough disk space.':
+                    elif error['message'] == 'No instances available.':
                         error_message = 'No instances with enough disk space available.'
                         self.creating_logs.emit(error_message)
                         time.sleep(5)
@@ -142,8 +142,8 @@ class RunpodSetupPage(QWidget):
 
     def createFooter(self):
         f_layout = QHBoxLayout()
-        previous_button = QPushButton("Back to Main Menu", self)
-        previous_button.clicked.connect(partial(self.parent.show_start_page, page_to_delete=self))
+        previous_button = QPushButton("Back", self)
+        previous_button.clicked.connect(partial(self.parent.show_machine_options_page, page_to_delete=self))
         self.continue_button = QPushButton("Continue", self)
         self.continue_button.setEnabled(False)
         self.parent.addDetail(f_layout, previous_button, 12)
@@ -191,11 +191,11 @@ class RunpodSetupPage(QWidget):
     def create_header(self):
         header_layout = QHBoxLayout()
 
-        title = QLabel("BitCurrent", self)
+        title = QLabel("EasyMiner", self)
         title.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.parent.addDetail(header_layout, title, 20, bold=True)
 
-        runpod_button = QPushButton("Managing pods", self)
+        runpod_button = QPushButton("Manage pods", self)
         runpod_button.clicked.connect(self.parent.show_runpod_manager_page)
         self.parent.addDetail(header_layout, runpod_button, 12)
 
