@@ -12,6 +12,10 @@ RUN chmod +x /app/update_miner-25.sh
 RUN chmod +x /app/update_miner-1.sh
 RUN chmod +x /app/update_miner-13.sh
 RUN chmod +x /app/update_miner-20.sh
+RUN chmod +x /app/update_miner-27.sh
+RUN chmod +x /app/update_miner-4.sh
+RUN chmod +x /app/update_miner-5.sh
+RUN chmod +x /app/update_miner-16.sh
 
 RUN pip install -r requirements.txt
 

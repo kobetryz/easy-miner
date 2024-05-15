@@ -6,7 +6,7 @@ from functools import partial
 import bittensor as bt
 from PyQt5.QtWidgets import (QPushButton, QLabel, QVBoxLayout, QWidget, QLineEdit,
                              QMessageBox, QHBoxLayout, QGroupBox, QSpacerItem,
-                             QTextEdit, QSizePolicy)
+                             QTextEdit, QSizePolicy, QApplication)
 from PyQt5.QtGui import QFont, QTextOption
 from PyQt5.QtCore import pyqtSignal, QThread
 from substrateinterface import Keypair
@@ -46,6 +46,7 @@ class WalletCreationThread(QThread):
         wallet._coldkey = ck_keypair
         wallet.coldkey_file.set_keypair(ck_keypair, encrypt=True, password=self.wallet_password, overwrite=True)
         wallet.set_coldkeypub(ck_keypair, overwrite=True)
+        self.mnemonic = ck_mnemonic
         self.show_mnemonic(ck_keypair, "coldkey")
 
 
@@ -203,6 +204,17 @@ class AddWalletPage(QWidget):
         if ok:
             self.save_button.setEnabled(False)
             self.finish_button.setEnabled(True)
+        self.copy_mnemonic()
+
+        
 
     def handle_output(self, text):
         self.log(text)
+
+    def copy_mnemonic(self):
+        mnemonic = f"{self.walletThread.mnemonic}"
+        print(mnemonic)
+        if mnemonic:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(mnemonic)
+            QMessageBox.information(self, "Mnemonic Copied", "Mnemonic copied to clipboard.")

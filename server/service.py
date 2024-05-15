@@ -77,6 +77,10 @@ class MinerService:
             1: f"prompting/neurons/{minner_options.miner_type.value}.py",
             13: f"data-universe/neurons/{minner_options.miner_type.value}.py",
             20: f"bitagent_subnet/neurons/{minner_options.miner_type.value}.py",
+            27: f"compute-subnet/neurons/{minner_options.miner_type.value}.py",
+            5: f"openkaito/neurons/{minner_options.miner_type.value}.py",
+            16: f"BitAds.ai/neurons/{minner_options.miner_type.value}.py",
+            4: f"targon/neurons/{'prover' if minner_options.miner_type.value == 'miner' else 'verifier'}/app.py",
         }
 
         extra_args = {

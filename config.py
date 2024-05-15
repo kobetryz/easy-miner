@@ -22,6 +22,9 @@ class SubnetType(Enum):
     DATA_UNIVERSE = 'dataverse 13'
     BIT_AGENT = 'bitagent 20'
     COMPUTE = 'compute  27'
+    TARGON = 'targon 4'
+    OPENKAITO = 'openkaito 5'
+    BIT_ADS_AI = 'bitads.ai 16'
 
 
 SUBNET_MAPPER = {
@@ -31,6 +34,9 @@ SUBNET_MAPPER = {
     SubnetType.DATA_UNIVERSE.value: [13,0],
     SubnetType.BIT_AGENT.value: [20,76],
     SubnetType.COMPUTE.value: [27,15],
+    SubnetType.TARGON.value: [4,0],
+    SubnetType.OPENKAITO.value: [5,88],
+    SubnetType.BIT_ADS_AI.value: [16,0],
 }
 
 
@@ -49,7 +55,10 @@ DIRECTORY_MAPPER = {
     1: 'prompting',
     13: 'data-universe',
     20: 'bitagent_subnet',
-    27: 'compute-subnet'
+    27: 'compute-subnet',
+    4: 'targon',
+    5: 'openkaito',
+    16: 'BitAds.ai',
 }
 
 IP_ADDRESS = get_public_ip()

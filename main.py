@@ -6,10 +6,15 @@
 import os
 import sys
 from multiprocessing import freeze_support
+import hashlib
+import uuid
+from datetime import datetime, timedelta
+import psycopg2
 
 from PyQt5 import sip
 from PyQt5.QtCore import QProcess
 from bittensor import subtensor, wallet
+
 
 from pages.dashboards import LocalDashboardPage, RunpodDashboardPage
 from pages.runpod.runpodManager import RunpodManagerPage
@@ -24,6 +29,7 @@ from pages.add_wallet import AddWalletPage
 from pages.wallet import WalletDetailsTable
 from pages.machineOptions import MachineOptionPage
 from pages.runpod.runpodSetup import RunpodSetupPage
+from database.connection import connect_to_database
 
 
 class MiningWizard(QMainWindow):
@@ -58,6 +64,7 @@ class MiningWizard(QMainWindow):
         # Initialize and add Startpage to the stack
         self.start_page = StartPage(self)
         self.central_widget.addWidget(self.start_page)
+        
     
     def show_page(self, page_class, *args, **kwargs):
         if previous_page := kwargs.get("page_to_delete"):
@@ -207,6 +214,52 @@ class MiningWizard(QMainWindow):
             event.accept()
         else:
             event.ignore()
+    
+    def get_device_fingerprint(self):
+        # Get MAC address
+       mac = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(0,2*6,2)])
+
+       device_fingerprint = hashlib.md5(mac.encode()).hexdigest()
+       print(f"Device fingerprint: {device_fingerprint}")
+       return device_fingerprint
+
+
+    def lock_user(self):
+        QMessageBox.warning(self, "Access Denied", "Your access to the app has been denied because you have exceeded the usage limit.")
+        self.terminate_processes()
+        QApplication.quit()
+        sys.exit(0)
+
+    def check_user_lock(self):
+        conn = connect_to_database()
+        if conn:
+            try:
+                cursor = conn.cursor()
+
+                # Check if user exists
+                cursor.execute("SELECT * FROM users WHERE device_id = %s", (self.get_device_fingerprint(),))
+                user_exists = cursor.fetchone()
+
+                if not user_exists:
+                    # Register new user
+                    cursor.execute("INSERT INTO users (device_id, first_usage) VALUES (%s, %s)", (self.get_device_fingerprint(), datetime.now()))
+                    conn.commit()
+
+                else:
+                    # Check usage duration
+                    cursor.execute("SELECT first_usage FROM users WHERE device_id = %s", (self.get_device_fingerprint(),))
+                    first_usage = cursor.fetchone()[0]
+                    print(f"First usage: {first_usage}")
+                    if datetime.now() - datetime.fromisoformat(first_usage.isoformat()) >= timedelta(days=30):
+                        # Lock user
+                        self.lock_user()
+                    else :
+                        print("User not locked")
+                cursor.close()
+
+            except (Exception, psycopg2.Error) as error:
+                print("Error:", error)
+
 
 
 if __name__ == "__main__":
@@ -214,4 +267,5 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MiningWizard()
     window.show()
+    window.check_user_lock()
     sys.exit(app.exec_())

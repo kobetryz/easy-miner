@@ -170,7 +170,7 @@ class DashboardPageBase(QWidget):
         self.createHeader()
 
     def createHeader(self):
-        header_group = QGroupBox("BitCurrent", self)
+        header_group = QGroupBox("EasyMiner", self)
         header_group.setFont(QFont("Georgia", 20, QFont.Bold))
         header_layout = QHBoxLayout(header_group)
         # header_group.setLayout(header_layout)
@@ -193,6 +193,13 @@ class DashboardPageBase(QWidget):
 
         self.layout.addWidget(header_group)
 
+    def get_user_coldkey(self):
+        coldkey_pub_file = os.path.join(self.parent.wallet_path, 'coldkeypub.txt')
+        with open (coldkey_pub_file,'r') as f:
+            my_coldkey = json.load(f)
+        return my_coldkey['ss58Address']
+
+    
     def get_user_hotkey_and_set_reg(self):
         """
         get users hotkey and checks if registered on subnet
@@ -204,14 +211,17 @@ class DashboardPageBase(QWidget):
                 my_wallet = json.load(f)
             self.parent.hotkey = my_wallet['ss58Address']
 
-        if self.parent.hotkey in self.parent.subnet.hotkeys:
-            uid = self.parent.subnet.hotkeys.index(self.parent.hotkey)
-            self.wallet_bal_tao = self.parent.subnet.stake.tolist()[uid]
-            self.registered = True
-        else:
-            wallet_bal_tao = str(self.parent.subtensor.get_balance(address=self.parent.hotkey))[1:]
+            self.parent.coldkey = self.get_user_coldkey()
+            print(self.parent.coldkey)
+
+            wallet_bal_tao = str(self.parent.subtensor.get_balance(address=self.parent.coldkey))[1:]
             self.wallet_bal_tao = float(wallet_bal_tao)
-            self.registered = False
+            print(f" {self.wallet_bal_tao} TAO")
+
+            if self.parent.hotkey in self.parent.subnet.hotkeys:
+                self.registered = True
+            else:
+                self.registered = False
 
     def toggle_mining(self):
         """changes start mining button to stop mining"""
@@ -234,7 +244,7 @@ class DashboardPageBase(QWidget):
     def handle_registration(self):
         self.log('You are not registered')
         self.registration_cost = self.parent.subtensor.recycle(netuid=self.parent.net_id)
-        warning_msg = f"You are not registered to mine on Bitcurrent!\nRegistration cost for Bitcurrent is {self.registration_cost}\n Do you want to register?\nNote this amount will be deducted from your wallet."
+        warning_msg = f"You are not registered on Subnet {self.parent.net_id}! \nRegistration cost is {self.registration_cost}. \n Do you want to register?\nNote this amount will be deducted from your wallet."
         reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
 
         if reply == QMessageBox.Yes:
@@ -250,7 +260,9 @@ class DashboardPageBase(QWidget):
             path=os.path.dirname(self.parent.wallet_path),
             hotkey=self.parent.hotkey
         )
-        wallet_bal = self.parent.subtensor.get_balance(address=self.parent.hotkey)
+        wallet_bal = self.parent.subtensor.get_balance(address=self.parent.coldkey)
+        print(f"{wallet_bal} TAO ")
+        print(f"{self.wallet_bal_tao} coldkey")
         # check wallet balance
         if wallet_bal < self.registration_cost:
             self.log('You don\'t have sufficient funds')
