@@ -7,6 +7,8 @@ from config import COUNTRY_CODE, PERSISTENT_DISK_SIZE_GB, OS_DISK_SIZE_GB, MAX_I
 from runpod_api.runpod import GPU_DICT, GPU_LIST_TO_USE, api
 from PyQt5.QtWidgets import QPushButton, QComboBox, QVBoxLayout, QHBoxLayout, QWidget, QGroupBox, QLabel, \
     QRadioButton, QSpinBox, QTextEdit, QSizePolicy, QLineEdit, QMessageBox
+
+from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 
 from utils import get_secret_hotkey, get_secret_coldkey, getLocalWandbApiKey, logger_wrapper
@@ -192,6 +194,9 @@ class RunpodSetupPage(QWidget):
         header_layout = QHBoxLayout()
 
         title = QLabel("EasyMiner", self)
+        font = QFont("Georgia", 20, QFont.Bold) 
+        font.setItalic(True)
+        title.setFont(font)
         title.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.parent.addDetail(header_layout, title, 20, bold=True)
 

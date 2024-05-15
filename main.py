@@ -88,6 +88,9 @@ class MiningWizard(QMainWindow):
 
     def show_machine_options_page(self, *args, **kwargs):
         self.show_page(MachineOptionPage, *args, **kwargs)
+
+    def show_runpod_setup_page(self, *args, **kwargs):
+        self.show_page(RunpodSetupPage, *args, **kwargs)
     
     def show_local_dashboard_page(self, *args, **kwargs):
         self.show_page(LocalDashboardPage, *args, **kwargs)

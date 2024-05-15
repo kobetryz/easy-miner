@@ -178,6 +178,7 @@ class MinerOptionsPage(QWidget):
         self.parent.net = SubnetType(self.subnet)
         self.parent.network = NetworkType(self.network)
         net_uid_index = 0 if self.parent.network == NetworkType.FINNEY else 1
+        self.parent.net_id_script = SUBNET_MAPPER[self.parent.net.value][0]
         print(net_uid_index, self.parent.network)
         self.parent.net_id = SUBNET_MAPPER[self.parent.net.value][net_uid_index]
         print(self.parent.net_id)
