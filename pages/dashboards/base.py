@@ -22,7 +22,6 @@ class DashboardPageBase(QWidget):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
         self.parent = parent
-        # self.addDetail = self.parent.addDetail
         self.data_logger = configure_logger_data(f"{self.parent.wallet_path}/full_user_data.log")
         self.parent.initialize_subtensor()
 
@@ -206,8 +205,8 @@ class DashboardPageBase(QWidget):
         """
         if not hasattr(self.parent, 'hotkey') or self.parent.hotkey is None:
             hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path, 'hotkeys'))]
-            hotkey_file = hotkey_files[-1]
-            with open(f'{self.parent.wallet_path}/hotkeys/{hotkey_file}', 'r') as f:
+            self.parent.hotkey_file = hotkey_files[-1]
+            with open(f'{self.parent.wallet_path}/hotkeys/{self.parent. hotkey_file}', 'r') as f:
                 my_wallet = json.load(f)
             self.parent.hotkey = my_wallet['ss58Address']
 
@@ -255,12 +254,17 @@ class DashboardPageBase(QWidget):
                 self.registered = False
 
     def register_on_subnet(self):
+        print(self.parent.wallet_path, '\n')
+        print(self.parent.wallet_name)
+        
         self.wallet = bt.wallet(
             name=self.parent.wallet_name,
             path=os.path.dirname(self.parent.wallet_path),
-            hotkey=self.parent.hotkey
+            hotkey=self.parent.hotkey_file
         )
+        print(self.wallet)
         wallet_bal = self.parent.subtensor.get_balance(address=self.parent.coldkey)
+        print(wallet_bal)
         # check wallet balance
         if wallet_bal < self.registration_cost:
             self.log('You don\'t have sufficient funds')

@@ -41,7 +41,7 @@ class MinerService:
 
     async def update_or_clone_miner(self, net_id: int):
         await websocket_service.broadcast(f"Updating or cloning miner")
-        await self.run_command(f'./update_miner-{net_id}.sh')
+        await self.run_command(f'./update_miner-{self.parent.net_id}.sh')
 
     @staticmethod
     async def regenerate_wallet(wallet_data: WalletData):

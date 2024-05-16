@@ -194,6 +194,11 @@ class RunpodDashboardPage(DashboardPageBase):
 
     def start_mining(self):
         self.log('Checking for registration')
+        if not hasattr(self, 'registered') or self.parent.hotkey not in self.parent.subnet.hotkeys:
+            self.registered = False
+        else: 
+            self.registered = True
+
         while not self.registered:
             response = self.handle_registration()
             if response == None:
