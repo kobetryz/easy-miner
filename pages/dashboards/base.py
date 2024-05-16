@@ -218,10 +218,7 @@ class DashboardPageBase(QWidget):
             self.parent.wallet_bal_tao = float(wallet_bal_tao)
             print(self.parent.wallet_bal_tao)
 
-            if self.parent.hotkey in self.parent.subnet.hotkeys:
-                self.registered = True
-            else:
-                self.registered = False
+        self.registered = self.parent.hotkey in self.parent.subnet.hotkeys
 
     def toggle_mining(self):
         """changes start mining button to stop mining"""
