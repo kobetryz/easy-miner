@@ -108,7 +108,7 @@ class LocalDashboardPage(DashboardPageBase):
         self.timer.timeout.connect(self.update_timer)
 
         # Log balance and start of mining
-        self.data_logger.info(f' Balance - Start: {self.wallet_bal_tao}')
+        self.data_logger.info(f' Balance - Start: {self.parent.wallet_bal_tao}')
         miner_directory = config.DIRECTORY_MAPPER.get(self.parent.net_id)
         command = f"{miner_directory}/venv/bin/python"
         args = get_running_args(
@@ -149,7 +149,7 @@ class LocalDashboardPage(DashboardPageBase):
             self.input_line.hide()
             self.input_button.hide()
             self.output_area.setReadOnly(True)
-        self.data_logger.info(f' Balance - Stop: {self.wallet_bal_tao}')
+        self.data_logger.info(f' Balance - Stop: {self.parent.wallet_bal_tao}')
         self.data_logger.info(f' Activity: Stop Mining')
         self.data_logger.info(f' Activity: Mining Time - {self.elapsed_time}')
 

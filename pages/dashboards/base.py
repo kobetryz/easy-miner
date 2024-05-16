@@ -29,7 +29,7 @@ class DashboardPageBase(QWidget):
         self.get_user_hotkey_and_set_reg()
         self.setupUI()
 
-        self.data_logger.info(f' Balance - Start: {self.wallet_bal_tao}')
+        self.data_logger.info(f' Balance - Start: {self.parent.wallet_bal_tao}')
         self.data_logger.info('Activity: Log in')
         self.data_logger.info(f' Activity: Mining Time - 0')
         reward_data = get_earnings_by_date_range(f"{self.parent.wallet_path}/full_user_data.log")
@@ -41,12 +41,12 @@ class DashboardPageBase(QWidget):
         summary_group.setAlignment(Qt.AlignLeft)
         summary_layout = QHBoxLayout(summary_group)
 
-        wallet_bal_dol = round(self.wallet_bal_tao * tao_price, 2)
+        wallet_bal_dol = round(self.parent.wallet_bal_tao * tao_price, 2)
         earnings_group = QGroupBox()
         earnings_layout = QVBoxLayout(earnings_group)
         earnings_layout.addWidget(QLabel("Wallet Balance", font=QFont('Georgia', 10)))
         earnings_layout.addWidget(QLabel(f"${wallet_bal_dol}", font=QFont('Georgia', 20, QFont.Bold)))
-        earnings_layout.addWidget(QLabel(f"TAO {self.wallet_bal_tao}", font=QFont('Georgia', 10)))
+        earnings_layout.addWidget(QLabel(f"TAO {self.parent.wallet_bal_tao}", font=QFont('Georgia', 10)))
         summary_layout.addWidget(earnings_group)
 
         # Mining infomation
@@ -215,8 +215,8 @@ class DashboardPageBase(QWidget):
             print(self.parent.coldkey)
 
             wallet_bal_tao = str(self.parent.subtensor.get_balance(address=self.parent.coldkey))[1:]
-            self.wallet_bal_tao = float(wallet_bal_tao)
-            print(self.wallet_bal_tao)
+            self.parent.wallet_bal_tao = float(wallet_bal_tao)
+            print(self.parent.wallet_bal_tao)
 
             if self.parent.hotkey in self.parent.subnet.hotkeys:
                 self.registered = True
