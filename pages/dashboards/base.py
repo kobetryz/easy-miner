@@ -257,7 +257,7 @@ class DashboardPageBase(QWidget):
         self.wallet = bt.wallet(
             name=self.parent.wallet_name,
             path=os.path.dirname(self.parent.wallet_path),
-            hotkey=self.parent.hotkey_file
+            hotkey=self.parent.hotkey_file #necessary to be able to find wallet its the same as hotkey name
         )
         print(self.wallet)
         wallet_bal = self.parent.subtensor.get_balance(address=self.parent.coldkey)
