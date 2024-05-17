@@ -106,7 +106,7 @@ class RunpodDashboardPage(DashboardPageBase):
 
         home_button = QPushButton("Home")
         self.parent.addDetail(header_layout, home_button, 14)
-        home_button.clicked.connect(self.redirect_to_home)
+        home_button.clicked.connect(partial(self.redirect_to_home, page_to_delete=self))
 
         self.wallet_button = QPushButton("Wallet")
         self.parent.addDetail(header_layout, self.wallet_button, 14)
@@ -120,7 +120,7 @@ class RunpodDashboardPage(DashboardPageBase):
 
         manage_pods = QPushButton("Managing pods")
         self.parent.addDetail(header_layout, manage_pods, 14)
-        manage_pods.clicked.connect(self.parent.show_runpod_manager_page)
+        manage_pods.clicked.connect(partial(self.parent.show_runpod_manager_page, page_to_delete=self))
 
         log_button = QPushButton("Log Out")
         self.parent.addDetail(header_layout, log_button, 14)
