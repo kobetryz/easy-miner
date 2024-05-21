@@ -57,7 +57,7 @@ class WalletDetailsTable(QWidget):
 
         layout = QVBoxLayout()
         # bit_label
-        header_group = QGroupBox("BitCurrent", self)
+        header_group = QGroupBox("EasyMiner", self)
         header_group.setFont(QFont("Georgia", 18, QFont.Bold))
         header_group.setAlignment(Qt.AlignLeft)
         header_layout = QVBoxLayout(header_group)

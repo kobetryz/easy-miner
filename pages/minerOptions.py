@@ -132,6 +132,18 @@ class MinerOptionsPage(QWidget):
             SubnetType.COMPUTE.value: {
                 "miner": {"GPU": "40 GB", "CPU": "4+ cores", "STORAGE": "100 GB"},
                 "validator": {"GPU": "40 GB", "CPU": "4+ cores", "STORAGE": "100 GB"},
+            },
+            SubnetType.TARGON.value: {
+                "miner": {"GPU": '80GB of VRAM', "STORAGE": "200 GB", "RAM": "16 GB", "CPU": "4+ cores",'OTHER':'NO TESTNET FOR THIS SUBNET'},
+                "validator": {"GPU": '80GB of VRAM', "STORAGE": "200 GB", "RAM": "16 GB", "CPU": "4+ cores",'OTHER':'NO TESTNET FOR THIS SUBNET'}
+            },
+             SubnetType.BIT_ADS_AI.value: {
+                "miner": {"GPU": "Not require a GPU", "CPU": "4+ cores",'OTHER':'NO TESTNET FOR THIS SUBNET',"STORAGE": "40 GB", "RAM": "4 GB",},
+                "validator": {"GPU": "Not require a GPU", "RAM": "32 GB",'OTHER':'NO TESTNET FOR THIS SUBNET', "STORAGE": "40 GB", "RAM": "4 GB",}
+            },
+            SubnetType.OPENKAITO.value: {
+                "miner": {"GPU": "Not require a GPU", "CPU": "8+ cores","RAM": "16 GB","STORAGE": "500 GB",   },
+                "validator": {"GPU": "Not require a GPU", "CPU": "8+ cores","RAM": "8 GB","STORAGE": "100 GB", },
             }
         }
         selected_requirements = requirements.get(subnet.lower(), {}).get(miner_type, {})
@@ -163,8 +175,8 @@ class MinerOptionsPage(QWidget):
     def createFooter(self): 
         h_layout = QHBoxLayout(self)
         h_layout.setAlignment(Qt.AlignBottom)
-        previous_button = QPushButton("Back to Main Menu")
-        previous_button.clicked.connect(partial(self.parent.show_start_page, page_to_delete=self))  # noqa
+        previous_button = QPushButton("Back")
+        previous_button.clicked.connect(partial(self.parent.show_machine_options_page, page_to_delete=self))  # noqa
         self.parent.addDetail(h_layout, previous_button, 12)
 
         self.next_button = QPushButton('Next')
@@ -178,13 +190,14 @@ class MinerOptionsPage(QWidget):
         self.parent.net = SubnetType(self.subnet)
         self.parent.network = NetworkType(self.network)
         net_uid_index = 0 if self.parent.network == NetworkType.FINNEY else 1
+        self.parent.net_id_script = SUBNET_MAPPER[self.parent.net.value][0]
         print(net_uid_index, self.parent.network)
         self.parent.net_id = SUBNET_MAPPER[self.parent.net.value][net_uid_index]
         print(self.parent.net_id)
         self.show_next_page(page_to_delete=self, instead_machine_options=self.show_next_page)
 
     def showSubnetNotImplemented(self):
-        QMessageBox.warning(self, "Warning", "Current subnet is not implemented")
+        QMessageBox.warning(self, "Warning", "Subnet not currently available")
 
     @staticmethod
     def find_checked_radiobutton(radiobuttons):

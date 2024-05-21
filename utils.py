@@ -6,10 +6,13 @@ from datetime import datetime
 from netrc import netrc
 
 import pandas as pd
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key, get_key
 import requests
 
 import config
+
+
+load_dotenv()
 
 
 def get_secret_coldkey(wallet_path: str):
@@ -103,13 +106,11 @@ def get_tao_price():
 
 
 def get_value_from_env(key):
-    load_dotenv()
-    return os.getenv(key)
+    return get_key(".env", key)
 
 
 def save_value_to_env(key, value):
-    with open(".env", "a") as env_file:
-        env_file.write(f"{key}=\"{value}\"\n")
+    set_key('.env', key, value)
 
 
 def getLocalWandbApiKey():

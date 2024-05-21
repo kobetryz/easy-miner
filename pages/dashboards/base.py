@@ -1,5 +1,6 @@
 import os
 import json
+import threading
 from abc import abstractmethod
 from functools import partial
 
@@ -7,9 +8,10 @@ import plotly.io as pio
 import plotly.graph_objects as go
 import matplotlib.dates as mdates
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox, QMessageBox, QTextEdit, \
-    QLineEdit
+    QLineEdit, QInputDialog, QMainWindow
 from PyQt5.QtGui import QFont, QTextOption, QDesktopServices
-from PyQt5.QtCore import Qt, QTimer, QDateTime, QProcess, QUrl
+from PyQt5.QtCore import QThread, Qt, QTimer, QDateTime, QProcess, QUrl, pyqtSignal, QObject
+
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 import pyqtgraph as pg
 import bittensor as bt
@@ -18,18 +20,78 @@ from config import tao_price
 from utils import get_earnings_by_date_range, get_total_mining, configure_logger_data, logger_wrapper
 
 
+class Worker(QObject):
+    password_required = pyqtSignal(str)
+    registration_complete = pyqtSignal(bool, str)
+    log_message = pyqtSignal(str)
+
+    def __init__(self, wallet_name, wallet_path, hotkey_file, net_id, coldkey, registration_cost, subtensor):
+        super().__init__()
+        self.wallet_name = wallet_name
+        self.wallet_path = wallet_path
+        self.hotkey_file = hotkey_file
+        self.net_id = net_id
+        self.coldkey = coldkey
+        self.registration_cost = registration_cost
+        self.subtensor = subtensor
+        self.event = threading.Event()
+        self.password = None
+
+    def run(self):
+        self.wallet = bt.wallet(
+            name=self.wallet_name,
+            path=os.path.dirname(self.wallet_path),
+            hotkey=self.hotkey_file
+        )
+
+        wallet_bal = self.subtensor.get_balance(address=self.coldkey)
+        print(f"{wallet_bal} wallet balance")
+        print(f"{self.registration_cost} registration cost")
+
+        # Check wallet balance
+        if wallet_bal < self.registration_cost:
+            self.log_message.emit('You don\'t have sufficient funds')
+            self.registration_complete.emit(False, "Insufficient funds")
+            return
+
+        self.log_message.emit('Registration in Progress!!')
+
+        # Function to capture password input via QInputDialog
+        def get_password(prompt):
+            self.password_required.emit(prompt)
+            self.event.wait()  # Wait for the main thread to provide the password
+            return self.password
+
+        # Mock the getpass.getpass function to capture password input via QInputDialog
+        import getpass
+        original_getpass = getpass.getpass
+        getpass.getpass = get_password
+
+        try:
+            success = self.subtensor.burned_register(wallet=self.wallet, netuid=self.net_id)
+            if success:
+                self.log_message.emit('Registration complete')
+                self.registration_complete.emit(True, "Registration Successful")
+            else:
+                self.log_message.emit('Registration failed')
+                self.registration_complete.emit(False, "Registration failed")
+        except Exception as e:
+            self.log_message.emit(f"Error: {str(e)}")
+            self.registration_complete.emit(False, "Registration failed")
+        finally:
+            # Restore the original getpass.getpass function
+            getpass.getpass = original_getpass
+
+
 class DashboardPageBase(QWidget):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
         self.parent = parent
-        # self.addDetail = self.parent.addDetail
         self.data_logger = configure_logger_data(f"{self.parent.wallet_path}/full_user_data.log")
         self.parent.initialize_subtensor()
-
         self.get_user_hotkey_and_set_reg()
         self.setupUI()
-
-        self.data_logger.info(f' Balance - Start: {self.wallet_bal_tao}')
+        self.data_logger.info(f' Balance - Start: {self.parent.wallet_bal_tao}')
         self.data_logger.info('Activity: Log in')
         self.data_logger.info(f' Activity: Mining Time - 0')
         reward_data = get_earnings_by_date_range(f"{self.parent.wallet_path}/full_user_data.log")
@@ -41,22 +103,21 @@ class DashboardPageBase(QWidget):
         summary_group.setAlignment(Qt.AlignLeft)
         summary_layout = QHBoxLayout(summary_group)
 
-        wallet_bal_dol = round(self.wallet_bal_tao * tao_price, 2)
+        wallet_bal_dol = round(self.parent.wallet_bal_tao * tao_price, 2)
         earnings_group = QGroupBox()
         earnings_layout = QVBoxLayout(earnings_group)
         earnings_layout.addWidget(QLabel("Wallet Balance", font=QFont('Georgia', 10)))
         earnings_layout.addWidget(QLabel(f"${wallet_bal_dol}", font=QFont('Georgia', 20, QFont.Bold)))
-        earnings_layout.addWidget(QLabel(f"TAO {self.wallet_bal_tao}", font=QFont('Georgia', 10)))
+        earnings_layout.addWidget(QLabel(f"TAO {self.parent.wallet_bal_tao}", font=QFont('Georgia', 10)))
         summary_layout.addWidget(earnings_group)
 
-        # Mining infomation
+        # Mining information
         mining_info_group = QGroupBox()
         mining_info_layout = QVBoxLayout(mining_info_group)
         mining_info_layout.addWidget(QLabel("Average Mining Time", font=QFont('Georgia', 10)))
         mining_info_layout.addWidget(QLabel("0.0HRS", font=QFont('Georgia', 20, QFont.Bold)))
         mining_info_layout.addWidget(QLabel(" ", font=QFont('Georgia', 10)))
         summary_layout.addWidget(mining_info_group)
-        # layout.addWidget(summary_group)
 
         # CPU USAGE
         cpu_info_group = QGroupBox()
@@ -86,7 +147,7 @@ class DashboardPageBase(QWidget):
         timer_info_layout.addWidget(self.timer_label)
         timer_info_layout.addWidget(QLabel(" ", font=QFont('Georgia', 10)))
 
-        # # Define Mining/Live time
+        # Define Mining/Live time
         self.mining_process = None
         self.update_script_process = None
         self.start_time = QDateTime.currentDateTime()
@@ -102,7 +163,6 @@ class DashboardPageBase(QWidget):
         activity_plot.getPlotItem().getAxis('left').setTextPen((200, 200, 200))
         activity_plot.getPlotItem().getAxis('bottom').setTextPen((200, 200, 200))
         activity_plot.showGrid(x=True, y=True, alpha=0.5)
-        # activity_plot.plot([0, 1, 2, 3,5], [0, 5, 3, 8, 2], pen='r', symbol='o', symbolPen='r', symbolBrush=(255, 0, 0), symbolSize=10)
         num_dates = mdates.date2num(activity_data['date'].tolist()).tolist()
         activity_plot.plot(num_dates, activity_data['time(s)'].tolist(), pen='g', symbol='o', symbolPen='r',
                            symbolBrush=(50, 205, 50), symbolSize=10)
@@ -150,20 +210,11 @@ class DashboardPageBase(QWidget):
 
         # Charts Section
         self.charts_group = QGroupBox()
-        # self.charts_group.setStyleSheet("QGroupBox { font-size: 18px; color: #ffffff; border: 2px solid #3498db; border-radius: 5px; margin-top: 10px;}")
         charts_layout = QVBoxLayout(self.charts_group)
-        # charts_layout.addWidget(QLabel("Cumulative Earnings", font=QFont('Georgia', 12, QFont.Bold)))
-        # charts_layout.addWidget(reward_plot)
-        # charts_layout.addWidget(QLabel("Daily Mining Time", font=QFont('Georgia', 12, QFont.Bold)))
-        # charts_layout.addWidget(activity_plot)
         self.plot_graph(reward_data['date'], reward_data['balance'])
         charts_layout.addWidget(self.webEngineView)
         self.layout.addWidget(self.charts_group)
         self.setLayout(self.layout)
-
-    # ********
-    # Methods
-    # ********
 
     def setupUI(self):
         self.layout = QVBoxLayout()
@@ -173,8 +224,6 @@ class DashboardPageBase(QWidget):
         header_group = QGroupBox("EasyMiner", self)
         header_group.setFont(QFont("Georgia", 20, QFont.Bold))
         header_layout = QHBoxLayout(header_group)
-        # header_group.setLayout(header_layout)
-        # header_group.setFixedHeight(30)
 
         home_button = QPushButton("Home")
         self.parent.addDetail(header_layout, home_button, 14)
@@ -195,19 +244,15 @@ class DashboardPageBase(QWidget):
 
     def get_user_coldkey(self):
         coldkey_pub_file = os.path.join(self.parent.wallet_path, 'coldkeypub.txt')
-        with open (coldkey_pub_file,'r') as f:
+        with open(coldkey_pub_file, 'r') as f:
             my_coldkey = json.load(f)
         return my_coldkey['ss58Address']
 
-    
     def get_user_hotkey_and_set_reg(self):
-        """
-        get users hotkey and checks if registered on subnet
-        """
         if not hasattr(self.parent, 'hotkey') or self.parent.hotkey is None:
             hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path, 'hotkeys'))]
-            hotkey_file = hotkey_files[-1]
-            with open(f'{self.parent.wallet_path}/hotkeys/{hotkey_file}', 'r') as f:
+            self.parent.hotkey_file = hotkey_files[-1]
+            with open(f'{self.parent.wallet_path}/hotkeys/{self.parent.hotkey_file}', 'r') as f:
                 my_wallet = json.load(f)
             self.parent.hotkey = my_wallet['ss58Address']
 
@@ -215,22 +260,17 @@ class DashboardPageBase(QWidget):
             print(self.parent.coldkey)
 
             wallet_bal_tao = str(self.parent.subtensor.get_balance(address=self.parent.coldkey))[1:]
-            self.wallet_bal_tao = float(wallet_bal_tao)
-            print(f" {self.wallet_bal_tao} TAO")
+            self.parent.wallet_bal_tao = float(wallet_bal_tao)
+            print(self.parent.wallet_bal_tao)
 
-            if self.parent.hotkey in self.parent.subnet.hotkeys:
-                self.registered = True
-            else:
-                self.registered = False
+        self.registered = self.parent.hotkey in self.parent.subnet.hotkeys
 
     def toggle_mining(self):
-        """changes start mining button to stop mining"""
         if not self.is_running():
             self.start_mining()
         else:
             self.stop_mining()
 
-    # changes chat to logs
     def toggle_view(self):
         if self.charts_group.isVisible():
             self.charts_group.hide()
@@ -243,45 +283,47 @@ class DashboardPageBase(QWidget):
 
     def handle_registration(self):
         self.log('You are not registered')
+        print(f"self.parent.net_id ${self.parent.net_id}" )
         self.registration_cost = self.parent.subtensor.recycle(netuid=self.parent.net_id)
         warning_msg = f"You are not registered on Subnet {self.parent.net_id}! \nRegistration cost is {self.registration_cost}. \n Do you want to register?\nNote this amount will be deducted from your wallet."
         reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            response = self.register_on_subnet()
-            if response == QMessageBox.Ok:
-                self.registered = True
-            else:
-                self.registered = False
+            self.register_on_subnet()
 
     def register_on_subnet(self):
-        self.wallet = bt.wallet(
-            name=self.parent.wallet_name,
-            path=os.path.dirname(self.parent.wallet_path),
-            hotkey=self.parent.hotkey
-        )
-        wallet_bal = self.parent.subtensor.get_balance(address=self.parent.coldkey)
-        print(f"{wallet_bal} TAO ")
-        print(f"{self.wallet_bal_tao} coldkey")
-        # check wallet balance
-        if wallet_bal < self.registration_cost:
-            self.log('You don\'t have sufficient funds')
-            warning_msg = f"You don't have sufficient funds in your account\nWould you like to add funds to you account?"
-            reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
+        self.worker = Worker(self.parent.wallet_name, self.parent.wallet_path, self.parent.hotkey_file, self.parent.net_id, self.parent.coldkey, self.registration_cost, self.parent.subtensor)
+        self.thread = QThread()
+        self.worker.moveToThread(self.thread)
+        self.worker.password_required.connect(self.on_password_required)
+        self.worker.registration_complete.connect(self.on_registration_complete)
+        self.worker.log_message.connect(self.log)
+        self.thread.started.connect(self.worker.run)
+        self.thread.start()
 
+    def on_password_required(self, prompt):
+        password, ok = QInputDialog.getText(self, 'Password Required', prompt, QLineEdit.Password)
+        if ok:
+            self.worker.password = password
+            self.worker.event.set()
+        else:
+            self.worker.password = None
+            self.worker.event.set()
+
+    def on_registration_complete(self, success, message):
+        if success:
+            self.registered = self.parent.hotkey in self.parent.subnet.hotkeys
+            info_msg = f"Congratulations!\n{message}\nYou are ready to mine"
+            QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
+        else:
+            warning_msg = f"{message}\nWould you like to add funds to your account?"
+            reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 QDesktopServices.openUrl(QUrl("https://bittensor.com/wallet"))
-                return None
-            else:
-                return None
-        else:
-            self.log('Registration in Progress!!')
-            success = self.parent.subtensor.burned_register(wallet=self.wallet, netuid=self.parent.net_id)
-            if success:
-                self.log('Registration complete')
-                info_msg = f"Congratulations!\nRegistration Successful!!\nYou are ready to mine"
-                final_reply = QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
-                return final_reply
+
+    def log(self, message):
+        print(message)
+        # Update the log in your UI if needed
 
     @abstractmethod
     def stop_mining(self):
@@ -311,7 +353,7 @@ class DashboardPageBase(QWidget):
         input_text = self.input_line.text() + '\n'
         self.mining_process.write(input_text.encode())
         self.input_line.clear()
-        self.input_line.hide()  # Hide the input line after sending input
+        self.input_line.hide()
         self.input_button.hide()
 
     def logout(self):
@@ -324,37 +366,25 @@ class DashboardPageBase(QWidget):
             self.parent.show_start_page(page_to_delete=self)
 
     def plot_graph(self, x, y):
-        # Create a QWebEngineView to display the Plotly chart
         self.webEngineView = QWebEngineView()
-        # Sample data generation for demonstration
-        dates = x  # pd.date_range(start="2023-01-01", periods=100, freq='D')
-        earnings = y  # Cumulative earnings
-
+        dates = x
+        earnings = y
         fig = go.Figure(data=[go.Scatter(x=dates, y=earnings, mode='lines+markers', name='Cumulative Earnings',
                                          line=dict(color='Green', width=2), marker=dict(color='green', size=3))])
-        # fig.update_layout(title='Cumulative Earnings Over Time', xaxis_title='Time', yaxis_title='Cumulative Earnings')
-
         fig.update_layout(
             title_text='Cumulative Earnings Over Time',
             xaxis_title='Time',
             yaxis_title='Cumulative Earnings',
-            template="plotly_dark"  # Use Plotly's dark theme
+            template="plotly_dark"
         )
-        # # Create a Plotly figure
-        # fig = go.Figure(data=[go.Scatter(x=[1, 2, 3, 4], y=[10, 11, 12, 13])])
-        # fig.update_layout(title='Plotly Chart in PyQt')
-
-        # Convert the figure to HTML and load it into the QWebEngineView
         raw_html = '<html><head><meta charset="utf-8" /></head><body>'
         raw_html += pio.to_html(fig, full_html=False, include_plotlyjs='cdn')
         raw_html += '</body></html>'
         self.webEngineView.setHtml(raw_html)
-        # self.layout.addWidget(self.webEngineView)
 
     def wandb_login(self):
         self.wandb_login_process = QProcess(self)
         self.parent.process.append(self.wandb_login_process)
-
         self.wandb_login_process.setProcessChannelMode(QProcess.MergedChannels)
         command = "wandb"
         args = [

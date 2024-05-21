@@ -95,6 +95,9 @@ class MiningWizard(QMainWindow):
 
     def show_machine_options_page(self, *args, **kwargs):
         self.show_page(MachineOptionPage, *args, **kwargs)
+
+    def show_runpod_setup_page(self, *args, **kwargs):
+        self.show_page(RunpodSetupPage, *args, **kwargs)
     
     def show_local_dashboard_page(self, *args, **kwargs):
         self.show_page(LocalDashboardPage, *args, **kwargs)
@@ -106,15 +109,34 @@ class MiningWizard(QMainWindow):
         if self.wallet_name:
             self.show_page(WalletDetailsTable, *args, **kwargs)
 
-    def check_runpod_api_key(self):
-        api_key = get_value_from_env("RUNPOD_API_KEY")
+    def check_runpod_api_key(self, check_env=True):
+        api_key = None
+        if check_env:
+            api_key = get_value_from_env("RUNPOD_API_KEY")
         if not api_key:
             api_key, ok = QInputDialog.getText(self, "RunPod API Key", "Enter your RunPod API Key:")
-            if ok and api_key:
-                save_value_to_env("RUNPOD_API_KEY", api_key)
-                api.API_KEY = api_key
-            else:
+            if not ok or not api_key:
                 QMessageBox.warning(self, "API Key Required", "RunPod API Key is required to proceed.")
+
+        api.API_KEY = api_key
+
+        response = api.get_myself()
+        if response.ok:
+            save_value_to_env("RUNPOD_API_KEY", api_key)
+            return
+        elif response.status_code == 401:
+            QMessageBox.warning(
+                self, "API key auth failed", "Check if you entered the key correctly and try again."
+            )
+        else:
+            QMessageBox.warning(
+                self,
+                "API key auth failed",
+                f"An error occurred during the authorization process: "
+                f"{response.status_code} {response.reason} {response.text} "
+                f"\nPlease contact support"
+            )
+        self.check_runpod_api_key(check_env=False)
 
     def show_runpod_page(self, *args, **kwargs):
         self.check_runpod_api_key()
@@ -267,5 +289,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MiningWizard()
     window.show()
-    window.check_user_lock()
-    sys.exit(app.exec_())
+    os._exit(app.exec_())

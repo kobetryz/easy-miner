@@ -36,7 +36,7 @@ SUBNET_MAPPER = {
     SubnetType.COMPUTE.value: [27,15],
     SubnetType.TARGON.value: [4,0],
     SubnetType.OPENKAITO.value: [5,88],
-    SubnetType.BIT_ADS_AI.value: [16,0],
+    SubnetType.BIT_ADS_AI.value: [16,13],
 }
 
 
