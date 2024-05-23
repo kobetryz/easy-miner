@@ -242,7 +242,6 @@ class MiningWizard(QMainWindow):
        mac = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(0,2*6,2)])
 
        device_fingerprint = hashlib.md5(mac.encode()).hexdigest()
-       print(f"Device fingerprint: {device_fingerprint}")
        return device_fingerprint
 
 
@@ -271,7 +270,7 @@ class MiningWizard(QMainWindow):
                     # Check usage duration
                     cursor.execute("SELECT first_usage FROM users WHERE device_id = %s", (self.get_device_fingerprint(),))
                     first_usage = cursor.fetchone()[0]
-                    print(f"First usage: {first_usage}")
+                   
                     if datetime.now() - datetime.fromisoformat(first_usage.isoformat()) >= timedelta(days=30):
                         # Lock user
                         self.lock_user()

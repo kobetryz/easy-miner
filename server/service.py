@@ -41,7 +41,7 @@ class MinerService:
 
     async def update_or_clone_miner(self, net_id: int):
         await websocket_service.broadcast(f"Updating or cloning miner")
-        await self.run_command(f'./update_miner-{net_id}.sh')
+        await self.run_command(f'./update_miner-{self.parent.net_id_script}.sh')
 
     @staticmethod
     async def regenerate_wallet(wallet_data: WalletData):
@@ -80,6 +80,7 @@ class MinerService:
             27: f"compute-subnet/neurons/{minner_options.miner_type.value}.py",
             5: f"openkaito/neurons/{minner_options.miner_type.value}.py",
             16: f"BitAds.ai/neurons/{minner_options.miner_type.value}.py",
+            120: f"BitAds.ai/neurons/{minner_options.miner_type.value}.py",
             4: f"targon/neurons/{'prover' if minner_options.miner_type.value == 'miner' else 'verifier'}/app.py",
         }
 
@@ -89,7 +90,8 @@ class MinerService:
                 f"--axon.external_port {minner_options.axon_port} --flask.host_address 127.0.0.1 --flask.host_port 8001",
             1: f"--netuid {minner_options.net_id} --subtensor.network {minner_options.network} --logging.debug" + (
                 " --neuron.device cuda" if minner_options.miner_type != MinerType.MINER else ""),
-            20: f"--netuid {minner_options.net_id} --subtensor.network {minner_options.network} --axon.port {minner_options.axon_port}"
+            20: f"--netuid {minner_options.net_id} --subtensor.network {minner_options.network} --axon.port {minner_options.axon_port}",
+            
         }
 
         if minner_options.net_id not in script_paths:

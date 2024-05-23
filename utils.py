@@ -140,6 +140,8 @@ def get_minner_version(subnet_id):
         dest_path = "openkaito/openkaito/__init__.py"
     elif subnet_id == 16:
         dest_path = "BitAds.ai/template/__init__.py"
+    elif subnet_id == 120:
+        dest_path = "BitAds.ai/template/__init__.py"
     else:
         return None
 
@@ -186,6 +188,7 @@ def get_running_args(sub_id, network, miner_type, wallet_name, hotkey, ip):
         4: "targon/neurons",
         5: "openkaito/neurons",
         16: "BitAds.ai/neurons",
+        120: "BitAds.ai/neurons",
     }
     extras = {
         25: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--logging.debug",

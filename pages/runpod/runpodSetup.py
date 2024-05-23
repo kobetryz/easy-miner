@@ -297,6 +297,7 @@ class RunpodSetupPage(QWidget):
     def set_local_params(self):
         if local_hotkey := get_secret_hotkey(self.parent.wallet_path):
             self.mnemonic_hotkey_field.setText(local_hotkey)
+            print(get_secret_coldkey(self.parent.wallet_path))
         if local_coldkey := get_secret_coldkey(self.parent.wallet_path):
             self.mnemonic_coldkey_field.setText(local_coldkey)
         if local_wandb_api_key := getLocalWandbApiKey():

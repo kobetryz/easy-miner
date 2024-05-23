@@ -22,22 +22,24 @@ class SubnetType(Enum):
     DATA_UNIVERSE = 'dataverse 13'
     BIT_AGENT = 'bitagent 20'
     COMPUTE = 'compute  27'
-    TARGON = 'targon 4'
-    OPENKAITO = 'openkaito 5'
     BIT_ADS_AI = 'bitads.ai 16'
+
+    # TARGON = 'targon 4'
+    # OPENKAITO = 'openkaito 5'
 
 
 SUBNET_MAPPER = {
     # if no test net replace with 0
     SubnetType.DISTRIBUTED_TRAINING.value: [25,100],
-    SubnetType.PROMPTING.value: [1,13],
+    SubnetType.PROMPTING.value: [1,61],
     SubnetType.DATA_UNIVERSE.value: [13,0],
     SubnetType.BIT_AGENT.value: [20,76],
     SubnetType.COMPUTE.value: [27,15],
-    SubnetType.TARGON.value: [4,0],
-    SubnetType.OPENKAITO.value: [5,88],
-    SubnetType.BIT_ADS_AI.value: [16,13],
+    SubnetType.BIT_ADS_AI.value: [16,120],
+    # SubnetType.TARGON.value: [4,0],
+    # SubnetType.OPENKAITO.value: [5,88],
 }
+
 
 
 class MinerType(Enum):
@@ -59,6 +61,7 @@ DIRECTORY_MAPPER = {
     4: 'targon',
     5: 'openkaito',
     16: 'BitAds.ai',
+    120: 'BitAds.ai',
 }
 
 IP_ADDRESS = get_public_ip()

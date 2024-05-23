@@ -283,7 +283,6 @@ class DashboardPageBase(QWidget):
 
     def handle_registration(self):
         self.log('You are not registered')
-        print(f"self.parent.net_id ${self.parent.net_id}" )
         self.registration_cost = self.parent.subtensor.recycle(netuid=self.parent.net_id)
         warning_msg = f"You are not registered on Subnet {self.parent.net_id}! \nRegistration cost is {self.registration_cost}. \n Do you want to register?\nNote this amount will be deducted from your wallet."
         reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
@@ -312,6 +311,7 @@ class DashboardPageBase(QWidget):
 
     def on_registration_complete(self, success, message):
         if success:
+            print(self.parent.hotkey in self.parent.subnet.hotkeys)
             self.registered = self.parent.hotkey in self.parent.subnet.hotkeys
             info_msg = f"Congratulations!\n{message}\nYou are ready to mine"
             QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
@@ -321,9 +321,9 @@ class DashboardPageBase(QWidget):
             if reply == QMessageBox.Yes:
                 QDesktopServices.openUrl(QUrl("https://bittensor.com/wallet"))
 
-    def log(self, message):
-        print(message)
-        # Update the log in your UI if needed
+    # def log(self, message):
+    #     print(message)
+    #     # Update the log in your UI if needed
 
     @abstractmethod
     def stop_mining(self):
