@@ -320,6 +320,7 @@ class DashboardPageBase(QWidget):
             reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 QDesktopServices.openUrl(QUrl("https://bittensor.com/wallet"))
+        self.thread.quit()
 
     # def log(self, message):
     #     print(message)
