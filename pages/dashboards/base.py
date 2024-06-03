@@ -9,15 +9,16 @@ import matplotlib.dates as mdates
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox, QMessageBox, QTextEdit, \
     QLineEdit, QInputDialog
 from PyQt5.QtGui import QFont, QTextOption, QDesktopServices
-from PyQt5.QtCore import Qt, QTimer, QDateTime, QProcess, QUrl
+from PyQt5.QtCore import Qt, QTimer, QDateTime, QProcess, QUrl, QThread, pyqtSignal, QObject, QEvent
 
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 import pyqtgraph as pg
 import bittensor as bt
+from bittensor import keyfile_data_is_encrypted, decrypt_keyfile_data, deserialize_keypair_from_keyfile_data
+from nacl.exceptions import CryptoError
 
 from config import tao_price
 from utils import get_earnings_by_date_range, get_total_mining, configure_logger_data, logger_wrapper
-
 
 class DashboardPageBase(QWidget):
     def __init__(self, parent, *args, **kwargs):
@@ -217,54 +218,75 @@ class DashboardPageBase(QWidget):
         reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            response = self.register_on_subnet()
-            if response == QMessageBox.Ok:
-                self.registered = True
-            else:
-                self.registered = False
+            self.register_on_subnet()
+
+    def get_key_password(self, prompt):
+        password, ok = QInputDialog.getText(self, 'Password Required', prompt, QLineEdit.Password)
+        if ok:
+            return password
+        return None
+
+    def encrypt_key(self, wallet, wallet_name):
+        keyfile_data = wallet._read_keyfile_data_from_file()
+        if keyfile_data_is_encrypted(keyfile_data):
+            password = self.get_key_password(f"Please enter password for {wallet_name}")
+            if not password:
+                return
+            decrypted_keyfile_data = decrypt_keyfile_data(
+                keyfile_data, password, coldkey_name=self.parent.wallet_name
+            )
+        else:
+            decrypted_keyfile_data = keyfile_data
+        return decrypted_keyfile_data
+
+    def set_cold_key(self, wallet):
+        while True:
+            try:
+                decrypted_keyfile_data = self.encrypt_key(self.wallet.coldkey_file, "coldkey")
+                if not decrypted_keyfile_data:
+                    return
+                wallet._coldkey = deserialize_keypair_from_keyfile_data(decrypted_keyfile_data)
+                break
+            except CryptoError as e:
+                ok = QMessageBox.warning(self, "Error", f"Incorrect password", QMessageBox.Ok)
+                if ok == QMessageBox.Ok:
+                    continue
+
+    def set_hot_key(self, wallet):
+        while True:
+            try:
+                decrypted_keyfile_data = self.encrypt_key(self.wallet.hotkey_file, "hotkey")
+                if not decrypted_keyfile_data:
+                    return
+                wallet._hotkey = deserialize_keypair_from_keyfile_data(decrypted_keyfile_data)
+                break
+            except CryptoError as e:
+                ok = QMessageBox.warning(self, "Error", f"Incorrect password", QMessageBox.Ok)
+                if ok == QMessageBox.Ok:
+                    continue
 
     def register_on_subnet(self):
         self.wallet = bt.wallet(
             name=self.parent.wallet_name,
             path=os.path.dirname(self.parent.wallet_path),
-            hotkey=self.parent.hotkey_file #necessary to be able to find wallet its the same as hotkey name
+            hotkey=self.parent.hotkey_file
         )
-        wallet_bal = self.parent.subtensor.get_balance(address=self.parent.coldkey)
-        # check wallet balance
-        if wallet_bal < self.registration_cost:
-            self.log('You don\'t have sufficient funds')
-            warning_msg = f"You don't have sufficient funds in your account\nWould you like to add funds to you account?"
-            reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
+        self.set_cold_key(self.wallet)
+        self.set_hot_key(self.wallet)
+        success = self.parent.subtensor.burned_register(wallet=self.wallet, netuid=self.parent.net_id)
+        self.on_registration_complete(success)
 
-            if reply == QMessageBox.Yes:
-                QDesktopServices.openUrl(QUrl("https://bittensor.com/wallet"))
-                return None
-            else:
-                return None
-        else:
-            self.log('Registration in Progress!!')
-            success = self.parent.subtensor.burned_register(wallet=self.wallet, netuid=self.parent.net_id)
-            if success:
-                self.log('Registration complete')
-                info_msg = f"Congratulations!\nRegistration Successful!!\nYou are ready to mine"
-                final_reply = QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
-                return final_reply
-
-    def on_registration_complete(self, success, message):
+    def on_registration_complete(self, success):
         if success:
             print(self.parent.hotkey in self.parent.subnet.hotkeys)
             self.registered = self.parent.hotkey in self.parent.subnet.hotkeys
-            info_msg = f"Congratulations!\n{message}\nYou are ready to mine"
+            info_msg = f"Congratulations!\nRegistration Successful\nYou are ready to mine"
             QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
         else:
-            warning_msg = f"{message}\nWould you like to add funds to your account?"
+            warning_msg = f"Registration failed\nWould you like to add funds to your account?"
             reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 QDesktopServices.openUrl(QUrl("https://bittensor.com/wallet"))
-
-    # def log(self, message):
-    #     print(message)
-    #     # Update the log in your UI if needed
 
     @abstractmethod
     def stop_mining(self):

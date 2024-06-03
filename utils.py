@@ -12,8 +12,9 @@ from dotenv import load_dotenv, set_key, get_key
 import requests
 from ansible.parsing.vault import AnsibleVaultError
 from ansible_vault import Vault
-from bittensor import keyfile_data_is_encrypted_nacl, NACL_SALT, keyfile_data_is_encrypted_ansible, \
+from bittensor import keyfile_data_is_encrypted_nacl, keyfile_data_is_encrypted_ansible, \
     keyfile_data_is_encrypted_legacy
+from bittensor.keyfile import NACL_SALT
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
