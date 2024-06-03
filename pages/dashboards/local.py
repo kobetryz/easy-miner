@@ -97,7 +97,6 @@ class LocalDashboardPage(DashboardPageBase):
 
     def run_mining_script(self):
         self.mining_process = QProcess(self)
-        self.parent.processes.append(self.mining_process)
 
         self.mining_process.setProcessChannelMode(QProcess.MergedChannels)
         self.mining_process.readyReadStandardOutput.connect(self.handle_output)
@@ -128,6 +127,7 @@ class LocalDashboardPage(DashboardPageBase):
         if not args:
             QMessageBox.warning(self, "Warning", "Somthing went wrong please contact to admin!", QMessageBox.Ok)
             return
+        self.parent.processes.append(self.mining_process)
         self.mining_process.start(command, args)
         if self.charts_group.isVisible():
             self.toggle_view()
