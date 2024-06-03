@@ -250,15 +250,6 @@ class DashboardPageBase(QWidget):
                 final_reply = QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
                 return final_reply
 
-    def on_password_required(self, prompt):
-        password, ok = QInputDialog.getText(self, 'Password Required', prompt, QLineEdit.Password)
-        if ok:
-            self.worker.password = password
-            self.worker.event.set()
-        else:
-            self.worker.password = None
-            self.worker.event.set()
-
     def on_registration_complete(self, success, message):
         if success:
             print(self.parent.hotkey in self.parent.subnet.hotkeys)
@@ -270,7 +261,6 @@ class DashboardPageBase(QWidget):
             reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 QDesktopServices.openUrl(QUrl("https://bittensor.com/wallet"))
-        self.thread.quit()
 
     # def log(self, message):
     #     print(message)
