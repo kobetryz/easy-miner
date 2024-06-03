@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import os
@@ -6,8 +7,18 @@ from datetime import datetime
 from netrc import netrc
 
 import pandas as pd
+from PyQt5.QtWidgets import QInputDialog, QMessageBox, QLineEdit
 from dotenv import load_dotenv, set_key, get_key
 import requests
+from ansible.parsing.vault import AnsibleVaultError
+from ansible_vault import Vault
+from bittensor import keyfile_data_is_encrypted_nacl, NACL_SALT, keyfile_data_is_encrypted_ansible, \
+    keyfile_data_is_encrypted_legacy
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from nacl import pwhash, secret
 
 import config
 
@@ -205,3 +216,61 @@ def get_running_args(sub_id, network, miner_type, wallet_name, hotkey, ip):
             return base_args + extras[sub_id]
         return base_args
     return None
+
+
+def decript_keyfile(self, keyfile_data):
+    while True:
+        password, ok = QInputDialog.getText(
+            self, 'Hotkey Password', 'Please enter your password to decrypt your hotkey', QLineEdit.Password
+        )
+        if not ok:
+            break
+        # NaCl SecretBox decrypt.
+        if keyfile_data_is_encrypted_nacl(keyfile_data):
+            password = bytes(password, "utf-8")
+            kdf = pwhash.argon2i.kdf
+            key = kdf(
+                secret.SecretBox.KEY_SIZE,
+                password,
+                NACL_SALT,
+                opslimit=pwhash.argon2i.OPSLIMIT_SENSITIVE,
+                memlimit=pwhash.argon2i.MEMLIMIT_SENSITIVE,
+            )
+            box = secret.SecretBox(key)
+            try:
+                return box.decrypt(keyfile_data[len("$NACL"):])
+            except Exception:
+                QMessageBox.warning(self, "Error", "Invalid password", QMessageBox.Ok)
+                continue
+
+        # Ansible decrypt.
+        elif keyfile_data_is_encrypted_ansible(keyfile_data):
+            vault = Vault(password)
+            try:
+                return vault.load(keyfile_data)
+            except AnsibleVaultError:
+                QMessageBox.warning(self, "Error", "Invalid password", QMessageBox.Ok)
+                continue
+        # Legacy decrypt.
+        elif keyfile_data_is_encrypted_legacy(keyfile_data):
+            __SALT = (
+                b"Iguesscyborgslikemyselfhaveatendencytobeparanoidaboutourorigins"
+            )
+            kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                salt=__SALT,
+                length=32,
+                iterations=10000000,
+                backend=default_backend(),
+            )
+            key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+            cipher_suite = Fernet(key)
+            try:
+                return cipher_suite.decrypt(keyfile_data)
+            except Exception:
+                QMessageBox.warning(self, "Error", "Invalid password", QMessageBox.Ok)
+                continue
+        # Unknown.
+        else:
+            QMessageBox.warning(self, "Error", "Unknown keyfile encryption type", QMessageBox.Ok)
+            return

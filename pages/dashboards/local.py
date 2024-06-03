@@ -124,6 +124,7 @@ class LocalDashboardPage(DashboardPageBase):
             self.parent.hotkey,
             IP_ADDRESS
         )
+        print(args)
         if not args:
             QMessageBox.warning(self, "Warning", "Somthing went wrong please contact to admin!", QMessageBox.Ok)
             return

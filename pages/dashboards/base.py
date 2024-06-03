@@ -1,6 +1,5 @@
 import os
 import json
-import threading
 from abc import abstractmethod
 from functools import partial
 
@@ -8,9 +7,9 @@ import plotly.io as pio
 import plotly.graph_objects as go
 import matplotlib.dates as mdates
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QPushButton, QGroupBox, QMessageBox, QTextEdit, \
-    QLineEdit, QInputDialog, QMainWindow
+    QLineEdit, QInputDialog
 from PyQt5.QtGui import QFont, QTextOption, QDesktopServices
-from PyQt5.QtCore import QThread, Qt, QTimer, QDateTime, QProcess, QUrl, pyqtSignal, QObject
+from PyQt5.QtCore import Qt, QTimer, QDateTime, QProcess, QUrl
 
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 import pyqtgraph as pg
@@ -20,77 +19,14 @@ from config import tao_price
 from utils import get_earnings_by_date_range, get_total_mining, configure_logger_data, logger_wrapper
 
 
-class Worker(QObject):
-    password_required = pyqtSignal(str)
-    registration_complete = pyqtSignal(bool, str)
-    log_message = pyqtSignal(str)
-
-    def __init__(self, wallet_name, wallet_path, hotkey_file, net_id, coldkey, registration_cost, subtensor):
-        super().__init__()
-        self.wallet_name = wallet_name
-        self.wallet_path = wallet_path
-        self.hotkey_file = hotkey_file
-        self.net_id = net_id
-        self.coldkey = coldkey
-        self.registration_cost = registration_cost
-        self.subtensor = subtensor
-        self.event = threading.Event()
-        self.password = None
-
-    def run(self):
-        self.wallet = bt.wallet(
-            name=self.wallet_name,
-            path=os.path.dirname(self.wallet_path),
-            hotkey=self.hotkey_file
-        )
-
-        wallet_bal = self.subtensor.get_balance(address=self.coldkey)
-        print(f"{wallet_bal} wallet balance")
-        print(f"{self.registration_cost} registration cost")
-
-        # Check wallet balance
-        if wallet_bal < self.registration_cost:
-            self.log_message.emit('You don\'t have sufficient funds')
-            self.registration_complete.emit(False, "Insufficient funds")
-            return
-
-        self.log_message.emit('Registration in Progress!!')
-
-        # Function to capture password input via QInputDialog
-        def get_password(prompt):
-            self.password_required.emit(prompt)
-            self.event.wait()  # Wait for the main thread to provide the password
-            return self.password
-
-        # Mock the getpass.getpass function to capture password input via QInputDialog
-        import getpass
-        original_getpass = getpass.getpass
-        getpass.getpass = get_password
-
-        try:
-            success = self.subtensor.burned_register(wallet=self.wallet, netuid=self.net_id)
-            if success:
-                self.log_message.emit('Registration complete')
-                self.registration_complete.emit(True, "Registration Successful")
-            else:
-                self.log_message.emit('Registration failed')
-                self.registration_complete.emit(False, "Registration failed")
-        except Exception as e:
-            self.log_message.emit(f"Error: {str(e)}")
-            self.registration_complete.emit(False, "Registration failed")
-        finally:
-            # Restore the original getpass.getpass function
-            getpass.getpass = original_getpass
-
-
 class DashboardPageBase(QWidget):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
         self.parent = parent
         self.data_logger = configure_logger_data(f"{self.parent.wallet_path}/full_user_data.log")
         self.parent.initialize_subtensor()
-        self.get_user_hotkey_and_set_reg()
         self.setupUI()
+        self.get_balance_and_set_reg()
         self.data_logger.info(f' Balance - Start: {self.parent.wallet_bal_tao}')
         self.data_logger.info('Activity: Log in')
         self.data_logger.info(f' Activity: Mining Time - 0')
@@ -248,20 +184,13 @@ class DashboardPageBase(QWidget):
             my_coldkey = json.load(f)
         return my_coldkey['ss58Address']
 
-    def get_user_hotkey_and_set_reg(self):
-        if not hasattr(self.parent, 'hotkey') or self.parent.hotkey is None:
-            hotkey_files = [f for f in os.listdir(os.path.join(self.parent.wallet_path, 'hotkeys'))]
-            self.parent.hotkey_file = hotkey_files[-1]
-            with open(f'{self.parent.wallet_path}/hotkeys/{self.parent.hotkey_file}', 'r') as f:
-                my_wallet = json.load(f)
-            self.parent.hotkey = my_wallet['ss58Address']
+    def get_balance_and_set_reg(self):
+        self.parent.coldkey = self.get_user_coldkey()
+        print(self.parent.coldkey)
 
-            self.parent.coldkey = self.get_user_coldkey()
-            print(self.parent.coldkey)
-
-            wallet_bal_tao = str(self.parent.subtensor.get_balance(address=self.parent.coldkey))[1:]
-            self.parent.wallet_bal_tao = float(wallet_bal_tao)
-            print(self.parent.wallet_bal_tao)
+        wallet_bal_tao = str(self.parent.subtensor.get_balance(address=self.parent.coldkey))[1:]
+        self.parent.wallet_bal_tao = float(wallet_bal_tao)
+        print(self.parent.wallet_bal_tao)
 
         self.registered = self.parent.hotkey in self.parent.subnet.hotkeys
 
@@ -288,17 +217,38 @@ class DashboardPageBase(QWidget):
         reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            self.register_on_subnet()
+            response = self.register_on_subnet()
+            if response == QMessageBox.Ok:
+                self.registered = True
+            else:
+                self.registered = False
 
     def register_on_subnet(self):
-        self.worker = Worker(self.parent.wallet_name, self.parent.wallet_path, self.parent.hotkey_file, self.parent.net_id, self.parent.coldkey, self.registration_cost, self.parent.subtensor)
-        self.thread = QThread()
-        self.worker.moveToThread(self.thread)
-        self.worker.password_required.connect(self.on_password_required)
-        self.worker.registration_complete.connect(self.on_registration_complete)
-        self.worker.log_message.connect(self.log)
-        self.thread.started.connect(self.worker.run)
-        self.thread.start()
+        self.wallet = bt.wallet(
+            name=self.parent.wallet_name,
+            path=os.path.dirname(self.parent.wallet_path),
+            hotkey=self.parent.hotkey_file #necessary to be able to find wallet its the same as hotkey name
+        )
+        wallet_bal = self.parent.subtensor.get_balance(address=self.parent.coldkey)
+        # check wallet balance
+        if wallet_bal < self.registration_cost:
+            self.log('You don\'t have sufficient funds')
+            warning_msg = f"You don't have sufficient funds in your account\nWould you like to add funds to you account?"
+            reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
+
+            if reply == QMessageBox.Yes:
+                QDesktopServices.openUrl(QUrl("https://bittensor.com/wallet"))
+                return None
+            else:
+                return None
+        else:
+            self.log('Registration in Progress!!')
+            success = self.parent.subtensor.burned_register(wallet=self.wallet, netuid=self.parent.net_id)
+            if success:
+                self.log('Registration complete')
+                info_msg = f"Congratulations!\nRegistration Successful!!\nYou are ready to mine"
+                final_reply = QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
+                return final_reply
 
     def on_password_required(self, prompt):
         password, ok = QInputDialog.getText(self, 'Password Required', prompt, QLineEdit.Password)

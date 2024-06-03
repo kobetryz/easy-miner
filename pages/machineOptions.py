@@ -1,8 +1,5 @@
 import subprocess
-import sys
 from functools import partial
-
-import pkg_resources
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QRadioButton, QLabel, QStackedWidget, QPushButton, QGroupBox, \
     QHBoxLayout, QLineEdit, QMessageBox, QInputDialog

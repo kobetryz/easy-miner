@@ -1,8 +1,7 @@
 # Easy miner app
 # Kofi Osei - Bonsu 
-# 30/12/2023 
-
-
+# 30/12/2023
+import json
 import os
 import sys
 from multiprocessing import freeze_support
@@ -19,7 +18,7 @@ from bittensor import subtensor, wallet
 from pages.dashboards import LocalDashboardPage, RunpodDashboardPage
 from pages.runpod.runpodManager import RunpodManagerPage
 from runpod_api.runpod import api
-from utils import get_value_from_env, save_value_to_env
+from utils import get_value_from_env, save_value_to_env, decript_keyfile
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QStackedWidget, QInputDialog, QLineEdit
 from PyQt5.QtGui import QFont, QCloseEvent
 
@@ -173,6 +172,7 @@ class MiningWizard(QMainWindow):
     def prompt_for_wallet_name(self):
         self.wallet_name, ok = QInputDialog.getText(self, "Wallet Name", "Please confirm wallet name:")
         if not ok:
+            self.wallet_path = None
             return  # User cancelled the dialog
         path_wallets = os.path.join(os.path.expanduser('~'), '.bittensor/wallets')
         self.wallet_path = os.path.join(path_wallets, self.wallet_name)
@@ -180,6 +180,20 @@ class MiningWizard(QMainWindow):
             QMessageBox.information(self, "Wallet not found", "Wallet not found. Please enter a valid wallet name.")
             self.wallet_path = None
             self.prompt_for_wallet_name()  # Prompt again
+        hotkey_files = [f for f in os.listdir(os.path.join(self.wallet_path, 'hotkeys'))]
+        self.hotkey_file = hotkey_files[-1]
+        try:
+            with open(f'{self.wallet_path}/hotkeys/{self.hotkey_file}', 'r') as f:
+                my_wallet = json.load(f)
+        except UnicodeDecodeError:
+            with open(f'{self.wallet_path}/hotkeys/{self.hotkey_file}', 'rb') as f:
+                key_data = decript_keyfile(self, f.read())
+                if not key_data:
+                    return self.prompt_for_wallet_name()
+                json_str = key_data.decode('utf-8')
+                my_wallet = json.loads(json_str)
+
+        self.hotkey = my_wallet['ss58Address']
 
     def prompt_for_mnemonic(self):
         cold_key, ok = QInputDialog.getText(self, "Enter ColdKey Mnemonic", "Please enter your coldkey mnemonic:", QLineEdit.Normal, "")
@@ -218,6 +232,7 @@ class MiningWizard(QMainWindow):
 
     def terminate_processes(self):
         for process in self.processes:
+            print(process)
             if process.state() != QProcess.NotRunning:
                 print(f"Terminating process {process.program()}")
                 process.terminate()
