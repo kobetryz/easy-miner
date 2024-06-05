@@ -219,6 +219,8 @@ class DashboardPageBase(QWidget):
 
         if reply == QMessageBox.Yes:
             self.register_on_subnet()
+        else:
+            return False
 
     def get_key_password(self, prompt):
         password, ok = QInputDialog.getText(self, 'Password Required', prompt, QLineEdit.Password)
@@ -266,6 +268,7 @@ class DashboardPageBase(QWidget):
                     continue
 
     def register_on_subnet(self):
+        self.log('Registering on Subnet')
         self.wallet = bt.wallet(
             name=self.parent.wallet_name,
             path=os.path.dirname(self.parent.wallet_path),
@@ -278,15 +281,16 @@ class DashboardPageBase(QWidget):
 
     def on_registration_complete(self, success):
         if success:
-            print(self.parent.hotkey in self.parent.subnet.hotkeys)
-            self.registered = self.parent.hotkey in self.parent.subnet.hotkeys
+            self.registered = True
             info_msg = f"Congratulations!\nRegistration Successful\nYou are ready to mine"
             QMessageBox.information(self, "Information", info_msg, QMessageBox.Ok)
+            return True
         else:
             warning_msg = f"Registration failed\nWould you like to add funds to your account?"
             reply = QMessageBox.warning(self, "Warning", warning_msg, QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 QDesktopServices.openUrl(QUrl("https://bittensor.com/wallet"))
+            return False
 
     @abstractmethod
     def stop_mining(self):

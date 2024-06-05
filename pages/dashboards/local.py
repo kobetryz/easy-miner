@@ -44,6 +44,8 @@ class LocalDashboardPage(DashboardPageBase):
         )
 
     def start_mining(self):
+        if self.charts_group.isVisible():
+            self.toggle_view()
         self.log('Checking for registration')
         # if not hasattr(self, 'registered') or self.parent.hotkey not in self.parent.subnet.hotkeys:
         #     self.registered = False
@@ -52,8 +54,10 @@ class LocalDashboardPage(DashboardPageBase):
             
         while not self.registered:
             response = self.handle_registration()
-            if response == None:
+            if response is True:
                 break
+            elif response is False:
+                return
         if self.registered:
             self.log('You are registered and ready to mine')
             self.update_miner()
