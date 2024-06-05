@@ -91,7 +91,7 @@ class LocalDashboardPage(DashboardPageBase):
         self.update_script_process.readyReadStandardOutput.connect(self.handle_update_script_output)
         path_to_scripts = Path(__file__).resolve().parent.parent.parent / "local_scripts"
         self.update_script_process.start(
-            'bash', [os.path.abspath(os.path.join(path_to_scripts, f'update_miner-{self.parent.net_id}.sh'))]
+            'bash', [os.path.abspath(os.path.join(path_to_scripts, f'update_miner-{self.parent.net_id_script}.sh'))]
         )
         self.update_script_process.finished.connect(self.run_mining_script)
 
