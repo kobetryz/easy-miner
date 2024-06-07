@@ -118,7 +118,9 @@ class LocalDashboardPage(DashboardPageBase):
         # Log balance and start of mining
         self.data_logger.info(f' Balance - Start: {self.parent.wallet_bal_tao}')
         miner_directory = config.DIRECTORY_MAPPER.get(self.parent.net_id)
-        command = f"{miner_directory}/venv/bin/python"
+        command = f"venv/bin/python"
+
+        working_directory = os.path.join(os.getcwd(), miner_directory)
         args = get_running_args(
             self.parent.net_id,
             self.parent.network.value,
@@ -127,10 +129,10 @@ class LocalDashboardPage(DashboardPageBase):
             self.parent.hotkey,
             IP_ADDRESS
         )
-        print(args)
         if not args:
             QMessageBox.warning(self, "Warning", "Somthing went wrong please contact to admin!", QMessageBox.Ok)
             return
+        self.mining_process.setWorkingDirectory(working_directory)
         self.parent.processes.append(self.mining_process)
         self.mining_process.start(command, args)
         if self.charts_group.isVisible():
