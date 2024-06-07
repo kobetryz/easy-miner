@@ -59,11 +59,14 @@ DIRECTORY_MAPPER = {
     61: 'prompting',
     13: 'data-universe',
     20: 'bitagent_subnet',
+    76: 'bitagent_subnet',
     27: 'compute-subnet',
+    15: 'compute-subnet',
     4: 'targon',
     5: 'openkaito',
     16: 'BitAds.ai',
     120: 'BitAds.ai',
+
 }
 
 IP_ADDRESS = get_public_ip()

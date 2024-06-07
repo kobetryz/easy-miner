@@ -192,17 +192,19 @@ def logger_wrapper(target, end="\n", limits=['[0m ', '| ']):
 def get_running_args(sub_id, network, miner_type, wallet_name, hotkey, ip):
     base_args = ["-u", f"{miner_type.value}.py", "--wallet.name", f"{wallet_name}", "--wallet.hotkey", f"{hotkey}"]
     paths = {
-        25: "DistributedTraining/neurons",
-        1: ("prompting/neurons/miners/huggingface" if miner_type == config.MinerType.MINER else "prompting/neurons"),
-        13: "data-universe/neurons",
-        20: "bitagent_subnet/neurons",
-        27: "compute-subnet/neurons",
-        4: "targon/neurons",
-        5: "openkaito/neurons",
-        16: "BitAds.ai/neurons",
-        120: "BitAds.ai/neurons",
-        61: ("prompting/neurons/miners/huggingface" if miner_type == config.MinerType.MINER else "prompting/neurons"),
-        100: "DistributedTraining/neurons",
+        25: "neurons",
+        1: ("neurons/miners/huggingface" if miner_type == config.MinerType.MINER else "neurons"),
+        13: "neurons",
+        20: "neurons",
+        27: "neurons",
+        15: "neurons",
+        76: "neurons",
+        4: "neurons",
+        5: "neurons",
+        16: "neurons",
+        120: "neurons",
+        61: ("neurons/miners/huggingface" if miner_type == config.MinerType.MINER else "neurons"),
+        100: "neurons",
     }
     extras = {
         25: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--logging.debug",
@@ -210,8 +212,10 @@ def get_running_args(sub_id, network, miner_type, wallet_name, hotkey, ip):
              "--flask.host_port", "8800", "--flask.host_address", f"0.0.0.0"],
         1: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--logging.debug"] + (["--neuron.device", "cuda"] if miner_type != config.MinerType.MINER else []),
         20: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--axon.port", "8090"],
+        76: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--axon.port", "8090"],
         27: ["--netuid", f"{sub_id}", "--subtensor.network", f"{network}", "--logging.debug"],
         61: ["--neuron.model_id casperhansen/llama-3-70b-instruct-awq", "--neuron.load_in_4bit", "True", "--axon.port", "21988"]
+
     }
 
     if sub_id in paths:
