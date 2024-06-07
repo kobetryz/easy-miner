@@ -12,6 +12,7 @@ install_dependencies() {
     echo "Activating virtual environment and installing dependencies..."
     source "$VENV_DIR/bin/activate"
     pip install -r requirements.txt && pip install -e .
+    pip install langchain-community
     deactivate
     echo "Dependencies installed."
 }

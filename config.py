@@ -54,7 +54,9 @@ class NetworkType(Enum):
 
 DIRECTORY_MAPPER = {
     25: 'DistributedTraining',
+    100: 'DistributedTraining',
     1: 'prompting',
+    61: 'prompting',
     13: 'data-universe',
     20: 'bitagent_subnet',
     27: 'compute-subnet',

@@ -5,6 +5,7 @@ DIR="prompting"
 
 install_dependencies() {
     pip install -r requirements.txt && pip install -e .
+    pip install langchain-community
     echo "Dependencies installed."
 }
 
