@@ -131,7 +131,12 @@ class StartPage(QWidget):
         QDesktopServices.openUrl(QUrl("https://bitcurrent.net/"))
 
     def check_updates(self, success_msg=True, error_msg=True):
-        response = requests.get(VERSION_URL)
+        try:
+            response = requests.get(VERSION_URL)
+        except Exception as e:
+            if error_msg:
+                QMessageBox.warning(self, "Error", f"Unable to get version, try again\n{str(e)}")
+            return
         if not response.status_code == 200:
             if error_msg:
                 QMessageBox.warning(self, "Error", "Unable to get version, try again")
