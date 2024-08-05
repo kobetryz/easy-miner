@@ -17,4 +17,3 @@ beautifulsoup4
 requests
 wandb
 psycopg2-binary
-PyInstaller
